@@ -1,0 +1,39 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Páginas Visitadas{% endblock title %}
+
+{% block navbar %}
+{% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container my-4">
+    <h2 class="mb-4">Páginas Visitadas</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>URL</th>
+                    <th>Fecha y Hora</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pagina in paginas %}
+                    <tr>
+                        <td>
+                            <!-- Mostrar todas las URLs como enlaces, incluso si son archivos o páginas -->
+                            <a href="{{ pagina.url }}" target="_blank">{{ pagina.url }}</a>
+                        </td>
+                        <td>{{ pagina.marca_tiempo|date:"d M, Y H:i" }}</td>
+                        <td>
+                            <!-- Botón para redirigir a la URL visitada -->
+                            <a href="{{ pagina.url }}" class="btn btn-info" target="_blank">Ver Página</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

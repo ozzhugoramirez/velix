@@ -1,0 +1,99 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Crear Producto{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Crear Producto</h1>
+
+    <form method="post" enctype="multipart/form-data" class="card p-4 shadow">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_title" class="form-label">Título</label>
+            {{ form.title }}
+        </div>
+
+        <div class="mb-3">
+            <label for="id_description" class="form-label">Descripción</label>
+            {{ form.description }}
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="id_price" class="form-label">Precio</label>
+                {{ form.price }}
+            </div>
+            <div class="col-md-6">
+                <label for="id_stock" class="form-label">Stock</label>
+                {{ form.stock }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_category" class="form-label">Categoría</label>
+            <div class="input-group">
+                {{ form.category }}
+                <a href="{% url 'crear_categoria' %}" class="btn btn-outline-secondary ms-2" title="Agregar nueva categoría">
+                    <i class="fas fa-plus"></i>
+                </a>
+            </div>
+        </div>
+        
+
+        <div class="mb-3">
+            <label for="id_image" class="form-label">Imagen</label>
+            {{ form.image }}
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    {{ form.is_daily_offer }}
+                    <label for="id_is_daily_offer" class="form-check-label">Oferta del día</label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="id_offer_start_date" class="form-label">Inicio de Oferta</label>
+                {{ form.offer_start_date }}
+            </div>
+            <div class="col-md-4">
+                <label for="id_offer_end_date" class="form-label">Fin de Oferta</label>
+                {{ form.offer_end_date }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="form-check">
+                    {{ form.is_promotional }}
+                    <label for="id_is_promotional" class="form-check-label">Es Promocional</label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="id_promotion_start_date" class="form-label">Inicio de Promoción</label>
+                {{ form.promotion_start_date }}
+            </div>
+            <div class="col-md-4">
+                <label for="id_promotion_end_date" class="form-label">Fin de Promoción</label>
+                {{ form.promotion_end_date }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form.is_featured }}
+                <label for="id_is_featured" class="form-check-label">Destacado</label>
+            </div>
+        </div>
+
+        <div class="text-end">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Guardar Producto
+            </button>
+            <a href="{% url 'ProductoAdminView' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock content %}

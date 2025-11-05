@@ -1,0 +1,122 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Gestión de Reclamos{% endblock title %}
+
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Gestión de Reclamos</h1>
+
+    <!-- Contadores de reclamos -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total de Reclamos</h5>
+                    <p class="display-6 text-primary">{{ total_reclamos }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Pendientes</h5>
+                    <p class="display-6 text-warning">{{ pendientes }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">En Proceso</h5>
+                    <p class="display-6 text-info">{{ en_proceso }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Resueltos</h5>
+                    <p class="display-6 text-success">{{ resueltos }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Rechazados</h5>
+                    <p class="display-6 text-danger">{{ rechazados }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtrador de estados -->
+    <form method="get" class="mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <select name="estado" class="form-select">
+                    <option value="">Todos los Estados</option>
+                    <option value="pendiente" {% if request.GET.estado == "pendiente" %}selected{% endif %}>Pendiente</option>
+                    <option value="en_proceso" {% if request.GET.estado == "en_proceso" %}selected{% endif %}>En Proceso</option>
+                    <option value="resuelto" {% if request.GET.estado == "resuelto" %}selected{% endif %}>Resuelto</option>
+                    <option value="rechazado" {% if request.GET.estado == "rechazado" %}selected{% endif %}>Rechazado</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabla de reclamos -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Usuario</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Correo</th>
+                    <th>Celular</th>
+                    <th>Tipo de Reclamo</th>
+                    <th>Estado</th>
+                    <th>Fecha de Creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reclamo in reclamos %}
+                <tr>
+                    <td>{{ reclamo.id }}</td>
+                    <td>
+                        {% if reclamo.usuario %}
+                            <a href="{% url 'ver_perfil' reclamo.usuario.id %}" class="text-decoration-none">
+                                {{ reclamo.usuario.username }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Anonimo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ reclamo.nombre }}</td>
+                    <td>{{ reclamo.apellido }}</td>
+                    <td>{{ reclamo.correo }}</td>
+                    <td>{{ reclamo.celular }}</td>
+                    <td>{{ reclamo.get_tipo_reclamo_display }}</td>
+                    <td>{{ reclamo.get_estado_display }}</td>
+                    <td>{{ reclamo.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'atender_reclamo' reclamo.id %}" class="btn btn-warning btn-sm">Atender Reclamo</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,132 @@
+
+{% extends "pages/web/base.html" %}
+
+
+
+{% block content %}
+<style>
+  body {
+    background-color: #f9f9f9;
+  }
+
+  .profile-card, .sidebar {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-box {
+    text-align: center;
+    padding: 10px;
+  }
+
+  .stat-box h5 {
+    margin-bottom: 5px;
+  }
+
+  .info-bar {
+    border-top: 1px solid #eee;
+    margin-top: 15px;
+    padding-top: 15px;
+  }
+
+  .nav-tabs .nav-link.active {
+    font-weight: bold;
+    color: #000;
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .steps-list li {
+    margin-bottom: 10px;
+  }
+
+  .tab-content {
+    margin-top: 20px;
+  }
+
+  .profile-container {
+      margin-top: 80px;
+    }
+
+  .purchase-card, .favorite-card {
+    background-color: #f8f8f8;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+
+
+  .orders-section {
+      margin-top: 20px;
+    }
+
+    .order-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .order-status-bar {
+      display: flex;
+      gap: 8px;
+      font-size: 0.85rem;
+      justify-content: space-between;
+      border-top: 1px solid #eee;
+      margin-top: 12px;
+      padding-top: 8px;
+    }
+</style>
+
+
+
+<div class="container profile-container">
+  <div class="row g-4">
+    <!-- Perfil principal -->
+    <div class="col-lg-8">
+      <div class="profile-card">
+              <div class="d-flex align-items-center mb-3">
+                <img src="{{ user.socialaccount_set.first.extra_data.picture }}" alt="Avatar" class="avatar me-3">
+                <div>
+                  <h4 class="mb-0">{{ user.get_full_name }}</h4>
+                  <small class="text-muted">Cliente</small>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between mb-3">
+                <div><strong>Seguidores:</strong> 1789</div>
+                <div><strong>Productos:</strong> 128</div>
+                <div><strong>Ventas:</strong> 10K ₽</div>
+              </div>
+
+
+              <a class="dropdown-item" href=" {% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a>
+
+        <!-- Tabs -->
+            <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+              <li class="nav-item"><a class="nav-link active"  href="{% url "profile" %}">Perfil</a></li>
+              <li class="nav-item"><a class="nav-link active"  href="{% url "favoritos_perfil" %}">Favoritos</a></li>
+              <li class="nav-item"><a class="nav-link active"  href="{% url "miscompras_perfil" %}">Mis Compras</a></li>
+              <li class="nav-item"><a class="nav-link active"  href="{% url "coins_perfil" %}">Coins</a></li>
+              <li class="nav-item"><a class="nav-link active"  href="{% url "compartidos_perfil" %}">Compartidos</a></li>
+            </ul>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+  
+
+{% endblock content %}
+
+
+{% block footer %} {% endblock footer %}

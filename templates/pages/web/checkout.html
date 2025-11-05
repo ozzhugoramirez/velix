@@ -1,0 +1,235 @@
+{% extends "pages/web/base.html" %}
+
+{% block content %}
+<div class="container my-5 py-4" style="min-height: 85vh;">
+  <div class="row g-5">
+    <!-- Columna izquierda -->
+    <div class="col-lg-7">
+      <h2 class="mb-4 fw-bold text-primary d-flex align-items-center gap-2">
+        <i class="bi bi-bag-check-fill"></i> Confirmar Compra
+      </h2>
+
+      <!-- Verificación -->
+      {% if perfil.estado_verificacion != 'aprobado' %}
+        <div class="alert alert-warning d-flex align-items-center">
+          <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-3"></i>
+          <div>
+            <strong>Tu cuenta no está verificada.</strong>
+            <p class="mb-1">Verifica tu cuenta para acceder a más opciones de pago y entrega.</p>
+            <a href="{% url 'data_profile' %}?next={{ request.path }}" class="btn btn-sm btn-primary">Verificar Cuenta</a>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} d-flex align-items-center mb-3">
+            <i class="bi bi-info-circle-fill me-2 fs-5 text-{{ message.tags }}"></i>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" action="{% url 'checkout' %}" class="mt-3" id="checkout-form">
+        {% csrf_token %}
+
+        <!-- Dirección -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-light d-flex align-items-center justify-content-between">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-geo-alt-fill"></i> Seleccionar Dirección
+            </h5>
+            <span class="text-muted small"><i class="bi bi-info-circle"></i> Debes elegir una dirección para habilitar los pagos</span>
+          </div>
+          <div class="card-body">
+            {% if default_address %}
+              <div class="form-check mb-2">
+                <input class="form-check-input address-radio" type="radio" name="address" id="address{{ default_address.id }}" value="{{ default_address.id }}" checked>
+                <label class="form-check-label fw-bold" for="address{{ default_address.id }}">
+                  {{ default_address }}
+                  <span class="badge bg-primary ms-2">Predeterminada</span>
+                </label>
+              </div>
+            {% endif %}
+
+            {% for address in other_addresses %}
+              <div class="form-check mb-2">
+                <input class="form-check-input address-radio" type="radio" name="address" id="address{{ address.id }}" value="{{ address.id }}">
+                <label class="form-check-label" for="address{{ address.id }}">{{ address }}</label>
+              </div>
+            {% endfor %}
+
+            <a href="{% url 'add_address' %}" class="btn btn-outline-secondary btn-sm mt-2">
+              <i class="bi bi-plus-circle"></i> Agregar Nueva Dirección
+            </a>
+          </div>
+        </div>
+
+        <!-- Métodos de Pago (Mercado Pago) -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-light d-flex align-items-center justify-content-between">
+            <h5 class="mb-0 d-flex align-items-center gap-2">
+              <i class="bi bi-wallet2"></i> Método de Pago
+            </h5>
+            <span class="badge rounded-pill text-bg-primary d-flex align-items-center gap-2">
+              <i class="bi bi-shield-lock"></i> Procesado por Mercado Pago
+            </span>
+          </div>
+
+          <div class="card-body">
+            <p class="text-muted small mb-3">
+              Todas las opciones de pago están <strong>habilitadas</strong>. El procesamiento se realiza 100% a través de <strong>Mercado Pago</strong>.
+              Primero selecciona una dirección para habilitar la elección del medio de pago.
+            </p>
+
+            <div class="row g-3" id="payment-options">
+              <!-- Opción: QR -->
+              <div class="col-12 col-md-6">
+                <label class="form-check-card w-100" aria-disabled="true">
+                  <input class="form-check-input visually-hidden payment-radio" type="radio" name="payment_method" id="mp_qr" value="mp_qr" disabled>
+                  <div class="card h-100 payment-card shadow-xs border-0">
+                    <div class="card-body d-flex flex-column align-items-start">
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-qr-code-scan fs-4"></i>
+                        <span class="fw-semibold">QR (Mercado Pago)</span>
+                      </div>
+                      <p class="text-muted small mb-0">
+                        Generaremos un código QR para pagar con tu billetera. Acreditación inmediata.
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              <!-- Opción: Tarjeta con Mercado Pago -->
+              <div class="col-12 col-md-6">
+                <label class="form-check-card w-100" aria-disabled="true">
+                  <input class="form-check-input visually-hidden payment-radio" type="radio" name="payment_method" id="mp_card" value="mp_card" disabled>
+                  <div class="card h-100 payment-card shadow-xs border-0">
+                    <div class="card-body d-flex flex-column align-items-start">
+                      <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-credit-card-2-front fs-4"></i>
+                        <span class="fw-semibold">Tarjeta (Mercado Pago)</span>
+                      </div>
+                      <p class="text-muted small mb-0">
+                        Paga con tarjetas de crédito/débito a través de Mercado Pago. Validación segura 3DS.
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 btn-lg shadow-sm">
+          <i class="bi bi-check-circle"></i> Confirmar Pedido
+        </button>
+      </form>
+    </div>
+
+    <!-- Columna derecha -->
+    <div class="col-lg-5">
+      <!-- Entrega -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-info text-white text-center">
+          <h6 class="mb-0"><i class="bi bi-truck"></i> Información de Entrega</h6>
+        </div>
+        <div class="card-body small">
+          <ul class="mb-0">
+            <li>🚚 Entregas de <strong>7:00 a 12:00 hs</strong> todos los días.</li>
+            <li>🕛 Compras antes de las <strong>00:00</strong> → entrega al día siguiente.</li>
+            <li>📦 Después de 00:00 → se entrega un día después.</li>
+            <li>🏪 Retiro en tienda disponible si así se coordina.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Pagos (condiciones) -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-warning text-dark text-center">
+          <h6 class="mb-0"><i class="bi bi-credit-card"></i> Condiciones de Pago</h6>
+        </div>
+        <div class="card-body small">
+          <ul class="mb-0">
+            <li>💳 Las tarjetas y QR se procesan <strong>exclusivamente</strong> con Mercado Pago.</li>
+            <li>🔐 Autorización segura y confirmación en segundos.</li>
+            <li>⚠️ Solo se entrega el producto si el pago fue confirmado.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Legal -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-light text-center">
+          <h6 class="mb-0"><i class="bi bi-shield-lock"></i> Información Legal</h6>
+        </div>
+        <div class="card-body small">
+          <p class="mb-1">📑 Todos los pedidos están sujetos a verificación de identidad y disponibilidad de stock.</p>
+          <p class="mb-0">🔐 Tu información está protegida por políticas de privacidad bajo normativa vigente.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estilos -->
+<style>
+  body { background-color: #f4f6f9; }
+  .card { border-radius: 14px; }
+  .card-header { border-radius: 14px 14px 0 0; font-weight: 600; }
+  .btn-lg { font-size: 1.05rem; padding: 0.8rem; }
+  .form-check-label i { margin-right: 6px; }
+  h2, h5 { color: #2b4c7e; }
+  .shadow-xs { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+  /* Tarjetas seleccionables de pago */
+  .form-check-card { cursor: pointer; user-select: none; }
+  .payment-card { transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; border: 1px solid rgba(0,0,0,0.06); }
+  .form-check-card:hover .payment-card { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  .payment-radio:checked + .payment-card { border-color: #2b4c7e; box-shadow: 0 0 0 3px rgba(43,76,126,.15); }
+
+  /* Estado deshabilitado visual */
+  .payment-disabled .payment-card { opacity: .6; pointer-events: none; }
+</style>
+
+<!-- Lógica: habilitar pago solo si hay dirección elegida -->
+<script>
+  (function () {
+    const addressRadios = document.querySelectorAll('.address-radio');
+    const paymentRadios  = document.querySelectorAll('.payment-radio');
+    const paymentGrid    = document.getElementById('payment-options');
+
+    function hasSelectedAddress() {
+      return Array.from(addressRadios).some(r => r.checked);
+    }
+
+    function togglePayments() {
+      const enabled = hasSelectedAddress();
+      paymentRadios.forEach(r => r.disabled = !enabled);
+      // Marca estado visual
+      if (!enabled) paymentGrid.classList.add('payment-disabled');
+      else paymentGrid.classList.remove('payment-disabled');
+    }
+
+    // Inicial: si tenés dirección predeterminada, se habilita
+    togglePayments();
+    addressRadios.forEach(r => r.addEventListener('change', togglePayments));
+
+    // Extra: evita enviar sin método de pago (por seguridad UX)
+    const form = document.getElementById('checkout-form');
+    form.addEventListener('submit', function (e) {
+      if (!hasSelectedAddress()) {
+        e.preventDefault();
+        alert('Elegí una dirección para habilitar el medio de pago.');
+        return;
+      }
+      const hasPayment = Array.from(paymentRadios).some(r => r.checked);
+      if (!hasPayment) {
+        e.preventDefault();
+        alert('Seleccioná un medio de pago (QR o Tarjeta con Mercado Pago).');
+      }
+    });
+  })();
+</script>
+{% endblock %}

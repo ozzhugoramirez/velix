@@ -1,0 +1,906 @@
+
+    <style>
+        :root{
+  --emerald: rgb(25,90,89);   /* esmeralda profundo */
+  --gold:    rgb(200,160,90); /* dorado metálico   */
+}
+
+.lang-dropdown { position: relative; }
+
+.lang-pill {
+  position: relative;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap:.5rem;
+  font-size: .85rem;
+  line-height: 1;
+  color: #fff;
+  background:
+    linear-gradient(135deg, rgba(200,160,90,.25), rgba(25,90,89,.25)),
+    rgba(22,22,23,.65);
+  border: 1px solid rgba(200,160,90,.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.lang-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+  border-color: var(--gold);
+}
+
+.lang-dot {
+  width: 8px; height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), var(--emerald));
+  box-shadow: 0 0 0 2px rgba(255,255,255,.12) inset;
+}
+
+.dropdown-menu.lang-menu {
+  min-width: 220px;
+  padding: .5rem;
+  border-radius: 14px;
+  background: rgba(22,22,23,.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.lang-item {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.75rem;
+  width:100%;
+  padding:.55rem .7rem;
+  border-radius:10px;
+  color:rgba(255,255,255,.9);
+  background: transparent;
+  border:1px solid transparent;
+  transition: background .2s ease, transform .15s ease, border-color .2s ease;
+}
+.lang-item:hover {
+  background: rgba(255,255,255,.06);
+  transform: translateX(2px);
+  border-color: rgba(200,160,90,.35);
+}
+
+.lang-tag {
+  font-size:.75rem;
+  padding:.15rem .45rem;
+  border-radius:8px;
+  border:1px solid rgba(200,160,90,.35);
+  color:#fff;
+  background: linear-gradient(135deg, rgba(200,160,90,.18), rgba(25,90,89,.18));
+}
+
+        /* Navbar base - Fondo semi-transparente con efecto vidrio */
+        .navbar {
+            background-color: rgba(22, 22, 23, 0.8) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.5s ease;
+            height: 52px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0.5rem 1rem;
+        }
+        
+        .navbar-nav {
+            align-items: center;
+        }
+        
+        /* ESTILO ORIGINAL DE LOS ITEMS QUE TE GUSTABA */
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            text-transform: capitalize;
+            padding: 0.75rem 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 18px;
+            margin: 0 2px;
+        }
+        
+        /* EFECTO HOVER ORIGINAL CON CRECIMIENTO */
+        .navbar-nav .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: scale(1.05);
+        }
+        
+        /* Contenedor del mega dropdown - Estilo vidrio */
+        .mega-dropdown {
+            position: fixed;
+            top: 52px;
+            left: 0;
+            width: 100%;
+            background-color: rgba(22, 22, 23, 0.92);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            padding: 2.5rem 0;
+            opacity: 0;
+            transform: translateY(-15px);
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            z-index: 1050;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        /* Mostrar mega dropdown al hacer hover */
+        .nav-item:hover .mega-dropdown {
+            opacity: 1;
+            transform: translateY(0);
+            visibility: visible;
+        }
+        
+        /* Columnas dentro del mega dropdown */
+        .dropdown-column {
+            padding: 0 1.8rem;
+            min-width: 200px;
+        }
+        
+        .dropdown-column h4 {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .dropdown-column a {
+            color: rgba(255, 255, 255, 0.7) !important;
+            display: block;
+            padding: 0.45rem 0;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .dropdown-column a:hover {
+            color: #fff !important;
+            transform: translateX(4px);
+        }
+        
+        /* Buscar - Estilo minimalista (MANTENIENDO LA ANIMACIÓN QUE TE GUSTA) */
+        #searchContainer {
+            background-color: rgba(22, 22, 23, 0.95);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            position: fixed;
+            top: 52px;
+            width: 100vw;
+            padding: 1.5rem 0;
+            opacity: 0;
+            transform-origin: top;
+            transform: scaleY(0);
+            pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            z-index: 1060;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        #searchContainer.open {
+            opacity: 1;
+            transform: scaleY(1);
+            pointer-events: auto;
+        }
+        
+        /* Input de búsqueda ultra minimalista */
+        #searchInput {
+            background-color: transparent;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            width: 100%;
+            font-size: 17px;
+            caret-color: #2997ff;
+            border-radius: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            transition: border-color 0.3s ease;
+        }
+        
+        #searchInput:focus {
+            outline: none;
+            border-bottom-color: rgba(255, 255, 255, 0.3);
+            box-shadow: none;
+        }
+        
+        #searchInput::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 300;
+        }
+        
+        #searchSuggestions ul {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0 0 0;
+        }
+        
+        #searchSuggestions li {
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-size: 15px;
+        }
+        
+        #searchSuggestions li:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Icono de búsqueda con efecto sutil */
+        #searchToggle, #mobileSearchToggle {
+            transition: all 0.4s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.85);
+            padding: 0;
+        }
+        
+        #searchToggle:hover, #mobileSearchToggle:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+        
+        /* User auth icons */
+        .user-auth-icons {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+        
+        .profile-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .profile-icon:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .mobile-icons {
+            display: none;
+        }
+        
+        /* Ajustes para móvil (MANTENIENDO LA NUEVA ORGANIZACIÓN DE ICONOS) */
+        @media (max-width: 991.98px) {
+            .desktop-search {
+                display: none;
+            }
+            
+            .mobile-icons {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        padding-right: 0; /* Elimina cualquier padding derecho */
+        gap: 0.5rem; /* Controla el espacio entre los elementos internos */
+    }
+
+    .navbar-toggler {
+        margin-right: 0; /* Elimina el margen derecho del botón */
+        padding: 0.25rem; /* Ajusta el padding interno si es necesario */
+    }
+            
+            .navbar-collapse {
+                position: fixed;
+                top: 52px;
+                left: 0;
+                right: 0;
+                background-color: rgba(22, 22, 23, 0.98);
+                backdrop-filter: blur(30px);
+                -webkit-backdrop-filter: blur(30px);
+                z-index: 1050;
+                padding: 1rem;
+                max-height: calc(100vh - 52px);
+                overflow-y: auto;
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
+            }
+            
+            /* Restaurando el efecto hover para móvil */
+            .navbar-nav .nav-link {
+                margin: 2px 0;
+            }
+            
+            .navbar-nav .nav-link:hover {
+                transform: scale(1.03);
+            }
+            
+            .mega-dropdown {
+                position: static;
+                background: transparent;
+                backdrop-filter: none;
+                box-shadow: none;
+                padding: 0.5rem 1rem;
+                display: none;
+            }
+            
+
+            
+            
+            .nav-item:hover .mega-dropdown {
+                display: block;
+            }
+        }
+    </style>
+
+
+
+    <style>
+    /* Estilos para el contenedor de perfil */
+    .profile-dropdown {
+        position: relative;
+    }
+
+    .profile-picture {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        transition: box-shadow 0.3s ease, border 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .profile-picture:hover {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+        border-color: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+    }
+
+    .dropdown-menu-end {
+        right: 0;
+        left: auto;
+    }
+</style>
+
+                <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="{% url "home" %}"><i class="bi bi-apple"></i></a>
+                        
+                        <!-- Íconos para móvil (búsqueda y perfil) - MANTENIENDO LA NUEVA UBICACIÓN -->
+                        <div class="mobile-icons d-lg-none">
+                {% if user.is_authenticated %}
+                    
+                    <a href="{% url "profile" %}" class="profile-icon me-2">
+                        <i class="bi bi-person-fill text-white"></i>
+                    </a>
+                {% else %}
+                    <a href="{% url "login" %}" class="btn btn-sm text-white me-2 login-btn" style="
+                        padding: 0.35rem 1rem;
+                        border-radius: 20px;
+                        font-size: 0.85rem;
+                        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                        position: relative;
+                        overflow: hidden;
+                        background-color: rgba(255, 255, 255, 0.08);
+                        border: 1px solid rgba(255, 255, 255, 0.15);
+                    ">
+                        <span style="
+                            position: relative;
+                            z-index: 2;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.3rem;
+                        ">
+                            <i class="bi bi-box-arrow-in-right" style="transition: transform 0.3s ease"></i>
+                            Sign In
+                        </span>
+                        <span class="hover-effect" style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+                            transform: translateX(-100%);
+                            transition: transform 0.4s ease;
+                            z-index: 1;
+                        "></span>
+                    </a>
+                {% endif %}
+                <button id="mobileSearchToggle" class="btn btn-sm text-white me-2">
+                    <i class="bi bi-search"></i>
+                </button>
+               
+
+
+                <div class="mobile-icons d-lg-none" style="margin-right: -0.5rem;">
+                <!-- tus íconos móviles aquí -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarApple" style="margin-right: 0;">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+
+
+
+            </div>
+
+
+            
+
+
+               <div class="collapse navbar-collapse" id="navbarApple">
+                    <ul class="navbar-nav mx-auto text-center">
+                        <!-- Artesanías -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop' %}">Categorias</a>
+                            <div class="mega-dropdown">
+                                <div class="container">
+                                    <div class="row">
+                                        <div class="dropdown-column col-md-3">
+                                            <h4>Por Material </h4>
+                                            <a href="{% url 'shop_categoria_list' 'cocina' %}">cosina  test prueba</a>
+                                            <a href="#">Textiles y Tejidos</a>
+                                            <a href="#">Madera Tallada</a>
+                                            <a href="#">Metalistería</a>
+                                            <a href="#">Vidrio Soplado</a>
+                                        </div>
+                                        <div class="dropdown-column col-md-3">
+                                            <h4>Por Región</h4>
+                                            <a href="#">América Latina</a>
+                                            <a href="#">África</a>
+                                            <a href="#">Asia</a>
+                                            <a href="#">Europa</a>
+                                            <a href="#">Oriente Medio</a>
+                                        </div>
+                                        <div class="dropdown-column col-md-3">
+                                            <h4>Colecciones</h4>
+                                            <a href="#">Edición Limitada</a>
+                                            <a href="#">Arte Tribal</a>
+                                            <a href="#">Folk Art</a>
+                                            <a href="#">Decoración Hogar</a>
+                                        </div>
+                                        <div class="dropdown-column col-md-3">
+                                            <h4>Para</h4>
+                                            <a href="#">Regalos</a>
+                                            <a href="#">Coleccionistas</a>
+                                            <a href="#">Decoración</a>
+                                            <a href="#">Uso Diario</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        
+                       
+                        
+                       
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop' %}">tecnologia</a>
+                            
+                        </li>
+
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop' %}">decoracion</a>
+                            
+                        </li>
+
+                        <!-- Experiencias -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop' %}">clips</a>
+                            
+                        </li>
+                        
+                        <!-- Experiencias -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'shop' %}">Shops</a>
+                            
+                        </li>
+                    </ul>
+                </div>
+                            
+
+<!-- Selector de idioma -->
+<div class="dropdown lang-dropdown">
+  <button class="lang-pill dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="lang-dot"></span> Español
+  </button>
+  <div class="dropdown-menu dropdown-menu-end lang-menu">
+    <button class="lang-item" type="button"><span>Español</span><span class="lang-tag">ES</span></button>
+    <button class="lang-item" type="button"><span>English</span><span class="lang-tag">EN</span></button>
+    <button class="lang-item" type="button"><span>中文（简体）</span><span class="lang-tag">中文</span></button>
+  </div>
+</div>
+
+
+
+
+               <!-- Contenedor para íconos de usuario y búsqueda (desktop) -->
+<div class="user-auth-icons desktop-search d-none d-lg-flex align-items-center gap-3">
+
+    <!-- Icono de búsqueda -->
+    <button id="searchToggle" class="btn btn-sm text-white">
+        <i class="bi bi-search fs-5"></i>
+    </button>
+
+    {% if user.is_authenticated %}
+        <!-- Icono del carrito -->
+        <a href="{% url 'cart' %}" class="position-relative text-decoration-none">
+            <i class="bi bi-cart-fill text-white fs-5"></i>
+            {% if cart_item_count and cart_item_count > 0 %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    {{ cart_item_count }}
+                    <span class="visually-hidden">artículos en el carrito</span>
+                </span>
+            {% endif %}
+        </a>
+
+        <!-- Perfil con dropdown -->
+        <div class="dropdown profile-dropdown">
+            <a href="#" class="d-block" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ user.avatar.url }}" alt="Profile" class="profile-picture">
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="profileDropdown">
+                <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person me-2"></i>Ir a perfil</a></li>
+               <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'notification_list' %}">
+                    <div>
+                    <i class="bi bi-bell me-2 text-primary"></i> 
+                    Notificaciones  {% if unread_notifications_count > 0 %}
+                    <span class="badge bg-danger rounded-pill">{{ unread_notifications_count }}</span>
+                    {% endif %}
+                    </div>
+                   
+                </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href=" {% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+            </ul>
+        </div>
+
+    {% else %}
+        <!-- Botón de inicio de sesión -->
+        <a href="{% url 'login' %}" class="btn btn-sm text-white login-btn" style="
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        ">
+            <span style="
+                position: relative;
+                z-index: 2;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.3rem;
+            ">
+                <i class="bi bi-box-arrow-in-right" style="transition: transform 0.3s ease"></i>
+                Sign In
+            </span>
+            <span class="hover-effect" style="
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+                transform: translateX(-100%);
+                transition: transform 0.4s ease;
+                z-index: 1;
+            "></span>
+        </a>
+    {% endif %}
+</div>
+
+            </div>
+        </div>
+    </nav>
+
+    
+
+     <div id="searchContainer">
+        <div class="container">
+            <form method="GET" action="{% url 'Search' %}">
+            <input
+                type="text"
+                id="searchInput"
+                name="q"
+                class="form-control"
+                placeholder="Search Nextgen..."
+                autocomplete="off"
+            />
+            </form>
+        
+            <div id="searchSuggestions" class="mt-2">
+           <ul id="defaultSuggestions" class="search-suggestions">
+            <li><a href="">→ Cerámica Andina</a></li>
+            <li><a href="">→ Textiles Africanos</a></li>
+            <li><a href="">→ Lámparas Marroquíes</a></li>
+            <li><a href="">→ Especias de la India</a></li>
+        </ul>
+
+<style>
+    .search-suggestions {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .search-suggestions li {
+        padding: 6px 0;
+    }
+    
+    .search-suggestions a {
+        color: #444;
+        text-decoration: none;
+        font-size: 14px;
+        display: block;
+        padding: 8px 16px;
+        transition: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .search-suggestions a:hover {
+        color: #000;
+        background-color: rgba(0, 0, 0, 0.03);
+        transform: translateX(4px);
+    }
+    
+    .search-suggestions a::before {
+        content: "→";
+        margin-right: 10px;
+        color: #888;
+        font-weight: 300;
+        transition: all 0.3s ease;
+    }
+    
+    .search-suggestions a:hover::before {
+        color: #000;
+        transform: translateX(2px);
+    }
+    
+    .search-suggestions a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 16px;
+        right: 16px;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-suggestions li:last-child a::after {
+        display: none;
+    }
+</style>
+            <ul id="dynamicSuggestions" style="display: none;"></ul>
+            </div>
+        </div>
+        </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("searchInput");
+  const searchContainer = document.getElementById("searchContainer");
+  const suggestionsBox = document.getElementById("searchSuggestions");
+  const defaultSuggestions = document.getElementById("defaultSuggestions");
+  const dynamicSuggestions = document.getElementById("dynamicSuggestions");
+
+  // Mostrar sugerencias por defecto al cargar la página
+  defaultSuggestions.style.display = "block";
+  dynamicSuggestions.style.display = "none";
+  suggestionsBox.style.display = "block";
+
+  // Manejar el enfoque del input
+  input.addEventListener("focus", function() {
+    searchContainer.classList.add("active");
+    if (input.value.trim().length === 0) {
+      defaultSuggestions.style.display = "block";
+      dynamicSuggestions.style.display = "none";
+    }
+  });
+
+  input.addEventListener("blur", function() {
+    // Retraso para permitir el clic en las sugerencias
+    setTimeout(() => {
+      searchContainer.classList.remove("active");
+    }, 200);
+  });
+
+  input.addEventListener("input", function () {
+    const query = input.value.trim();
+    
+    if (query.length === 0) {
+      defaultSuggestions.style.display = "block";
+      dynamicSuggestions.style.display = "none";
+      return;
+    }
+
+    defaultSuggestions.style.display = "none";
+    dynamicSuggestions.style.display = "block";
+    dynamicSuggestions.innerHTML = "<li class='loading'>Searching...</li>";
+
+    fetch(`/search/suggestions/?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        dynamicSuggestions.innerHTML = "";
+
+        if (data.suggestions.length === 0) {
+          dynamicSuggestions.innerHTML = "<li>No results found</li>";
+          return;
+        }
+
+        data.suggestions.forEach(suggestion => {
+          const li = document.createElement("li");
+          li.textContent = suggestion;
+          li.addEventListener("click", () => {
+            input.value = suggestion;
+            input.form.submit();
+          });
+          dynamicSuggestions.appendChild(li);
+        });
+      });
+  });
+
+  // Manejar clic en las sugerencias por defecto
+  document.querySelectorAll("#defaultSuggestions li").forEach(item => {
+    item.addEventListener("click", function() {
+      input.value = this.textContent;
+      input.form.submit();
+    });
+  });
+});
+</script>
+
+<style>
+#searchContainer {
+  display: none; /* Oculto inicialmente */
+  position: fixed;
+  top: 52px;
+  width: 100vw;
+  padding: 1rem 0;
+  background-color: #000;
+  z-index: 1060;
+  border-top: 1px solid #333;
+}
+
+#searchContainer.open {
+  display: block; /* Visible cuando tiene la clase open */
+}
+
+#searchContainer.active {
+  background-color: rgba(0,0,0,0.95);
+}
+
+#searchSuggestions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#searchSuggestions li {
+  padding: 8px 12px;
+  color: #aaa;
+  cursor: pointer;
+}
+
+#searchSuggestions li:hover {
+  color: white;
+  background-color: #222;
+}
+
+.loading {
+  color: #777 !important;
+  font-style: italic;
+}
+</style>
+
+
+
+
+    
+   
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchToggle = document.getElementById('searchToggle');
+            const mobileSearchToggle = document.getElementById('mobileSearchToggle');
+            const searchContainer = document.getElementById('searchContainer');
+            const searchInput = document.getElementById('searchInput');
+            
+            // Manejar el search toggle (desktop)
+            if (searchToggle) {
+                searchToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    searchContainer.classList.toggle('open');
+                    if (searchContainer.classList.contains('open')) {
+                        searchInput.focus();
+                    }
+                });
+            }
+            
+            // Manejar el search toggle (mobile)
+            if (mobileSearchToggle) {
+                mobileSearchToggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    searchContainer.classList.toggle('open');
+                    
+                    // Cerrar el menú navbar si está abierto
+                    const navbarCollapse = document.querySelector('.navbar-collapse');
+                    if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                            toggle: false
+                        });
+                        bsCollapse.hide();
+                    }
+                    
+                    if (searchContainer.classList.contains('open')) {
+                        searchInput.focus();
+                    }
+                });
+            }
+            
+            // Cerrar el search al hacer clic fuera
+            document.addEventListener('click', (e) => {
+                if ((!searchToggle || !searchToggle.contains(e.target)) && 
+                    (!mobileSearchToggle || !mobileSearchToggle.contains(e.target)) && 
+                    !searchContainer.contains(e.target)) {
+                    searchContainer.classList.remove('open');
+                }
+            });
+            
+            // Cerrar el menú al hacer clic en un ítem (para móvil)
+            document.querySelectorAll('.navbar-nav .nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    // Si el enlace tiene un mega-dropdown como siguiente hermano, NO cerrar el menú
+                    const nextElem = link.nextElementSibling;
+                    if (nextElem && nextElem.classList.contains('mega-dropdown')) {
+                        // Evita que el menú se cierre, permite mostrar el mega-dropdown
+                        e.preventDefault();
+                        // Alternar visibilidad del mega-dropdown solo en móvil
+                        if (window.innerWidth <= 991.98) {
+                            // Oculta otros mega-dropdowns abiertos
+                            document.querySelectorAll('.mega-dropdown').forEach(drop => {
+                                if (drop !== nextElem) drop.style.display = 'none';
+                            });
+                            // Alterna el actual
+                            nextElem.style.display = (nextElem.style.display === 'block') ? 'none' : 'block';
+                        }
+                        return;
+                    }
+                    // Si NO tiene mega-dropdown, cerrar el menú móvil
+                    const navbarCollapse = document.querySelector('.navbar-collapse');
+                    if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                            toggle: false
+                        });
+                        bsCollapse.hide();
+                    }
+                });
+            });
+        });
+    </script>
+
+
+

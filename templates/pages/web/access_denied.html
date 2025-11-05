@@ -1,0 +1,10 @@
+{% extends "pages/web/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="alert alert-danger">
+        <h4>Acceso Denegado</h4>
+        <p>No tienes permiso para ver esta notificación.</p>
+    </div>
+    <a href="{% url 'notification_list' %}" class="btn btn-secondary">Volver</a>
+</div>
+{% endblock %}

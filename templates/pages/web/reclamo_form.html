@@ -1,0 +1,125 @@
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+{% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<style>
+    /* Fondo elegante con gradiente */
+    .reclamo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background:  whitesmoke;
+        padding: 50px 15px;
+    }
+
+    /* Tarjeta flotante del formulario */
+    .reclamo-card {
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        max-width: 800px;
+        width: 100%;
+    }
+
+    /* Títulos del formulario */
+    .reclamo-title {
+        text-align: center;
+        color: #333;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    /* Inputs organizados en dos columnas */
+    .form-group {
+        display: flex;
+        gap: 15px;
+    }
+
+    .form-group .input-field {
+        flex: 1;
+    }
+
+    /* Asegurar que en móviles los inputs estén en columna */
+    @media (max-width: 768px) {
+        .form-group {
+            flex-direction: column;
+        }
+    }
+
+    /* Botón de enviar */
+    .btn-enviar {
+        background: #0071e3;
+        border: none;
+        font-weight: bold;
+        padding: 12px;
+        transition: 0.3s;
+    }
+
+    .btn-enviar:hover {
+        background: #005bb5;
+    }
+</style>
+
+<div class="reclamo-container">
+    <div class="reclamo-card">
+        <h2 class="reclamo-title">Registrar Reclamo</h2>
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Primera fila: Nombre y Apellido -->
+            <div class="form-group">
+                <div class="input-field">
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" class="form-control" required>
+                </div>
+                <div class="input-field">
+                    <label for="apellido" class="form-label">Apellido</label>
+                    <input type="text" id="apellido" name="apellido" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Segunda fila: Correo y Celular -->
+            <div class="form-group">
+                <div class="input-field">
+                    <label for="correo" class="form-label">Correo</label>
+                    <input type="email" id="correo" name="correo" class="form-control" required>
+                </div>
+                <div class="input-field">
+                    <label for="celular" class="form-label">Celular</label>
+                    <input type="text" id="celular" name="celular" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Tercera fila: Tipo de Reclamo -->
+            <div class="form-group">
+                <div class="input-field">
+                    <label for="tipo_reclamo" class="form-label">Tipo de Reclamo</label>
+                    <select id="tipo_reclamo" name="tipo_reclamo" class="form-select" required>
+                        {% for key, value in reclamo_opciones %}
+                        <option value="{{ key }}">{{ value }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Cuarta fila: Descripción -->
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="4" required></textarea>
+            </div>
+
+            <!-- Botón de enviar -->
+            <button type="submit" class="btn btn-primary w-100 btn-enviar">Registrar</button>
+        </form>
+    </div>
+</div>
+{% endblock content %}
+
+{% block footer %}
+{% include "components/web/footer.html" %}
+{% endblock footer %}

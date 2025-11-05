@@ -1,0 +1,35 @@
+# --- Python/Django básicos
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+build/
+dist/
+
+# --- Entornos virtuales
+.venv/
+venv/
+.env/          # si alguna vez creaste una carpeta/venv con este nombre
+
+# --- Variables de entorno (tu caso)
+core/.env
+
+# --- Base de datos local (tu caso)
+db.sqlite3
+
+# --- Archivos temporales / IDE
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Django: archivos subidos por usuarios (opcional ignorarlos)
+media/
+# Si querés versionar 'media' NO pongas esta línea.
+
+# --- Node / front si aplica
+node_modules/

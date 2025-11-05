@@ -1,0 +1,51 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Comentarios del Producto{% endblock title %}
+
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-secondary text-white">
+            <h1 class="text-center mb-0">Comentarios sobre: {{ product.title }}</h1>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Usuario</th>
+                            <th>Comentario</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comentario in comentarios %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ comentario.user.username }}</td>
+                            <td>{{ comentario.content }}</td>
+                            <td>{{ comentario.created_at|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                No hay comentarios para este producto.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-muted text-center">
+            Última actualización: {{ product.updated_at|date:"d/m/Y H:i" }}
+        </div>
+    </div>
+</div>
+{% endblock content %}

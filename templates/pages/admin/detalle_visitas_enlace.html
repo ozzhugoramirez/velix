@@ -1,0 +1,54 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Detalle de Visitas del Enlace{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Visitas del Enlace Compartido</h1>
+
+    <!-- Información del enlace compartido -->
+    <div class="mb-4">
+        <h5>Enlace Compartido: <a href="{{ enlace_compartido.share_link }}" target="_blank">{{ enlace_compartido.share_link }}</a></h5>
+        <h5>Producto: {{ enlace_compartido.product.title }}</h5>
+        <h5>Total de Visitas: {{ visitas.count }}</h5>
+    </div>
+
+    <!-- Tabla de Visitas -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Usuario</th>
+                    <th>IP Address</th>
+                    <th>Fecha y Hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for visita in visitas %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    
+                    <td>
+                        {% if visita.user %}
+                            <a href="{% url 'ver_perfil' visita.user.id %}" class="text-decoration-none">
+                                {{ visita.user.username }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Anónimo</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td>{{ visita.ip_address }}</td>
+                    <td>{{ visita.visit_time }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No hay visitas para este enlace compartido.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}

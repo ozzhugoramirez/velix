@@ -1,0 +1,162 @@
+{% extends "pages/admin/base.html" %}
+
+{% block navbar %}
+    {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+
+
+{% block content %}
+<style>
+    .fade-in { animation: fadeIn 0.8s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .container-admin { max-width: 1100px; margin: auto; margin-top: 4rem; padding: 20px; }
+</style>
+
+<div class="container container-admin fade-in">
+    <h2 class="text-center">📩 Panel de Notificaciones (Admin)</h2>
+
+    <!-- Mensajes de éxito -->
+    {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+            {% for message in messages %}
+                {{ message }}<br>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endif %}
+
+    <!-- Listado de Grupos -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-dark text-white">
+            <h5>📌 Grupos</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for group in groups %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ group.name }}
+                        <span class="badge bg-info">{{ group.users.count }} Usuarios</span>
+                    </li>
+                {% empty %}
+                    <p class="text-muted text-center">No hay grupos creados.</p>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Listado de Notificaciones -->
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5>📬 Notificaciones</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="notificationsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Título</th>
+                        <th>Mensaje</th>
+                        <th>Fecha</th>
+                        <th class="text-center">Leídos</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in notification_data %}
+                        <tr>
+                            <td>{{ item.notification.title }}</td>
+                            <td>{{ item.notification.message|truncatechars:50 }}</td>
+                            <td>{{ item.notification.created_at|date:"d M Y H:i" }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-success">{{ item.read_count }} / {{ item.total_users }}</span>
+                            </td>
+                            <td class="text-center">
+                                <form method="post" action="">
+                                    {% csrf_token %}
+                                    <button type="submit" name="action" value="mark_as_read" class="btn btn-sm btn-outline-secondary">
+                                        📖 Marcar como Leído
+                                    </button>
+                                    <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger">
+                                        ❌ Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No hay notificaciones.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Agregar DataTables para mejor experiencia -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#notificationsTable').DataTable({
+            "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/Spanish.json" },
+            "ordering": false
+        });
+    });
+</script>
+
+{% endblock %}
+
+
+
+
+{% block footer %} 
+    <div class="contador-consultas izquierda">
+        <span class="icono">📊</span><a href="">Total:</a>  <span class="cantidad"></span>
+    </div>
+
+    <div class="contador-consultas derecha">
+        <span class="icono">📈</span><a href="">Boleta</span>
+    </div>
+
+    <style>
+        .contador-consultas {
+            position: fixed;
+            bottom: 15px;
+            padding: 12px 18px;
+            background: linear-gradient(45deg,rgb(128, 158, 190),rgb(203, 177, 245)); /* Degradado azul a violeta */
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .contador-consultas:hover {
+            transform: scale(1.05);
+        }
+
+        .icono {
+            font-size: 20px;
+        }
+
+        .cantidad {
+            color: #ffeb3b; /* Amarillo brillante para resaltar el número */
+        }
+
+        /* Posicionamiento para el botón izquierdo */
+        .izquierda {
+            left: 15px;
+        }
+
+        /* Posicionamiento para el botón derecho */
+        .derecha {
+            right: 15px;
+        }
+    </style>
+{% endblock footer %}
+
+

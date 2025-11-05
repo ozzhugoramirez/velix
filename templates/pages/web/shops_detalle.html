@@ -1,0 +1,447 @@
+
+
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+{% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+
+
+
+
+{% block content %}
+
+<!-- Contenedor principal con espacio responsive -->
+<div class="container mt-md-5 mt-3 pt-md-4 pt-2 px-3 px-md-4">
+    <!-- Sección principal del producto - Stack vertical en móvil -->
+    <div class="row g-4">
+        <!-- Miniaturas de imágenes - Horizontal scroll en móvil -->
+        <div class="col-md-2 d-md-flex flex-md-column align-items-md-center d-flex flex-row pe-md-0 pe-2 overflow-auto" style="max-height: 500px;">
+            <div class="d-flex flex-md-column flex-row">
+                {% if images %}
+                    {% for image in images %}
+                    <div class="mb-2 me-2 me-md-0 overflow-hidden rounded-3" style="min-width: 80px; width: 80px; height: 80px; border: 1px solid #eee; cursor: pointer;">
+                        <img src="{{ image.image.url }}" alt="{{ product.title }}" 
+                             class="w-100 h-100 object-fit-cover transition-all"
+                             onclick="changeMainImage('{{ image.image.url }}')">
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Imagen principal - Full width en móvil -->
+        <div class="col-md-5 col-12">
+            <div class="card border-0 bg-light p-2 p-md-3 h-100">
+                <div class="ratio ratio-1x1">
+                    <img id="mainProductImage" src="{{ product.image.url }}" alt="{{ product.title }}" 
+                         class="img-fluid object-fit-contain cursor-zoom"
+                         style="max-height: 400px;">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detalles del producto - Full width en móvil -->
+        <div class="col-md-5 col-12">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-3 p-md-4">
+                    <h1 class="h4 fw-bold mb-2">{{ product.title }}</h1>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="text-warning small me-2">
+                            ★★★★☆
+                        </div>
+                        <span class="text-muted small">(38 opiniones)</span>
+                        <span class="badge bg-info ms-2 small">Nuevo</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <span class="h3 fw-bold text-danger">${{ product.price }}</span>
+                        {% if product.old_price %}
+                        <span class="text-muted text-decoration-line-through ms-2">${{ product.old_price }}</span>
+                        <span class="badge bg-success ms-2">{{ product.discount_percentage }}% OFF</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="mb-3 text-success small">
+                        <i class="fas fa-check-circle"></i> Envío gratis a todo el país
+                    </p>
+
+                    <div class="mb-4 small">
+                        <p class="mb-1"><i class="fas fa-box"></i> <strong>Stock:</strong> {{ product.stock }} unidades</p>
+                        <p class="mb-1"><i class="fas fa-bolt"></i> <strong>Estado:</strong> 
+                            <span class="badge {% if status == 'Promoción' %}bg-success{% elif status == 'Oferta' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ status }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Botones de acción - Stack en móvil -->
+                    <div class="d-grid gap-2 mb-3">
+
+
+                        {% if user.is_authenticated %}
+                            <form action="{% url 'add_to_cart' product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success shadow-sm px-3 py-2 rounded-3 fw-semibold d-flex align-items-center">
+                                    <i class="fas fa-cart-plus me-2"></i> Agregar al carrito
+                                </button>
+                            </form>
+
+
+                            <form action="{% url 'like_product' product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn {% if user in product.likes.all %}btn-danger{% else %}btn-outline-danger{% endif %} shadow-sm px-3 py-2 rounded-3 fw-semibold d-flex align-items-center">
+                                    {% if user in product.likes.all %}
+                                        <i class="fas fa-heart me-2"></i> Quitar Me gusta
+                                    {% else %}
+                                        <i class="far fa-heart me-2"></i> Me gusta
+                                    {% endif %}
+                                    <span class="ms-1 small">({{ product.total_likes }})</span>
+                                </button>
+                            </form>
+
+
+
+
+                        {% else %}
+                            <a href="{% url "login" %}?next={{ request.path }}" 
+                            class="btn btn-outline-dark shadow-sm px-3 py-2 rounded-3 fw-semibold d-flex align-items-center">
+                                <i class="fas fa-lock me-2"></i> Inicie sesión para comprar
+                            </a>
+                        {% endif %}
+
+
+
+
+
+
+
+
+
+                        
+                        
+                        <!-- Botón de WhatsApp con tamaño responsive +54 9 11 5018-3148 -->
+                       <a href="{% url 'grupo_whatsapp' %}?id={{ product.id }}&titulo={{ product.title|urlencode }}&precio={{ product.price }}" 
+                        class="btn btn-success py-2 fw-bold d-flex align-items-center justify-content-center">
+                            <i class="fab fa-whatsapp me-2 fs-5"></i>
+                            <span class="d-none d-sm-inline">Consultar por</span> WhatsApp
+                        </a>
+
+                        
+                        <button class="btn btn-outline-secondary py-2" onclick="shareProduct('{{ product.id }}')">
+                            <i class="fas fa-share-alt me-2"></i>Compartir
+                        </button>
+                    </div>
+
+                    <div class="border-top pt-3 small">
+                        <p class="mb-1"><i class="fas fa-credit-card text-muted me-2"></i> En 6 cuotas de <strong>${{ product.installment_price }}</strong></p>
+                        <p class="mb-0"><i class="fas fa-truck text-muted me-2"></i> Llega mañana con envío express</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas de Descripción y Opiniones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs flex-nowrap overflow-auto" id="productTabs" role="tablist" style="flex-wrap: nowrap;">
+                <li class="nav-item flex-shrink-0" role="presentation">
+                    <button class="nav-link active" id="description-tab" data-bs-toggle="tab" data-bs-target="#description" type="button" role="tab">
+                        <i class="fas fa-file-alt me-2"></i>Descripción
+                    </button>
+                </li>
+                <li class="nav-item flex-shrink-0" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab">
+                        <i class="fas fa-comments me-2"></i>Opiniones (38)
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
+                <!-- Contenido Descripción -->
+                <div class="tab-pane fade show active" id="description" role="tabpanel">
+                    <h4 class="mb-3">Detalles del producto</h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            {{ product.description|linebreaks }}
+                        </div>
+                        <div class="col-md-4 mt-3 mt-md-0">
+                            <div class="card border-0 bg-light p-3">
+                                <h5 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Características</h5>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Material premium</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Garantía de 1 año</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Hecho a mano</li>
+                                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Envío internacional</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contenido Opiniones -->
+                <div class="tab-pane fade" id="reviews" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="mb-0">Opiniones de clientes</h4>
+                            <p class="text-muted mb-0">Valoración promedio: 4.4/5</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                            <i class="fas fa-pen me-1"></i>Escribir opinión
+                        </button>
+                    </div>
+                    
+                    {% for comment in product.comment_set.all %}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <strong>{{ comment.user }}</strong>
+                                    <div class="text-warning small">
+                                        ★★★★☆
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ comment.created_at|date:"d M Y" }}</small>
+                            </div>
+                            <p class="mb-2">{{ comment.content }}</p>
+                            {% if comment.image %}
+                            <img src="{{ comment.image.url }}" alt="Comentario" class="img-thumbnail" style="max-width: 200px;">
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comment-slash text-muted fa-3x mb-3"></i>
+                        <h5>No hay opiniones aún</h5>
+                        <p class="text-muted">Sé el primero en opinar sobre este producto</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                            Escribir opinión
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos relacionados - 2 columnas en móvil -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="mb-4"><i class="fas fa-link text-primary me-2"></i>Productos relacionados</h3>
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                {% for related_product in related_products %}
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm product-card">
+                        <div class="position-relative">
+                            {% if related_product.image %}
+                            <img src="{{ related_product.image.url }}" class="card-img-top" alt="{{ related_product.title }}" style="height: 180px; object-fit: cover;">
+                            {% endif %}
+                            <div class="card-img-overlay d-flex justify-content-end p-2">
+                                <button class="btn btn-sm btn-light rounded-circle shadow-sm" style="width: 30px; height: 30px;">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+                            {% if related_product.discount_percentage %}
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2">-{{ related_product.discount_percentage }}%</span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body p-3">
+                            <h6 class="card-title">{{ related_product.title|truncatechars:40 }}</h6>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <p class="mb-0 text-danger fw-bold">${{ related_product.price }}</p>
+                                    {% if related_product.old_price %}
+                                    <small class="text-muted text-decoration-line-through">${{ related_product.old_price }}</small>
+                                    {% endif %}
+                                </div>
+                                <a href="{% url 'product_detail' related_product.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="text-center py-4">
+                        <i class="fas fa-box-open text-muted fa-3x mb-3"></i>
+                        <h5>No hay productos relacionados</h5>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para opiniones -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Escribe tu opinión</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Calificación</label>
+                        <div class="rating">
+                            <i class="far fa-star" data-value="1"></i>
+                            <i class="far fa-star" data-value="2"></i>
+                            <i class="far fa-star" data-value="3"></i>
+                            <i class="far fa-star" data-value="4"></i>
+                            <i class="far fa-star" data-value="5"></i>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Comentario</label>
+                        <textarea class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Subir foto (opcional)</label>
+                        <input type="file" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary">Publicar opinión</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function shareProduct(productId) {
+        const button = document.querySelector("[onclick=\"shareProduct('" + productId + "')\"]");
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando enlace...';
+        button.disabled = true;
+        
+        fetch(`/shops/product/generate-share-link/${productId}/`)
+            .then(response => response.json())
+            .then(data => {
+                navigator.clipboard.writeText(data.share_link).then(() => {
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>¡Enlace copiado!';
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.innerHTML = '<i class="fas fa-times me-2"></i>Error';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }, 2000);
+            });
+    }
+
+    function changeMainImage(imageUrl) {
+        document.getElementById("mainProductImage").src = imageUrl;
+    }
+
+    // Rating stars interaction
+    document.querySelectorAll('.rating i').forEach(star => {
+        star.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            const container = this.parentNode;
+            container.querySelectorAll('i').forEach((s, index) => {
+                if (index < value) {
+                    s.classList.remove('far');
+                    s.classList.add('fas');
+                } else {
+                    s.classList.remove('fas');
+                    s.classList.add('far');
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    /* Estilos generales */
+    body {
+        padding-top: 70px;
+    }
+    
+    /* Estilo para las miniaturas en móvil */
+    @media (max-width: 767.98px) {
+        .col-md-2.d-flex {
+            max-height: 100px;
+            flex-direction: row;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 10px;
+        }
+        .col-md-2.d-flex > div {
+            display: inline-block;
+            float: none;
+        }
+    }
+    
+    /* Estilo para el botón de WhatsApp */
+    .btn-success {
+        background-color: #25D366;
+        border-color: #25D366;
+    }
+    .btn-success:hover {
+        background-color: #128C7E;
+        border-color: #128C7E;
+    }
+    
+    /* Efectos hover para tarjetas */
+    .product-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Estilo para las pestañas */
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 12px 20px;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        background: none;
+        border-bottom: 3px solid #0d6efd;
+    }
+    
+    /* Clases utilitarias */
+    .cursor-zoom {
+        cursor: zoom-in;
+    }
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    .object-fit-contain {
+        object-fit: contain;
+    }
+    .rating i {
+        color: #ffc107;
+        cursor: pointer;
+        font-size: 1.5rem;
+        margin-right: 5px;
+    }
+</style>
+
+{% endblock content %}
+
+{% block footer %}
+{% include "components/web/footer.html" %}
+{% endblock footer %}

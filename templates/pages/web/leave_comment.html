@@ -1,0 +1,59 @@
+{% extends "pages/web/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+  <h1 class="text-center mb-4 text-primary fw-bold">
+    Deja tu comentario para <strong class="text-dark">{{ product.title }}</strong>
+  </h1>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      {% if already_commented %}
+      <div class="alert alert-warning text-center shadow-sm" role="alert">
+        <h5 class="mb-3"><i class="bi bi-info-circle-fill"></i> Ya has comentado este producto.</h5>
+        <p>Gracias por tu opinión. Si deseas gestionar tus comentarios, puedes hacerlo en tu perfil.</p>
+        <a href="{% url 'profile' %}" class="btn btn-outline-primary mt-2">Ir a mi perfil</a>
+      </div>
+      {% else %}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <!-- Detalles del producto -->
+          <div class="d-flex align-items-center mb-4">
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                 class="rounded-circle shadow-sm border" 
+                 style="width: 70px; height: 70px; object-fit: cover;" />
+            <h5 class="ms-3 text-dark fw-bold">{{ product.name }}</h5>
+          </div>
+          <div class="text-muted mb-3">
+            <p><strong>Descripción:</strong> {{ product.description }}</p>
+            <p><strong>Precio:</strong> ${{ product.price }}</p>
+          </div>
+
+          {% if messages %}
+          <div>
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} text-center shadow-sm" role="alert">
+              {{ message }}
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              {{ form.as_p }}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 shadow-sm">
+              <i class="bi bi-send-fill"></i> Enviar Comentario
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

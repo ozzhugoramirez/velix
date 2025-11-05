@@ -1,0 +1,513 @@
+1- login con google listo
+2- login con verificacion con whatsapp listo en base de prueba . falta conectar con el api de whatsapp
+para el envio de codigo de verificacion
+3- control de cookie de 1 hora enel caso de que el cliente no este usando el sitio web. pasado 1 hora se cierra o si lo usa se renueva el cookie sin cerrar sesion
+4-proteccion de urls para perfil, de usuarios sin hacer login o sin cuenta
+5-login protegido para dasboard admin 
+6-carrito de compras listado de productos, search de productos, boton de lik
+7- formulario de reclamos listo
+8- vista home agregado de listado de promocion y oferta del dia. producto visto recien y producto que le diste link
+9-  funcionalida de contador de vistas duracion de permanencia del usuario ,paginas visitadas, deteccion de que dispositivo ingresa al sitio web
+,deteccion del navegador y tipo que es.
+10- funcion de analizar las busques de cliente enel search y clasificarlo para saber que es lo que se busca mas. repuestas guardado individuales y completas 
+para indenticar solo tipo de busqueda
+11- contador de productos agregado a carrito. funcion global para usar en cualquier vista
+12- urls perzonalizado para los redes social .para indenticar desde que red social visitan nuestro sitio web
+13- agregar funcionalida de eleccion de que producto mostrar en la vita principal las promociones y oferta y mostrar todo en la vista de promociones
+tambien identificacion de los producto en oferta y normal tanto en la vista shops y vista del detalle del producto
+14- agregar funcionalidad de paginacion de producto
+15- manejo de errores 404 urls incorrecto
+16- ajustamiento de login con whatsapp diselo y codigo de verificacion  con link sin ingresaar manualmente el codigo. tambien tien la option de copiar y pegar el codigo
+17- configuracion de plantilla de whatsapp api ya funcio solo falta habilitar un numero
+18-se agrego funcionalidad de ver si un usuario esta en linea o desconectado mostrando cuentos minutos
+19-diseño de /shops/checkout/ para habilitar botones en efectivo y transferencia si solo  se verifica la cuenta . tambien el boton de registro de datos . vuelve 
+ala misma vista despues de completar los datos sin necesidad ir hasta perfil
+20- funcionalizar de shape. compartir producto con id ubico de usuario y del producto para identifica quien lo compartio el horario y quienes vieron los producto comportido 
+por el enlace generado
+21- search autocompletado. sugerencia de busqueda hasta 5 productos
+22- implementacion de vista de detalle del producto. producto de sugerencia relaciono ala categoria del mismo producto visto aleatorio hasta 3 productos
+23- filtrado aleatorio de producto cada ves que se actualiza la vista. para mostrar producto nuevos en cada actualizacion
+24- implementacion de comentarios sobre el producto. solo podran comentar los clientes que hayan comprado el producto. y solo de ese producto especifico que comportido
+no puede comentar dos veces sobre el mismo producto
+25- arreglo de problema para poder direccion prederminado
+26- eleccion de efectivo o transferencia solo si la cuenta esta verficado y solo se podra elegir esas opciones si se usa la direccion prederminado enel momento de verficar el perfil.
+
+admin clone:
+ user y profile
+ reclamos
+ visitas diarias y  visitas completos
+ paginas visitas
+ producto
+ producto views
+ mas images
+ share copy
+ share visitas
+
+
+{% provider_login_url 'google' %}
+
+
+
+  <!-- Sección de órdenes recientes -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Órdenes recientes</h2>
+                    {% if ordenes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                        <th>Envío</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for orden in ordenes %}
+                                        <tr>
+                                            <td><strong>{{ orden.numero_orden }}</strong></td>
+                                            <td>{{ orden.created_at|date:"d M, Y H:i" }}</td>
+                                            <td>${{ orden.monto_total }}</td>
+                                            <td>{{ orden.get_metodo_envio_display }}</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if orden.status == 'completed' %} bg-success 
+                                                    {% elif orden.status == 'pending' %} bg-warning text-dark 
+                                                    {% else %} bg-danger 
+                                                    {% endif %}">{{ orden.get_status_display }}</span>
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'detalle_compra' orden.id %}" class="btn btn-sm btn-outline-primary">
+                                                    Ver Detalle
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            No tienes órdenes recientes.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    {% url 'logout' %}
+
+
+
+
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+    {% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<style>
+  body {
+    background-color: #f9f9f9;
+  }
+
+  .profile-card, .sidebar {
+    background-color: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-box {
+    text-align: center;
+    padding: 10px;
+  }
+
+  .stat-box h5 {
+    margin-bottom: 5px;
+  }
+
+  .info-bar {
+    border-top: 1px solid #eee;
+    margin-top: 15px;
+    padding-top: 15px;
+  }
+
+  .nav-tabs .nav-link.active {
+    font-weight: bold;
+    color: #000;
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .steps-list li {
+    margin-bottom: 10px;
+  }
+
+  .tab-content {
+    margin-top: 20px;
+  }
+
+  .profile-container {
+      margin-top: 80px;
+    }
+
+  .purchase-card, .favorite-card {
+    background-color: #f8f8f8;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+
+
+  .orders-section {
+      margin-top: 20px;
+    }
+
+    .order-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .order-status-bar {
+      display: flex;
+      gap: 8px;
+      font-size: 0.85rem;
+      justify-content: space-between;
+      border-top: 1px solid #eee;
+      margin-top: 12px;
+      padding-top: 8px;
+    }
+</style>
+
+
+
+<div class="container profile-container">
+  <div class="row g-4">
+    <!-- Perfil principal -->
+    <div class="col-lg-8">
+      <div class="profile-card">
+        <div class="d-flex align-items-center mb-3">
+          <img src="{{ user.socialaccount_set.first.extra_data.picture }}" alt="Avatar" class="avatar me-3">
+          <div>
+            <h4 class="mb-0">{{ user.get_full_name }}</h4>
+            <small class="text-muted">Cliente</small>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3">
+          <div><strong>Seguidores:</strong> 1789</div>
+          <div><strong>Productos:</strong> 128</div>
+          <div><strong>Ventas:</strong> 10K ₽</div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+          <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#perfil">Perfil</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#favoritos">Favoritos</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#compras">Mis Compras</a></li>
+          <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#coins">Coins</a></li>
+        </ul>
+
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="perfil">
+            <div class="row g-3">
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Nombre completo</h6>
+                    <p class="mb-0">{{ user.get_full_name }}</p>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Correo electrónico</h6>
+                    <p class="mb-0">{{ user.email }}</p>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Fecha de registro</h6>
+                    <p class="mb-0">{{ user.date_joined|date:"d M, Y" }}</p>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Último acceso</h6>
+                    <p class="mb-0">{{ user.last_login|date:"d M, Y H:i" }}</p>
+                </div>
+                </div>
+
+                <div class="col-12">
+                <div class="border rounded p-3 bg-white shadow-sm">
+                    <h6 class="text-muted mb-2">Biografía</h6>
+                    <p class="mb-0 fst-italic text-secondary">
+                    {% if user.profile.bio %}
+                        {{ user.profile.bio }}
+                    {% else %}
+                        No has añadido una biografía aún. <a href="#">Editar perfil</a>
+                    {% endif %}
+                    </p>
+                </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h5 class="mb-3">Configuraciones rápidas</h5>
+                <div class="d-flex flex-wrap gap-2">
+                <a href="" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil-square me-1"></i> Editar Perfil
+                </a>
+                <a href="#" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i> Eliminar Cuenta
+                </a>
+                </div>
+            </div>
+            </div>
+
+
+          <div class="tab-pane fade" id="favoritos">
+  <div class="row g-4">
+    <!-- Tarjeta de producto favorito -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <img src="https://via.placeholder.com/300x180" class="card-img-top" alt="Producto favorito">
+        <div class="card-body d-flex flex-column">
+          <h6 class="card-title text-truncate">Auriculares Bluetooth</h6>
+          <p class="card-text text-muted small">Auriculares inalámbricos con cancelación de ruido y carga rápida.</p>
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <a href="#" class="btn btn-sm btn-outline-primary">Ver más</a>
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Otra tarjeta -->
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <img src="https://via.placeholder.com/300x180" class="card-img-top" alt="Producto favorito">
+        <div class="card-body d-flex flex-column">
+          <h6 class="card-title text-truncate">Lámpara de Escritorio LED</h6>
+          <p class="card-text text-muted small">Moderna, regulable e ideal para estudios y oficinas.</p>
+          <div class="mt-auto d-flex justify-content-between align-items-center">
+            <a href="#" class="btn btn-sm btn-outline-primary">Ver más</a>
+            <button class="btn btn-sm btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay productos -->
+    <div class="col-12 text-center text-muted mt-4">
+      <i class="bi bi-heart-slash display-5 mb-2"></i>
+      <p>No has añadido productos a tus favoritos.</p>
+      <a href="#" class="btn btn-outline-primary">Explorar productos</a>
+    </div>
+  </div>
+</div>
+
+
+          <div class="tab-pane fade" id="compras">
+            {% for compra in compras %}
+              <div class="purchase-card">
+                <p><strong>{{ compra.producto.nombre }}</strong> - {{ compra.fecha|date:"d/m/Y" }}</p>
+                <a href="{% url 'detalle_compra' compra.id %}" class="btn btn-sm btn-outline-primary">Ver más detalles</a>
+              </div>
+            {% empty %}
+
+
+
+
+       <!-- Sección de compras realizadas -->
+<div class="orders-section">
+  <h5 class="mb-3">Mis Compras Recientes</h5>
+
+  {% if ordenes %}
+    {% for orden in ordenes %}
+      <div class="order-card">
+        <div class="d-flex justify-content-between">
+          <strong>Orden:</strong> #{{ orden.numero_orden }}
+          <span class="text-muted">{{ orden.created_at|date:"d M, Y H:i" }}</span>
+        </div>
+        <div class="order-status-bar">
+          <span>Total: ${{ orden.monto_total }}</span>
+          <span>Envío: {{ orden.get_metodo_envio_display }}</span>
+          <span class="badge 
+            {% if orden.status == 'completed' %} bg-success 
+            {% elif orden.status == 'pending' %} bg-warning text-dark 
+            {% else %} bg-danger 
+            {% endif %}">{{ orden.get_status_display }}</span>
+          <a href="{% url 'detalle_compra' orden.id %}" class="btn btn-sm btn-outline-primary ms-auto">
+            Ver Detalle
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="alert alert-info text-center">
+      No tienes órdenes recientes.
+    </div>
+  {% endif %}
+</div>
+
+
+
+
+            {% endfor %}
+          </div>
+
+          
+
+
+          <div class="tab-pane fade" id="coins">
+  <div class="text-center mb-4">
+    <div class="d-inline-flex align-items-center gap-3 p-3 bg-warning bg-opacity-10 rounded shadow-sm">
+      <i class="bi bi-coin text-warning display-4"></i>
+      <div>
+        <h4 class="mb-0 fw-bold text-warning">120 Coins</h4>
+        <small class="text-muted">¡Sigue acumulando para desbloquear recompensas!</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de progreso hacia una meta -->
+  <div class="mb-4 px-4">
+    <label class="form-label fw-semibold">Meta: Descuento de $10</label>
+    <div class="progress" style="height: 20px;">
+      <div class="progress-bar bg-warning" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
+        60%
+      </div>
+    </div>
+  </div>
+
+  <!-- Recompensas disponibles -->
+  <div class="row g-3 px-2">
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title">Cupón de $5</h6>
+          <p class="text-muted small">Canjea 100 coins y obtén un descuento instantáneo.</p>
+          <button class="btn btn-outline-warning btn-sm w-100">Canjear por 100 coins</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title">Envío Gratis</h6>
+          <p class="text-muted small">Obtén envío gratis en tu próxima compra por 150 coins.</p>
+          <button class="btn btn-outline-warning btn-sm w-100">Canjear por 150 coins</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title">Regalo sorpresa</h6>
+          <p class="text-muted small">Recibe un pequeño obsequio exclusivo por 200 coins.</p>
+          <button class="btn btn-outline-warning btn-sm w-100" disabled>Requiere 200 coins</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tip / info extra -->
+  <div class="alert alert-light border mt-4 shadow-sm small">
+    <i class="bi bi-lightbulb me-2 text-warning"></i>
+    Ganas coins con cada compra, reseña o recomendación de productos. ¡Sigue participando!
+  </div>
+</div>
+
+        </div>
+
+        <div class="info-bar">
+          <small class="text-muted">Última actualización: hoy a las 17:00</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar derecha -->
+    <div class="col-lg-4">
+  <!-- Guía de compras -->
+  <div class="sidebar mb-4 shadow-sm border">
+    <h5 class="mb-3">🛒 Cómo realizar un pedido</h5>
+    <div class="list-group list-group-flush">
+      <div class="list-group-item d-flex align-items-start gap-3 border-0">
+        <span class="badge bg-primary rounded-pill">1</span>
+        <div>
+          <strong>Explora productos</strong>
+          <p class="text-muted mb-0 small">Busca por categoría o usa el buscador inteligente.</p>
+        </div>
+      </div>
+      <div class="list-group-item d-flex align-items-start gap-3 border-0">
+        <span class="badge bg-primary rounded-pill">2</span>
+        <div>
+          <strong>Añade al carrito</strong>
+          <p class="text-muted mb-0 small">Agrega artículos y verifica los descuentos aplicados.</p>
+        </div>
+      </div>
+      <div class="list-group-item d-flex align-items-start gap-3 border-0">
+        <span class="badge bg-primary rounded-pill">3</span>
+        <div>
+          <strong>Confirma y paga</strong>
+          <p class="text-muted mb-0 small">Elige método de envío y completa el pago de forma segura.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recursos útiles -->
+  <div class="sidebar shadow-sm border">
+    <h5 class="mb-3">📘 Centro de ayuda</h5>
+    <ul class="list-unstyled small">
+      <li class="mb-2">
+        <i class="bi bi-question-circle text-primary me-2"></i>
+        <a href="#" class="text-decoration-none text-dark">¿Cómo elegir el mejor producto?</a>
+      </li>
+      <li class="mb-2">
+        <i class="bi bi-credit-card text-primary me-2"></i>
+        <a href="#" class="text-decoration-none text-dark">Formas de pago y seguridad</a>
+      </li>
+      <li class="mb-2">
+        <i class="bi bi-box-seam text-primary me-2"></i>
+        <a href="#" class="text-decoration-none text-dark">Costos y tiempos de envío</a>
+      </li>
+      <li class="mb-2">
+        <i class="bi bi-arrow-counterclockwise text-primary me-2"></i>
+        <a href="#" class="text-decoration-none text-dark">Política de devoluciones</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block footer %}
+<div class="mt-5">
+  {% include "components/web/footer.html" %}
+</div>
+{% endblock footer %}

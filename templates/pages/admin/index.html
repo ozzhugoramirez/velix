@@ -1,0 +1,121 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Dashboard de Enlaces{% endblock title %}
+
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container-fluid my-5">
+   
+
+    
+    <div class="row">
+        <!-- Sección de Enlaces Compartidos -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white text-center">
+                    <h5 class="mb-0">Enlaces Compartidos</h5>
+                </div>
+                <div class="card-body p-3">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Plataforma</th>
+                                    <th>Visitas</th>
+                                    <th>Copiar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for link in social_links %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-info text-dark">{{ link.platform }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ link.total_clicks }}</strong>
+                                    </td>
+                                    <td>
+                                        <button 
+                                            class="btn btn-outline-primary btn-sm" 
+                                            onclick="copyToClipboard('{{ link.url }}')">
+                                            Copiar
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vista Principal (Ejemplo de contenido adicional) -->
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">Resumen de Inventario</h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h5 class="text-muted">Valor total del stock</h5>
+                        <p class="display-5 fw-bold text-success">
+                            ${{ total_valor_stock|floatformat:2 }}
+                        </p>
+                    </div>
+        
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="bg-light p-4 rounded shadow-sm text-center">
+                                <h6 class="text-secondary">Productos Propios</h6>
+                                <p class="h4 text-primary fw-bold">
+                                    ${{ total_valor_propios|floatformat:2 }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-4 rounded shadow-sm text-center">
+                                <h6 class="text-secondary">Productos de Terceros</h6>
+                                <p class="h4 text-danger fw-bold">
+                                    ${{ total_valor_terceros|floatformat:2 }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Mostrar una notificación temporal
+        const toast = document.createElement("div");
+        toast.className = "toast align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-3";
+        toast.style.zIndex = 1055;
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    Enlace copiado al portapapeles.
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+            </div>`;
+        document.body.appendChild(toast);
+        const bootstrapToast = new bootstrap.Toast(toast);
+        bootstrapToast.show();
+
+        // Remover después de 3 segundos
+        setTimeout(() => toast.remove(), 3000);
+    }).catch(err => {
+        alert("No se pudo copiar el enlace");
+    });
+}
+</script>
+{% endblock content %}

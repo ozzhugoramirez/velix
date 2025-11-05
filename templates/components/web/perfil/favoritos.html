@@ -1,0 +1,51 @@
+
+
+{% extends "pages/web/perfil.html" %}
+
+{% block title %}{% endblock title %}
+
+{% block navbar %}
+   {% include "components/web/navbar.html" %}
+   {% include "pages/web/perfil.html" %}
+
+{% endblock navbar %}
+
+{% block content %}
+   
+
+    {% if productos_favoritos %}
+      {% for producto in productos_favoritos %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <img src="{{ producto.image.url }}" class="card-img-top" alt="{{ producto.title }}">
+            <div class="card-body d-flex flex-column">
+              <h6 class="card-title text-truncate">{{ producto.title }}</h6>
+              <p class="card-text text-muted small">{{ producto.description|truncatewords:15 }}</p>
+              <div class="mt-auto d-flex justify-content-between align-items-center">
+                <a href="{{ producto.get_absolute_url }}" class="btn btn-sm btn-outline-primary">Ver más</a>
+
+                
+
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="col-12 text-center text-muted mt-4">
+        <i class="bi bi-heart-slash display-5 mb-2"></i>
+        <p>No has añadido productos a tus favoritos.</p>
+        <a href="{% url 'shop' %}" class="btn btn-outline-primary">Explorar productos</a>
+      </div>
+    {% endif %}
+
+
+
+
+{% endblock content %}
+
+{% block footer %}
+
+  {% include "components/web/footer.html" %}
+
+{% endblock footer %}

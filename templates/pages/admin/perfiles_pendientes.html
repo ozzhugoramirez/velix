@@ -1,0 +1,40 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Perfiles Pendientes{% endblock title %}
+
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Perfiles Pendientes</h1>
+    <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Usuario</th>
+                <th>Estado</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for perfil in perfiles_pendientes %}
+            <tr>
+                <td>{{ perfil.id }}</td>
+                <td>{{ perfil.usuario.username }}</td>
+                <td>{{ perfil.estado_verificacion }}</td>
+                <td>
+                    <a href="{% url 'revisar_perfil' perfil.id %}" class="btn btn-primary btn-sm">Revisar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No hay perfiles pendientes.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock content %}

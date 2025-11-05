@@ -1,0 +1,73 @@
+{% if Invitationdata %}
+<!-- Modal -->
+<div class="modal fade" id="invitationModal" tabindex="-1" aria-labelledby="invitationModalLabel" aria-hidden="true" 
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content shadow-lg rounded">
+            <!-- Encabezado con diseño moderno -->
+            <div class="modal-header bg-gradient-primary text-white text-center">
+                <h5 class="modal-title w-100 fw-bold" id="invitationModalLabel">¡Bienvenido a Velarisx!</h5>
+            </div>
+
+            <!-- Cuerpo del modal con estilo más atractivo -->
+            <div class="modal-body text-center">
+                <i class="fas fa-star fa-3x text-warning mb-3"></i> <!-- Ícono decorativo -->
+                <h2 class="display-6 fw-bold text-dark">Nos alegra tenerte aquí 🎉</h2>
+                <p class="lead mt-3 text-muted">
+                    Explora nuestro catálogo y descubre los productos exclusivos que hemos preparado para ti.
+                </p>
+                <p class="text-secondary">
+                    Ofrecemos envíos rápidos, garantía en todos nuestros productos y un servicio al cliente de calidad.
+                </p>
+            </div>
+
+            <!-- Pie con botón estilizado -->
+            <div class="modal-footer justify-content-center">
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg shadow-lg px-4 py-2">
+                    <i class="fas fa-home"></i> Ir a Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para mostrar el modal automáticamente -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var invitationModal = new bootstrap.Modal(document.getElementById('invitationModal'));
+        invitationModal.show();
+    });
+</script>
+
+<style>
+    /* Fondo del encabezado con un degradado elegante */
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+    }
+
+    /* Sombra y bordes más suaves para un diseño moderno */
+    .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /* Texto del modal */
+    .modal-body h2 {
+        font-size: 24px;
+        color: #333;
+    }
+
+    /* Botón con efecto elegante */
+    .btn-primary {
+        background: #0071e3;
+        border: none;
+        font-size: 18px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: #005bb5;
+        transform: scale(1.05);
+    }
+</style>
+{% endif %}

@@ -1,0 +1,121 @@
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+    {% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container mt-5 pt-4 mb-5 pb-4">
+    <!-- Información de la orden -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="h5 mb-0">Orden #{{ ordenes.numero_orden }}</h3>
+                <span class="badge 
+                    {% if ordenes.status == 'completed' %} bg-success 
+                    {% elif ordenes.status == 'pending' %} bg-warning text-dark 
+                    {% else %} bg-danger 
+                    {% endif %}">
+                    {{ ordenes.get_status_display }}
+                </span>
+            </div>
+            <p class="text-muted"><small>Fecha: {{ ordenes.created_at|date:"d M, Y H:i" }}</small></p>
+            <p><strong>Total:</strong> ${{ ordenes.monto_total }}</p>
+            <p><strong>Envío:</strong> {{ ordenes.get_metodo_envio_display }}</p>
+            <p><strong>Pago:</strong> {{ ordenes.get_payment_method_display }}</p>
+        </div>
+    </div>
+
+    <!-- Línea de tiempo del pedido -->
+    <h4 class="h6 mb-3">Estado del pedido:</h4>
+    <div class="d-flex justify-content-between text-center mb-4">
+        <div class="flex-fill">
+            <div class="rounded-circle p-2 {% if ordenes.status in 'approved shipped completed' %} bg-primary text-white {% else %} bg-light text-secondary {% endif %}">
+                <i class="bi bi-check-circle fs-4"></i>
+            </div>
+            <p class="mt-2 small">Pedido Aprobado</p>
+        </div>
+        <div class="flex-fill">
+            <div class="rounded-circle p-2 {% if ordenes.status in 'shipped completed' %} bg-success text-white {% else %} bg-light text-secondary {% endif %}">
+                <i class="bi bi-truck fs-4"></i>
+            </div>
+            <p class="mt-2 small">Enviado</p>
+        </div>
+        <div class="flex-fill">
+            <div class="rounded-circle p-2 {% if ordenes.status == 'completed' %} bg-dark text-white {% else %} bg-light text-secondary {% endif %}">
+                <i class="bi bi-box-seam fs-4"></i>
+            </div>
+            <p class="mt-2 small">Entregado</p>
+        </div>
+    </div>
+
+    <!-- Detalles del pedido -->
+    <h4 class="h6 mb-3">Detalles del pedido:</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                <tr>
+                    <td>{{ item.product.title }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.price }}</td>
+                    <td>${{ item.price|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Confirmación de entrega -->
+    {% if ordenes.status == 'completed' and ordenes.verification_code %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h4 class="h6">Entrega confirmada</h4>
+            <p><strong>Entregado a:</strong> {{ ordenes.delivery_recipient_name }}</p>
+            <p><strong>Fecha:</strong> {{ ordenes.enviado_en|date:"d M, Y H:i" }}</p>
+            <p><strong>Código de verificación:</strong> {{ ordenes.verification_code }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Opciones del usuario -->
+    <h4 class="h6 mb-3">Opciones disponibles:</h4>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="#" class="btn btn-outline-primary btn-sm">Solicitar devolución</a>
+        <a href="#" class="btn btn-outline-secondary btn-sm">Reportar producto dañado</a>
+        <a href="#" class="btn btn-outline-info btn-sm">Recomendaciones para devoluciones</a>
+    </div>
+
+    <!-- Recomendaciones -->
+    <div class="alert alert-info">
+        <h5 class="alert-heading">Recomendaciones</h5>
+        <ul class="mb-0">
+            <li>Si tu producto no ha llegado, revisa el estado del envío en el timeline.</li>
+            <li>Para devoluciones, conserva el embalaje original.</li>
+            <li>Si el producto llegó dañado, toma fotografías y contáctanos.</li>
+        </ul>
+    </div>
+
+    <!-- Botones finales -->
+    <div class="text-center mt-5">
+        <a href="{{ first_comment_url.url }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-chat-dots me-2"></i> Dejar comentario
+        </a>
+        <a href="#" class="btn btn-success btn-lg ms-3" download>
+            <i class="bi bi-download me-2"></i> Descargar boleta
+        </a>
+    </div>
+</div>
+{% endblock content %}
+
+{% block footer %}
+    {% include "components/web/footer.html" %}
+{% endblock footer %}

@@ -1,0 +1,104 @@
+{% extends "pages/web/base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <!-- Título principal -->
+    <h2 class="text-center fw-bold text-success mb-4"><i class="bi bi-bag-check-fill"></i> ¡Compra Confirmada!</h2>
+
+    <!-- Información del pedido -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-body">
+            <h4 class="card-title text-secondary"><i class="bi bi-receipt-cutoff"></i> Información del Pedido</h4>
+            <hr>
+            <p><strong>Pedido ID:</strong> {{ order.numero_orden }}</p>
+            <p><strong>Estado:</strong> <span class="badge bg-info text-dark">{{ order.get_status_display }}</span></p>
+            <p><strong>Dirección:</strong> {{ order.address }}</p>
+            <p><strong>Método de Pago:</strong> <span class="badge bg-success">{{ order.get_payment_method_display }}</span></p>
+        </div>
+    </div>
+
+    <!-- Lista de productos -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-body">
+            <h4 class="card-title text-secondary"><i class="bi bi-box-seam"></i> Productos en el Pedido</h4>
+            <hr>
+            <ul class="list-group">
+                {% for item in order.orderitem_set.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ item.quantity }} x {{ item.product.title }}</span>
+                    <span class="badge bg-primary rounded-pill">${{ item.price }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Código de entrega -->
+    <div class="card shadow-lg mb-4 text-center">
+        <div class="card-body">
+            <h5 class="text-danger"><i class="bi bi-key-fill"></i> Palabra clave para la entrega del pedido:</h5>
+            <p class="fs-4 fw-bold bg-light p-2 rounded d-inline-block">{{ order.delivery_code }}</p>
+        </div>
+    </div>
+
+    <!-- Total -->
+    <div class="text-center mb-4">
+        <h4 class="text-secondary"><i class="bi bi-cash-stack"></i> Total del Pedido: <span class="text-success fw-bold">${{ order.monto_total }}</span></h4>
+    </div>
+
+    <!-- Botón para ir al perfil -->
+    <div class="text-center">
+        <a href="{% url 'profile' %}" class="btn btn-primary btn-lg shadow">
+            <i class="bi bi-person-circle"></i> OK, ir a perfil
+        </a>
+    </div>
+</div>
+
+<!-- Bloquear navegación hacia atrás y teclas de retroceso -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Reemplaza la URL en la historia del navegador para evitar que vuelva atrás
+        window.history.replaceState(null, "", window.location.href);
+        
+        // Detectar si el usuario intenta presionar "Atrás"
+        window.onpopstate = function () {
+            window.location.href = "{% url 'profile' %}";
+        };
+
+        // Prevenir el uso de teclas para volver atrás
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Backspace" && !["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
+                event.preventDefault();
+            }
+            if ((event.altKey && event.key === "ArrowLeft") || (event.ctrlKey && event.key === "ArrowLeft")) {
+                event.preventDefault();
+                window.location.href = "{% url 'profile' %}";
+            }
+        });
+
+        // Evitar el caché para que no pueda recargar la página anterior
+        if (window.performance && window.performance.navigation.type === 2) {
+            window.location.href = "{% url 'profile' %}";
+        }
+    });
+</script>
+
+<!-- Estilos adicionales -->
+<style>
+    .btn-lg {
+        transition: all 0.3s ease-in-out;
+        font-size: 1.2rem;
+    }
+    .btn-lg:hover {
+        transform: scale(1.05);
+        background-color: #0056b3;
+    }
+    .card {
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}

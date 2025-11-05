@@ -1,0 +1,114 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Gestión de Clientes{% endblock title %}
+
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="alert alert-primary text-center">
+                <h5>Total de Usuarios Registrados</h5>
+                <p class="mb-0"><strong>{{ total_usuarios }}</strong></p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-success text-center">
+                <h5>Usuarios Activos</h5>
+                <p class="mb-0"><strong>{{ total_activos }}</strong></p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-info text-center">
+                <h5>Usuarios Verificados</h5>
+                <p class="mb-0"><strong>{{ total_verificados }}</strong></p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-warning text-center">
+                <h5>Cuentas No Verificadas</h5>
+                <p class="mb-0"><strong>{{ total_no_verificados }}</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de búsqueda -->
+    <form method="get" action="" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-9">
+                <input 
+                    type="search" 
+                    name="q" 
+                    class="form-control" 
+                    placeholder="Buscar por username, email o número de WhatsApp"
+                    value="{{ request.GET.q|default:'' }}" autocomplete="off">
+            </div>
+            <div class="col-md-3 text-end">
+                <button type="submit" class="btn btn-primary w-100">Buscar</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabla de resultados -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover table-bordered align-middle">
+         <thead class="table-dark">
+            <tr>
+                <th scope="col">Nombre de Usuario</th>
+                <th scope="col">Email</th>
+                <th scope="col">Número de WhatsApp</th>
+                <th scope="col">Estado de Verificación</th>
+                <th scope="col">Es Staff</th>
+                <th scope="col">Está Activo</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Total de Visitas</th>
+                <th scope="col">Última Actividad</th>
+                <th scope="col">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if usuarios %}
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.username }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.whatsapp_number|default:"No registrado" }}</td>
+                    <td>
+                        {% if usuario.is_verified %}
+                            <span class="badge bg-success">Verificado</span>
+                        {% else %}
+                            <span class="badge bg-danger">No Verificado</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ usuario.is_staff|yesno:"Sí,No" }}</td>
+                    <td>{{ usuario.is_active|yesno:"Sí,No" }}</td>
+                    <td>{{ usuario.get_role_display }}</td>
+                    <td>{{ usuario.total_visitas }}</td>
+                    <td>{{ usuario.last_activity_display }}</td>
+                    <td>
+                        <a href="{% url 'editar_usuario' usuario.id %}" class="btn btn-warning btn-sm">Modificar</a>
+                        <a href="{% url 'ver_perfil' usuario.id %}" class="btn btn-info btn-sm">Ver Perfil</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="10" class="text-center">No se encontraron resultados</td>
+                </tr>
+            {% endif %}
+        </tbody>
+        </table>
+    </div>
+</div>
+{% endblock content %}
+
+{% block footer %}
+<footer class="bg-dark text-white text-center py-3">
+    <p>&copy; 2025 - Gestión de Clientes. Todos los derechos reservados.</p>
+</footer>
+{% endblock footer %}

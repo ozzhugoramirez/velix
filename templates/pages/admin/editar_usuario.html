@@ -1,0 +1,54 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Editar Usuario{% endblock title %}
+
+{% block content %}
+
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white text-center">
+            <h3>Editar Usuario: {{ usuario.username }}</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" novalidate class="row g-3">
+                {% csrf_token %}
+                
+                <!-- Mostrar mensajes de error globales -->
+                {% if form.non_field_errors %}
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Renderizar campos del formulario -->
+                {% for field in form %}
+                <div class="col-md-6">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                    <div class="text-danger small">
+                        {{ field.errors|join:", " }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <!-- Botones de acción -->
+                <div class="col-12 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success me-2">Guardar Cambios</button>
+                    <a href="{% url 'clintes_admin' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,34 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Confirmar Borrado{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-danger text-white">
+            <h1 class="text-center mb-0">Confirmar Borrado</h1>
+        </div>
+        <div class="card-body">
+            <p class="text-center">¿Estás seguro de que deseas borrar los siguientes cupones?</p>
+            <ul class="list-group mb-4">
+                {% for cupon in cupones %}
+                <li class="list-group-item">
+                    <strong>Código:</strong> {{ cupon.code }} | 
+                    <strong>Descuento:</strong> {{ cupon.discount_value }} | 
+                    <strong>Expira:</strong> {{ cupon.expiration_date|date:"d/m/Y H:i" }}
+                </li>
+                {% endfor %}
+            </ul>
+            <form method="post" class="text-center">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Confirmar Borrado
+                </button>
+                <a href="{% url 'coupon_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

@@ -1,0 +1,44 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Atender Reclamo{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center">Atender Reclamo</h1>
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            Reclamo de {{ reclamo.nombre }} {{ reclamo.apellido }}
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label"><strong>Tipo de Reclamo</strong></label>
+                    <p>{{ reclamo.get_tipo_reclamo_display }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Descripción</strong></label>
+                    <p>{{ reclamo.descripcion }}</p>
+                </div>
+                <div class="mb-3">
+                    <label for="estado" class="form-label"><strong>Estado</strong></label>
+                    <select name="estado" id="estado" class="form-select">
+                        <option value="pendiente" {% if reclamo.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="en_proceso" {% if reclamo.estado == 'en_proceso' %}selected{% endif %}>En Proceso</option>
+                        <option value="resuelto" {% if reclamo.estado == 'resuelto' %}selected{% endif %}>Resuelto</option>
+                        <option value="rechazado" {% if reclamo.estado == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="notas_internas" class="form-label"><strong>Notas Internas</strong></label>
+                    <textarea name="notas_internas" id="notas_internas" rows="4" class="form-control">{{ reclamo.notas_internas }}</textarea>
+                </div>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-success me-2">Guardar Cambios</button>
+                    <a href="{% url 'Reclamos_admin' %}" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

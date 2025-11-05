@@ -1,0 +1,132 @@
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+{% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<style>
+    .info-container {
+        max-width: 900px;
+        margin: 100px auto 50px; /* Espaciado para que no esté pegado al navbar */
+        background: #ffffff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .info-header {
+        text-align: center;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+    }
+    .info-section {
+        margin-bottom: 30px;
+    }
+    .info-section h3 {
+        color: #0071e3;
+        font-weight: bold;
+    }
+    .info-section p {
+        color: #555;
+        line-height: 1.6;
+    }
+    .info-list {
+        padding-left: 20px;
+    }
+    .info-list li {
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="container info-container">
+    <h2 class="info-header">
+        {% if section == 'blog' %}
+            Información sobre Reclamos y Consultas
+        {% elif section == 'guia' %}
+            Información sobre Envíos y Tiempos de Entrega
+        {% elif section == 'cuidado' %}
+            Información sobre Garantía de Productos
+      
+        {% else %}
+            Información General
+        {% endif %}
+    </h2>
+
+    {% if section == 'blog' %}
+    dfdf
+    <div class="info-section">
+        <h3>¿Cómo realizar un reclamo?</h3>
+        <p>Si tienes un inconveniente con tu compra, puedes presentar un reclamo de manera rápida y sencilla. Sigue estos pasos:</p>
+        <ul class="info-list">
+            <li>Accede a tu <strong>Perfil</strong>.</li>
+            <li>Ve a la sección <strong>Pedidos</strong>.</li>
+            <li>Selecciona el pedido con el que tienes problemas.</li>
+            <li>Presiona la opción <strong>Enviar Reclamo</strong>.</li>
+            <li>Describe tu problema y envía la solicitud.</li>
+        </ul>
+        <h3>Tiempo de respuesta</h3>
+        <p>Atendemos todos los reclamos en un plazo de <strong>24 a 48 horas hábiles</strong>. Si el problema requiere más tiempo, te notificaremos.</p>
+    </div>
+
+    {% elif section == 'guia' %}
+    <div class="info-section">
+        <h3>Envíos y Tiempos de Entrega</h3>
+        <p>Actualmente realizamos envíos únicamente en <strong>Buenos Aires (Capital Federal)</strong>.</p>
+        <ul class="info-list">
+            <li>Entrega estándar: <strong>12 a 24 horas</strong>.</li>
+            <li>Entrega express (costo adicional): <strong>Menos de 6 horas</strong>.</li>
+            <li>Pedidos realizados después de las <strong>19:00 hs</strong> se procesarán al día siguiente.</li>
+        </ul>
+        <h3>Condiciones del Envío</h3>
+        <p>Para garantizar una entrega segura, te pedimos:</p>
+        <ul class="info-list">
+            <li>Proporcionar una dirección exacta.</li>
+            <li>Presentar documento de identidad al recibir el pedido.</li>
+            <li>El pago en efectivo solo se acepta al momento de la entrega.</li>
+        </ul>
+    </div>
+
+    {% elif section == 'cuidado' %}
+    <div class="info-section">
+        <h3>Garantía de Productos</h3>
+        <p>Todos nuestros productos cuentan con garantía de calidad. En caso de fallas o defectos, puedes solicitar una revisión o un reemplazo.</p>
+        <h3>Condiciones de la garantía</h3>
+        <ul class="info-list">
+            <li>Debe presentarse la factura de compra.</li>
+            <li>El producto no debe presentar daños ocasionados por mal uso.</li>
+            <li>Las garantías varían según el tipo de producto (consultar en detalle).</li>
+        </ul>
+        <h3>Plazo de garantía</h3>
+        <p>El plazo estándar de garantía es de <strong>6 meses</strong>, pero algunos productos pueden tener hasta <strong>1 año de garantía oficial</strong>.</p>
+        <h3>¿Cómo solicitar garantía?</h3>
+        <p>Sigue estos pasos:</p>
+        <ul class="info-list">
+            <li>Ve a la sección <strong>Mis Pedidos</strong> en tu perfil.</li>
+            <li>Selecciona el producto en cuestión.</li>
+            <li>Presiona la opción <strong>Solicitar Garantía</strong>.</li>
+            <li>Describe el problema y adjunta imágenes si es necesario.</li>
+        </ul>
+    </div>
+
+  
+
+    {% else %}
+    <div class="info-section">
+        <h3>Información General</h3>
+        <p>Bienvenido a nuestra tienda online. Aquí puedes encontrar información relevante sobre compras, pagos, envíos, devoluciones y seguridad en las transacciones.</p>
+        <h3>Atención al Cliente</h3>
+        <p>Si necesitas asistencia, puedes contactarnos a través de:</p>
+        <ul class="info-list">
+            <li>Correo electrónico: <strong>soporte@velarisx.com</strong></li>
+            <li>WhatsApp: <strong>+54 11 6287-7070</strong></li>
+            <li>Chat en vivo disponible de <strong>10:00 a 19:00 hs</strong></li>
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}
+
+{% block footer %}
+{% include "components/web/footer.html" %}
+{% endblock footer %}

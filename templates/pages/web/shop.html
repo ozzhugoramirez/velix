@@ -1,0 +1,105 @@
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+{% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container-fluid px-3 px-md-4 mt-4">  <!-- container-fluid y padding reducido -->
+    {% if messages %}
+    <div class="alert alert-danger mb-3">
+        {% for message in messages %}
+            <p class="mb-0">{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row g-2 g-md-3">  <!-- gutter reducido entre cards -->
+        {% for item in products %}
+        {% with product=item.product status=item.status %}
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm hover-shadow transition-all mb-2">  <!-- mb-2 en lugar de mb-4 -->
+                <div class="position-relative" style="height: 160px; overflow: hidden;">  <!-- altura imagen reducida -->
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="card-img-top w-100 h-100" style="object-fit: cover;" alt="{{ product.title }}">
+                    {% else %}
+                        <img src="/static/images/default-product.png" class="card-img-top w-100 h-100" style="object-fit: cover;" alt="Imagen no disponible">
+                    {% endif %}
+                    <div class="badge bg-danger position-absolute top-0 end-0 m-1 p-1 small">{{ status }}</div>
+                </div>
+                <div class="card-body p-2 d-flex flex-column">  <!-- padding interno reducido -->
+                    <h6 class="card-title mb-1 text-truncate">{{ product.title }}</h6>
+                    <div class="d-flex justify-content-between small mb-1">  <!-- margen inferior reducido -->
+                        <span class="text-muted">👁️ 234</span>
+                        <span class="text-muted">❤️ 87</span>
+                    </div>
+                    <p class="card-text mb-1"><small class="text-success fw-bold">${{ product.price }}</small></p>
+                    <p class="card-text mb-1"><small class="text-muted">{{ product.category.name }}</small></p>  <!-- margen inferior reducido -->
+                    <div class="d-flex justify-content-between mt-auto pt-1">  <!-- padding top reducido -->
+                    
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-outline-primary py-0 px-1">Ver</a>  <!-- padding interno reducido -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Paginación compacta -->
+    <div class="mt-2 d-flex justify-content-center">  <!-- margen superior reducido -->
+        {% if page_obj.has_other_pages %}
+            <nav>
+                <ul class="pagination pagination-sm mb-2">  <!-- margen inferior reducido -->
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if selected_category %}&category={{ selected_category }}{% endif %}">&laquo;&laquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">&laquo;</a>
+                        </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">&raquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_category %}&category={{ selected_category }}{% endif %}">&raquo;&raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .hover-shadow {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08) !important;
+    }
+    .card {
+        border-radius: 6px !important;
+    }
+    .card-img-top {
+        border-top-left-radius: 6px !important;
+        border-top-right-radius: 6px !important;
+    }
+    body {
+        padding-top: 70px; /* Asegura espacio fijo bajo el navbar */
+    }
+</style>
+
+{% endblock content %}
+
+{% block footer %}
+{% include "components/web/footer.html" %}
+{% endblock footer %}

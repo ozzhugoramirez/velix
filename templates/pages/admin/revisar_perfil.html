@@ -1,0 +1,92 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Revisar Perfil{% endblock title %}
+
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Revisar Perfil</h1>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Datos del Perfil</h5>
+
+            <div class="mb-4">
+                <h5 class="card-title">Foto de Perfil</h5>
+                {% if perfil.foto_perfil %}
+                <img src="{{ perfil.foto_perfil.url }}" alt="Foto de perfil" class="img-thumbnail" style="max-width: 150px;">
+                {% else %}
+                <p>No se ha cargado una foto de perfil.</p>
+                {% endif %}
+            </div>
+            <p><strong>Usuario:</strong> {{ perfil.usuario.username }}</p>
+            <p><strong>Correo Electrónico:</strong> {{ perfil.usuario.email }}</p>
+            <p><strong>Número de Teléfono:</strong> {{ perfil.numero_telefono }}</p>
+            <p><strong>Fecha de Nacimiento:</strong> {{ perfil.fecha_nacimiento }}</p>
+            <p><strong>Género:</strong> {{ perfil.genero }}</p>
+            <p><strong>Último Inicio de Sesión:</strong> {{ perfil.ultimo_inicio_sesion }}</p>
+            <p><strong>Coins:</strong> {{ perfil.coins }}</p>
+            <p><strong>Puntos de Fidelidad:</strong> {{ perfil.puntos_fidelidad }}</p>
+            <p><strong>Suscripción a Boletín:</strong> {{ perfil.suscripcion_boletin|yesno:"Sí,No" }}</p>
+            <p><strong>Comentario de Rechazo:</strong> {{ perfil.comentario_rechazo }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Direcciones Asociadas</h5>
+            {% if direcciones %}
+            <ul>
+                {% for direccion in direcciones %}
+                <li>
+                    <strong>Localidad:</strong> {{ direccion.localidad }}<br>
+                    <strong>Calle Principal:</strong> {{ direccion.main_street }}<br>
+                    <strong>Calle Secundaria:</strong> {{ direccion.secondary_street }}<br>
+                    <strong>Número de Casa:</strong> {{ direccion.house_number }}<br>
+                    <strong>Barrio:</strong> {{ direccion.barrio }}<br>
+                    <strong>Código Postal:</strong> {{ direccion.postal_code }}<br>
+                    <strong>WhatsApp:</strong> {{ direccion.whatsapp_number }}<br>
+                    <strong>Correo Electrónico:</strong> {{ direccion.email }}<br>
+                    <strong>Descripción Adicional:</strong> {{ direccion.description }}<br>
+                    <strong>Predeterminada:</strong> {{ direccion.is_default|yesno:"Sí,No" }}
+                </li>
+                <hr>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>No hay direcciones asociadas.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-footer">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="estado_verificacion" class="form-label">Estado de Verificación</label>
+                    <select id="estado_verificacion" name="estado_verificacion" class="form-select">
+                        <option value="pendiente" {% if perfil.estado_verificacion == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="aprobado" {% if perfil.estado_verificacion == 'aprobado' %}selected{% endif %}>Aprobado</option>
+                        <option value="rechazado" {% if perfil.estado_verificacion == 'rechazado' %}selected{% endif %}>Rechazado</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="comentario_rechazo" class="form-label">Comentario de Rechazo</label>
+                    <textarea id="comentario_rechazo" name="comentario_rechazo" class="form-control" rows="3">{{ perfil.comentario_rechazo }}</textarea>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="cuenta_verificada" name="cuenta_verificada" {% if perfil.cuenta_verificada %}checked{% endif %}>
+                    <label class="form-check-label" for="cuenta_verificada">
+                        Cuenta Verificada
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-success">Guardar Cambios</button>
+                <a href="{% url 'perfiles_pendientes' %}" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}

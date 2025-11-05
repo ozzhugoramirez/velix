@@ -1,0 +1,44 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}{% endblock title %}
+
+{% block navbar %}
+ 
+{% endblock navbar %}
+
+{% block content %}
+{% include "pages/admin/perfil.html" %}
+
+
+<div class="container my-4">
+    <h2 class="mb-4">Lista de Visitas</h2>
+    <table class="table table-bordered table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Dirección IP</th>
+                <th>Fecha y Hora</th>
+                <th>Duración</th>
+                <th>Dispositivo</th>
+                <th>Navegador</th>
+                <th>Acciones</th>  <!-- Columna para las acciones -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for visita in visitas %}
+                <tr>
+                    <td>{{ visita.direccion_ip }}</td>
+                    <td>{{ visita.marca_tiempo|date:"d M, Y H:i" }}</td>
+                    <td>{{ visita.duracion_legible }}</td>
+                    <td>{{ visita.dispositivo }}</td>
+                    <td>{{ visita.navegador }}</td>
+                    <td>
+                        <!-- Botón para ver las páginas visitadas de esta visita -->
+                        <a href="{% url 'ver_paginas_visitadas' visita.id %}" class="btn btn-info btn-sm">Ver Páginas Visitadas</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock content %}
+

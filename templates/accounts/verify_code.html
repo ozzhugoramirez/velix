@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Código</title>
+    <!-- Carga de Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .verify-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .verify-container h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        .verify-container p {
+            text-align: center;
+            font-size: 16px;
+            color: #666;
+        }
+        .otp-input {
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            font-size: 24px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .otp-input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+        }
+        .footer-text {
+            text-align: center;
+            margin-top: 20px;
+            color: #777;
+        }
+        .alert-info {
+            margin-top: 20px;
+        }
+        /* Asegurar que los campos no se salgan del contenedor */
+        .otp-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: nowrap; /* Evitar que los campos se muevan a una nueva línea */
+        }
+        .timer {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="verify-container">
+        <h1>Verificar Código de WhatsApp</h1>
+        <p>Por favor, ingresa el código de 8 dígitos que se te envió.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="otp-container">
+                <!-- 8 campos de entrada para cada dígito del código -->
+                <input type="text" class="otp-input" name="verification_code_1" maxlength="1" required autofocus>
+                <input type="text" class="otp-input" name="verification_code_2" maxlength="1" required>
+                <input type="text" class="otp-input" name="verification_code_3" maxlength="1" required>
+                <input type="text" class="otp-input" name="verification_code_4" maxlength="1" required>
+                <input type="text" class="otp-input" name="verification_code_5" maxlength="1" required>
+                <input type="text" class="otp-input" name="verification_code_6" maxlength="1" required>
+                <input type="text" class="otp-input" name="verification_code_7" maxlength="1" required>
+                <input type="text" class="otp-input" name="verification_code_8" maxlength="1" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">Verificar</button>
+        </form>
+
+        {% if message %}
+            <div class="alert alert-info mt-3" role="alert">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        <div class="timer" id="timer">
+            Tiempo restante: <span id="countdown">5:00</span> minutos
+        </div>
+
+        <div class="footer-text">
+            <p>¿No recibiste el código? <a href="#">Reenviar código</a></p>
+        </div>
+    </div>
+
+    <!-- Carga de Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Temporizador de 5 minutos
+        var countdownMinutes = 5;
+        var countdownSeconds = 0;
+    
+        function updateTimer() {
+            var minutes = countdownMinutes < 10 ? "0" + countdownMinutes : countdownMinutes;
+            var seconds = countdownSeconds < 10 ? "0" + countdownSeconds : countdownSeconds;
+            document.getElementById("countdown").textContent = minutes + ":" + seconds;
+    
+            if (countdownSeconds == 0) {
+                if (countdownMinutes == 0) {
+                    // El tiempo ha expirado
+                    document.getElementById("timer").innerHTML = "El código ha expirado. <a href='#'>Reenviar código</a>";
+                    return; // Detener el temporizador
+                }
+                countdownMinutes--;
+                countdownSeconds = 59;
+            } else {
+                countdownSeconds--;
+            }
+        }
+    
+        // Actualiza el temporizador cada segundo
+        setInterval(updateTimer, 1000);
+    
+        // Para pasar al siguiente campo de entrada al completar uno
+        const inputs = document.querySelectorAll('.otp-input');
+    
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value.length === 1 && index < inputs.length - 1) {
+                    // Mover al siguiente campo cuando se ingresa un valor
+                    inputs[index + 1].focus();
+                }
+            });
+    
+            // Permitir que el usuario borre y se mueva hacia el campo anterior
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && e.target.value.length === 0 && index > 0) {
+                    // Mover al campo anterior al borrar
+                    inputs[index - 1].focus();
+                }
+            });
+    
+            // Escuchar el evento de pegar el código
+            input.addEventListener('paste', (e) => {
+                // Evitar el comportamiento predeterminado de pegar
+                e.preventDefault();
+    
+                // Obtener el contenido pegado
+                const pasteData = e.clipboardData.getData('Text');
+    
+                // Pegar los valores en los campos de entrada
+                for (let i = 0; i < pasteData.length; i++) {
+                    if (inputs[i]) {
+                        inputs[i].value = pasteData[i];  // Asignar cada carácter a cada campo
+                    }
+                }
+    
+                // Después de pegar, si el último campo tiene un valor, no se mueve a ningún otro campo
+                if (pasteData.length === inputs.length) {
+                    return;
+                }
+    
+                // Mover el foco al siguiente campo disponible si el código tiene menos dígitos
+                if (pasteData.length < inputs.length) {
+                    inputs[pasteData.length].focus();
+                }
+            });
+        });
+
+        function getQueryParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+    
+        // Prellenar los campos con el código
+        window.onload = function() {
+            const codigo = getQueryParameter('codigo');
+            if (codigo) {
+                const inputs = document.querySelectorAll('.otp-input');
+                for (let i = 0; i < codigo.length; i++) {
+                    if (inputs[i]) {
+                        inputs[i].value = codigo[i];
+                    }
+                }
+            }
+        };
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,75 @@
+{% extends "pages/web/perfil.html" %}
+
+{% block title %}{% endblock title %}
+
+{% block navbar %}
+   {% include "components/web/navbar.html" %}
+   {% include "pages/web/perfil.html" %}
+
+{% endblock navbar %}
+
+{% block content %}
+   
+
+   <div class="tab-content">
+       
+            <div class="row g-3">
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Nombre completo</h6>
+                    <p class="mb-0">{{ user.get_full_name }}</p>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Correo electrónico</h6>
+                    <p class="mb-0">{{ user.email }}</p>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Fecha de registro</h6>
+                    <p class="mb-0">{{ user.date_joined|date:"d M, Y" }}</p>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="border rounded p-3 bg-light h-100">
+                    <h6 class="text-muted">Último acceso</h6>
+                    <p class="mb-0">{{ user.last_login|date:"d M, Y H:i" }}</p>
+                </div>
+                </div>
+
+                <div class="col-12">
+                <div class="border rounded p-3 bg-white shadow-sm">
+                    <h6 class="text-muted mb-2">Biografía</h6>
+                    <p class="mb-0 fst-italic text-secondary">
+                    {% if user.profile.bio %}
+                        {{ user.profile.bio }}
+                    {% else %}
+                        No has añadido una biografía aún. <a href="#">Editar perfil</a>
+                    {% endif %}
+                    </p>
+                </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h5 class="mb-3">Configuraciones rápidas</h5>
+                <div class="d-flex flex-wrap gap-2">
+                <a href="" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil-square me-1"></i> Editar Perfil
+                </a>
+                <a href="#" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i> Eliminar Cuenta
+                </a>
+                </div>
+            </div>
+    </div>
+
+{% endblock content %}
+
+{% block footer %}
+
+  {% include "components/web/footer.html" %}
+
+{% endblock footer %}

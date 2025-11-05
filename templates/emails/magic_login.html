@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Acceso sin contraseña</title>
+  <meta name="viewport" content="width=device-width">
+  <style>
+    /* Paleta esmeralda + dorado */
+    :root{
+      --emerald-1:#10b981; --emerald-2:#059669; --gold-2:#b68a2a;
+      --ink:#0f172a; --muted:#64748b; --card:#ffffff; --bg:#f6f7fb;
+    }
+    body{margin:0;background:var(--bg);color:var(--ink);}
+    .container{max-width:600px;margin:0 auto;background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(2,6,23,.08)}
+    .header{padding:20px 24px;background:linear-gradient(135deg,#ecfdf5,#fefce8);border-bottom:1px solid #e2e8f0;}
+    .brand{display:inline-block;padding:10px 14px;border-radius:10px;background:linear-gradient(135deg, rgba(16,185,129,.12), rgba(214,179,106,.14));border:1px solid #d1fae5;color:var(--emerald-2);font-weight:700;text-decoration:none;}
+    .content{padding:24px;}
+    .pre{display:none;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden}
+    h1{font-size:18px;margin:0 0 6px 0;}
+    p{margin:0 0 12px 0;line-height:1.6;color:var(--muted);}
+    .callout{border-left:4px solid var(--gold-2);background:#fff8e6;padding:12px 12px;border-radius:8px;margin:16px 0;color:#664d0e}
+    .muted{color:var(--muted);font-size:13px}
+    .footer{padding:16px 24px;color:#94a3b8;font-size:12px;text-align:center}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;word-break: break-all;}
+    @media (prefers-color-scheme: dark){
+      :root{ --ink:#e2e8f0; --muted:#94a3b8; --bg:#0b1220; --card:#0f172a; }
+      .header{border-bottom-color:#1f2a44}
+      .callout{background:#1c1a11;color:#e6d9b8}
+    }
+  </style>
+  <!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings xmlns:o="urn:schemas-microsoft-com:office:office">
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+</head>
+<body>
+  <!-- preheader -->
+  <div class="pre">Tu enlace seguro para entrar a {{ site_name }}. Caduca en {{ ttl }} minutos. Enlace de un solo uso.</div>
+
+  <div class="container">
+    <div class="header">
+      <span class="brand">{{ site_name }}</span>
+    </div>
+    <div class="content">
+      <h1>Ingresá a tu cuenta</h1>
+      <p>Usá el siguiente botón para iniciar sesión sin contraseña. Por seguridad, el enlace vence en <strong>{{ ttl }} minutos</strong> y funciona <strong>una sola vez</strong>.</p>
+
+      <!-- Botón súper visible (Bulletproof + VML para Outlook) -->
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:18px 0 22px;">
+        <tr>
+          <td align="left">
+            <!--[if mso]>
+            <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml"
+              xmlns:w="urn:schemas-microsoft-com:office:word"
+              href="{{ magic_url }}" style="height:44px;v-text-anchor:middle;width:220px;"
+              arcsize="12%" strokecolor="#047857" fillcolor="#059669">
+              <w:anchorlock/>
+              <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;">
+                Entrar ahora
+              </center>
+            </v:roundrect>
+            <![endif]-->
+            <!--[if !mso]><!-- -->
+            <a href="{{ magic_url }}" target="_blank" rel="noopener"
+               style="
+                 display:inline-block;
+                 background-color:#059669;
+                 color:#ffffff !important;
+                 font-weight:800;
+                 text-decoration:none;
+                 padding:14px 22px;
+                 border-radius:10px;
+                 border:1px solid #047857;
+                 box-shadow:0 6px 18px rgba(16,185,129,.35);
+                 font-size:16px; line-height:1; letter-spacing:.2px;">
+              Entrar ahora
+            </a>
+            <!--<![endif]-->
+          </td>
+        </tr>
+      </table>
+
+      <div class="callout">
+        <strong>¿No fuiste vos?</strong> Ignorá este correo. Nadie podrá usar este enlace una vez que venza o si no tiene acceso a tu casilla.
+      </div>
+
+      <p class="muted">Si el botón no funciona, copiá y pegá este enlace en tu navegador:</p>
+      <p class="mono muted">{{ magic_url }}</p>
+
+      {% if support_email %}
+        <p class="muted">¿Necesitás ayuda? Escribinos a <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+      {% endif %}
+    </div>
+    <div class="footer">
+      © {{ year }} {{ site_name }} — Enlace de acceso de un solo uso.
+    </div>
+  </div>
+</body>
+</html>

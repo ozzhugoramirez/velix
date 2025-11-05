@@ -1,0 +1,78 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url "home" %}">( Mi sitio )</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <!-- Inicio -->
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url "dasboard" %}">Inicio</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url "admin_notification_dashboard" %}">notificaciones</a>
+                </li>
+
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'perfiles_pendientes' %}">
+                        Revisión Perfil 
+                        {% if perfiles_pendientes_count > 0 %}
+                        <span class="badge bg-danger">{{ perfiles_pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+             
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'Reclamos_admin' %}">
+                        Reclamos 
+                        {% if reclamos_pendientes_count > 0 %}
+                        <span class="badge bg-danger">{{ reclamos_pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+            
+                <!-- Clientes -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url "clintes_admin" %}">Clientes</a>
+                </li>
+                <!-- Productos -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url "ProductoAdminView" %}">Productos</a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'coupon_list' %}">Cupones</a>
+                </li>
+                <!-- Proveedores -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url "search_queries" %}">busquedas</a>
+                </li>
+                <!-- Despacho -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'visitas_combinadas' %}">Metricas</a>
+                </li>
+                <!-- Pedidos -->
+              
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'order_list' %}">
+                        Órdenes 
+                        {% if ordenes_pendientes_count > 0 %}
+                        <span class="badge bg-danger">{{ ordenes_pendientes_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                
+                
+                <!-- Cerrar sesión -->
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

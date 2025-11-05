@@ -1,0 +1,86 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Análisis del Producto{% endblock title %}
+{% block navbar %}
+   {% include "components/admin/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h1 class="text-center mb-0">Análisis del Producto</h1>
+        </div>
+        <div class="card-body">
+            <h3 class="text-center mb-4 text-secondary">{{ product.title }}</h3>
+
+            <div class="row text-center">
+                <!-- Total de vistas -->
+                <div class="col-md-3">
+                    <div class="card border-info shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Total de Vistas</h5>
+                            <h3 class="text-primary">
+                                <a href="{% url 'detalle_vistas_producto' product.id %}" class="text-decoration-none">
+                                    {{ total_vistas }}
+                                </a>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total de compartidos -->
+                <div class="col-md-3">
+                    <div class="card border-success shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Total de Compartidos</h5>
+                            <h3 class="text-success">
+                                <a href="{% url 'detalle_compartidos_producto' product.id %}" class="text-decoration-none">
+                                    {{ total_compartidos }}
+                                </a>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total de vistas desde enlaces compartidos -->
+                <div class="col-md-3">
+                    <div class="card border-warning shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Vistas desde Enlaces Compartidos</h5>
+                            <h3 class="text-warning">{{ total_vistas_compartidos }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total de likes -->
+                <div class="col-md-3">
+                    <div class="card border-danger shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Total de Likes</h5>
+                            <h3 class="text-danger">{{ total_likes }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card border-secondary shadow-sm mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">Total de Comentarios</h5>
+                            <h3 class="text-secondary">
+                                <a href="{% url 'detalle_comentarios_producto' product.id %}" class="text-decoration-none">
+                                    {{ total_comentarios }}
+                                </a>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <div class="card-footer text-muted text-center">
+            Última actualización: {{ product.updated_at|date:"d/m/Y H:i" }}
+        </div>
+    </div>
+</div>
+{% endblock content %}

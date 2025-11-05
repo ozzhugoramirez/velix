@@ -1,0 +1,150 @@
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+    {% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+    {% if query %}
+        <div class="text-center mb-5">
+            <h3 class="fw-bold text-uppercase">Resultados para: <span class="text-primary">"{{ query }}"</span></h3>
+            <p class="text-muted">Explora nuestras mejores opciones basadas en tu búsqueda</p>
+        </div>
+
+        <!-- Coincidencias exactas -->
+        {% if exact_matches %}
+            <h4 class="text-success fw-bold mb-3">Coincidencias Exactas</h4>
+            <div class="row g-4">
+                {% for item in exact_matches %}
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card product-card shadow-sm border-0 position-relative">
+                            <!-- Badges de promoción -->
+                            {% if item.is_currently_promotional %}
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">🔥 En Promoción</span>
+                            {% elif item.is_daily_offer %}
+                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">⚡ Oferta del Día</span>
+                            {% endif %}
+
+                            <!-- Imagen del producto con verificación de existencia -->
+                            <div class="product-image-wrapper">
+                                {% if item.image and item.image.url %}
+                                    <img src="{{ item.image.url }}" class="product-image img-fluid" alt="{{ item.title }}">
+                                {% else %}
+                                    <img src="/static/images/default-product.png" class="product-image img-fluid" alt="Imagen no disponible">
+                                {% endif %}
+                            </div>
+
+                            <div class="card-body text-center">
+                                <h6 class="fw-bold text-truncate">{{ item.title }}</h6>
+                                <p class="text-muted small">{{ item.description|truncatewords:10 }}</p>
+                                <p class="fw-bold fs-5 text-danger">$ {{ item.price }}</p>
+
+                                <a href="{% url 'product_detail' item.id %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                                    <i class="bi bi-eye"></i> Ver Detalles
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-danger text-center">No hay coincidencias exactas para "{{ query }}".</p>
+        {% endif %}
+
+        <!-- Otros resultados relacionados -->
+        {% if other_matches %}
+            <h4 class="text-info fw-bold mt-5">Otros productos relacionados</h4>
+            <div class="row g-4">
+                {% for item in other_matches %}
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="card product-card shadow-sm border-0 position-relative">
+                            {% if item.is_currently_promotional %}
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">🔥 En Promoción</span>
+                            {% elif item.is_daily_offer %}
+                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">⚡ Oferta del Día</span>
+                            {% endif %}
+
+                            <div class="product-image-wrapper">
+                                {% if item.image and item.image.url %}
+                                    <img src="{{ item.image.url }}" class="product-image img-fluid" alt="{{ item.title }}">
+                                {% else %}
+                                    <img src="/static/images/default-product.png" class="product-image img-fluid" alt="Imagen no disponible">
+                                {% endif %}
+                            </div>
+
+                            <div class="card-body text-center">
+                                <h6 class="fw-bold text-truncate">{{ item.title }}</h6>
+                                <p class="text-muted small">{{ item.description|truncatewords:10 }}</p>
+                                <p class="fw-bold fs-5 text-danger">$ {{ item.price }}</p>
+
+                                <a href="{% url 'product_detail' item.id %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                                    <i class="bi bi-eye"></i> Ver Detalles
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p class="text-center text-muted fs-5">Introduce un término de búsqueda para ver resultados.</p>
+    {% endif %}
+</div>
+
+<!-- Estilos Personalizados -->
+<style>
+    /* Contenedor de los productos */
+    .product-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Imagen de producto */
+    .product-image-wrapper {
+        height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        padding: 10px;
+    }
+
+    .product-image {
+        max-height: 160px;
+        object-fit: contain;
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .product-image:hover {
+        transform: scale(1.05);
+    }
+
+    /* Botón de acción */
+    .btn-outline-primary {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #0071e3;
+        color: white;
+    }
+
+    /* Texto truncado para títulos */
+    .text-truncate {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock content %}
+
+{% block footer %}
+{% endblock footer %}

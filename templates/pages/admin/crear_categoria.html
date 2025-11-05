@@ -1,0 +1,28 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Crear Categoría{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Crear Categoría</h1>
+    <form method="post" class="card p-4 shadow">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_name" class="form-label">Nombre</label>
+            <input type="text" name="name" class="form-control" id="id_name" required>
+        </div>
+        <div class="mb-3">
+            <label for="id_description" class="form-label">Descripción</label>
+            <textarea name="description" class="form-control" id="id_description" rows="4"></textarea>
+        </div>
+        <div class="text-end">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save"></i> Guardar Categoría
+            </button>
+            <a href="{% url 'crear_producto' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock content %}

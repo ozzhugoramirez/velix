@@ -1,0 +1,88 @@
+{% extends "pages/web/base.html" %}
+
+{% block navbar %}
+{% include "components/web/navbar.html" %}
+{% endblock navbar %}
+
+{% block content %}
+<style>
+    /* Contenedor principal con margen superior */
+    .success-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: whitesmoke;
+        padding: 50px 15px;
+    }
+
+    /* Tarjeta de confirmación */
+    .success-card {
+        background: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Icono de éxito */
+    .success-icon {
+        font-size: 60px;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+
+    /* Mensaje de éxito */
+    .success-title {
+        font-weight: bold;
+        font-size: 24px;
+        color: #333;
+    }
+
+    .success-text {
+        color: #555;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+
+    /* Botón de regreso */
+    .btn-ok {
+        background: #0071e3;
+        border: none;
+        font-weight: bold;
+        padding: 12px 20px;
+        transition: 0.3s;
+        border-radius: 5px;
+        color: white;
+        display: inline-block;
+        text-decoration: none;
+    }
+
+    .btn-ok:hover {
+        background: #005bb5;
+    }
+</style>
+
+<div class="success-container">
+    <div class="success-card">
+        <i class="fas fa-check-circle success-icon"></i>
+        <h2 class="success-title">Reclamo Registrado Exitosamente</h2>
+        <p class="success-text">
+            Hemos recibido tu reclamo y nuestro equipo lo revisará lo antes posible.  
+            Te contactaremos en un plazo máximo de <strong>24 a 48 horas hábiles</strong>.  
+        </p>
+        <p class="success-text">
+            Si necesitas más información o deseas hacer un seguimiento de tu reclamo,  
+            puedes visitar la sección <strong>Mis Reclamos</strong> en tu perfil.
+        </p>
+        <a href="{% url 'home' %}" class="btn btn-ok">OK</a>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block footer %}
+{% include "components/web/footer.html" %}
+{% endblock footer %}

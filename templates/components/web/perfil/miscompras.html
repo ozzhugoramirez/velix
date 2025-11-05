@@ -1,0 +1,47 @@
+{% extends "pages/web/perfil.html" %}
+
+{% block title %}{% endblock title %}
+
+{% block navbar %}
+   {% include "components/web/navbar.html" %}
+   {% include "pages/web/perfil.html" %}
+
+{% endblock navbar %}
+
+{% block content %}
+   {% for compra in ordenes %}
+  <div class="card mb-3 p-3">
+      <p>
+          <strong>N° Orden:</strong> {{ compra.numero_orden }} <br>
+          <strong>Fecha:</strong> {{ compra.created_at|date:"d/m/Y H:i" }} <br>
+          <strong>Estado:</strong> {{ compra.get_status_display }} <br>
+          <strong>Monto total:</strong> ${{ compra.monto_total }}
+          
+      </p>
+
+      <h6>Productos:</h6>
+      <ul>
+        {% for item in compra.orderitem_set.all %}
+            <li>{{ item.product.title }} (x{{ item.quantity }}) - ${{ item.total_price }}</li>
+        {% endfor %}
+      </ul>
+
+      <a href="{% url 'detalle_compra' compra.id %}" class="btn btn-sm btn-outline-primary">
+        Ver más detalles
+      </a>
+  </div>
+{% empty %}
+  <div class="alert alert-info text-center">
+    No has realizado ninguna compra aún.
+  </div>
+{% endfor %}
+
+
+{% endblock content %}
+
+
+{% block footer %}
+
+  {% include "components/web/footer.html" %}
+
+{% endblock footer %}

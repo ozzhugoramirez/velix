@@ -1,0 +1,87 @@
+{% extends "pages/web/perfil.html" %}
+
+{% block title %}{% endblock title %}
+
+{% block navbar %}
+   {% include "components/web/navbar.html" %}
+   {% include "pages/web/perfil.html" %}
+
+{% endblock navbar %}
+
+{% block content %}
+
+    <div >
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center gap-3 p-3 bg-warning bg-opacity-10 rounded shadow-sm">
+                <i class="bi bi-coin text-warning display-4"></i>
+                <div>
+                    <h4 class="mb-0 fw-bold text-warning">120 Coins</h4>
+                    <small class="text-muted">¡Sigue acumulando para desbloquear recompensas!</small>
+                </div>
+                </div>
+            </div>
+
+            <!-- Barra de progreso hacia una meta -->
+            <div class="mb-4 px-4">
+                <label class="form-label fw-semibold">Meta: Descuento de $10</label>
+                <div class="progress" style="height: 20px;">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
+                    60%
+                </div>
+                </div>
+            </div>
+
+            <!-- Recompensas disponibles -->
+            <div class="row g-3 px-2">
+                <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                    <h6 class="card-title">Cupón de $5</h6>
+                    <p class="text-muted small">Canjea 100 coins y obtén un descuento instantáneo.</p>
+                    <button class="btn btn-outline-warning btn-sm w-100">Canjear por 100 coins</button>
+                    </div>
+                </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                    <h6 class="card-title">Envío Gratis</h6>
+                    <p class="text-muted small">Obtén envío gratis en tu próxima compra por 150 coins.</p>
+                    <button class="btn btn-outline-warning btn-sm w-100">Canjear por 150 coins</button>
+                    </div>
+                </div>
+                </div>
+
+                <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                    <h6 class="card-title">Regalo sorpresa</h6>
+                    <p class="text-muted small">Recibe un pequeño obsequio exclusivo por 200 coins.</p>
+                    <button class="btn btn-outline-warning btn-sm w-100" disabled>Requiere 200 coins</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+                    <!-- Tip / info extra -->
+                    <div class="alert alert-light border mt-4 shadow-sm small">
+                        <i class="bi bi-lightbulb me-2 text-warning"></i>
+                        Ganas coins con cada compra, reseña o recomendación de productos. ¡Sigue participando!
+                    </div>
+            
+                 <div class="info-bar">
+                    <small class="text-muted">Última actualización: hoy a las 17:00</small>
+                    
+                </div>
+    </div>
+
+
+{% endblock content %}
+
+
+{% block footer %}
+
+  {% include "components/web/footer.html" %}
+
+{% endblock footer %}

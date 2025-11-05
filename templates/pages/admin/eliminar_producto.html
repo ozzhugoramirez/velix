@@ -1,0 +1,17 @@
+{% extends "pages/admin/base.html" %}
+
+{% block title %}Eliminar Producto{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center text-danger mb-4">¿Estás seguro de eliminar este producto?</h1>
+    <p class="text-center">{{ object.title }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="text-center">
+            <button type="submit" class="btn btn-danger">Eliminar</button>
+            <a href="{% url 'ProductoAdminView' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock content %}
