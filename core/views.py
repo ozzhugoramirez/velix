@@ -28,26 +28,7 @@ class LogoutView(View):
         return redirect("home")  
 
 
-def chatbot_message(request):
-    if request.method == "POST":
-        user_message = request.POST.get('message', '')
-        
-        # Imprimir en la consola de Django
-        print(f"Mensaje recibido desde el chatbot: {user_message}")
-         
-        # Detectar "buscar"
-        if 'buscar' in user_message.lower():
-            # Tomar el texto después de "buscar" como query
-            query = user_message.lower().replace('buscar', '').strip()
-            search_url = f"{reverse('Search')}?q={query}"  # 'Search' = name de tu URL
-            return JsonResponse({'redirect': search_url})
-        
-        # Generar la respuesta del bot (puede ser estática o lógica)
-        bot_response = f"He recibido tu mensaje: {user_message}"
-        
-        return JsonResponse({'response': bot_response})
-    
-    return JsonResponse({'response': 'Error'}, status=400)
+
 
 
 def change_language(request):

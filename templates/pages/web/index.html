@@ -1,4 +1,5 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block navbar %}
   {% include "components/web/navbar.html" %}
@@ -9,526 +10,371 @@
 {% include "components/web/invitacionmodel.html" %}
 
 <style>
-  /* Espacio para separar del navbar */
-  .navbar-spacer {
-    height: 30px;
+  :root {
+    --emerald: #047857;
+    --gold: #d97706;
+    --dark: #0f172a;
+    --light: #f8fafc;
   }
   
-  /* Estilos generales */
-  .carousel img {
-    object-fit: cover;
-    height: 100%;
+  body { background-color: var(--light); font-family: 'Inter', sans-serif; }
+
+  /* --- 1. HERO SECTION CINEMÁTICO --- */
+  .hero-wrapper {
+    position: relative;
+    height: 85vh; /* Ocupa casi toda la pantalla */
     width: 100%;
-  }
-
-  .carousel-caption {
-    position: static;
-    padding: 0.5rem 0;
-    text-align: center;
-    background: rgba(0,0,0,0.05);
-  }
-
-  /* Ajustes para las cards */
-  .card-promo {
-    transition: all 0.3s ease;
-    border: none;
-    border-radius: 8px;
     overflow: hidden;
-    height: 100%;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    background: #000;
   }
   
-  .card-promo:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+  .hero-slide {
+    position: absolute; top:0; left:0; width: 100%; height: 100%;
+    background-size: cover; background-position: center;
+    opacity: 0; transition: opacity 1s ease-in-out;
+  }
+  .hero-slide.active { opacity: 1; }
+  
+  /* Gradiente para que el texto se lea siempre */
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
+    display: flex; align-items: center; padding: 0 5%;
   }
 
-  /* Cards de promoción especial */
-  .promo-wide-card {
-    height: auto;
-    margin-bottom: 1rem;
-  }
-  
-  .promo-wide-card .card-img-top {
-    height: 200px;
-    object-fit: cover;
-  }
-  
-  .promo-wide-card .badge {
-    font-size: 0.9rem;
-    padding: 0.35rem 0.75rem;
-  }
-  
-  .promo-wide-card .btn {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.9rem;
+  .hero-content {
+    max-width: 600px;
+    color: white;
+    transform: translateY(30px); opacity: 0;
+    animation: slideUpFade 1s forwards 0.5s;
   }
 
-  /* Ajustes para el carrusel y cards principales */
-  .main-carousel-card {
-    margin-bottom: 1.5rem;
+  @keyframes slideUpFade { to { transform: translateY(0); opacity: 1; } }
+
+  .btn-hero {
+    background: white; color: black; font-weight: 800;
+    padding: 15px 40px; border-radius: 50px; text-transform: uppercase;
+    letter-spacing: 1px; transition: 0.3s; border: none;
+    display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn-hero:hover { background: var(--emerald); color: white; transform: scale(1.05); }
+
+  /* --- 2. BENTO GRID (Categorías/Promos) --- */
+  .bento-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 250px);
+    gap: 15px;
+    padding: 20px 0;
+  }
+  
+  .bento-item {
+    position: relative; border-radius: 20px; overflow: hidden;
+    cursor: pointer; transition: transform 0.3s;
+  }
+  .bento-item:hover { transform: translateY(-5px); }
+  .bento-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+  .bento-item:hover img { transform: scale(1.1); }
+  
+  .bento-content {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    color: white;
+  }
+  
+  /* Layout del grid */
+  .span-2 { grid-column: span 2; }
+  .span-row-2 { grid-row: span 2; }
+  
+  @media (max-width: 768px) {
+    .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .span-2, .span-row-2 { grid-column: span 1; grid-row: span 1; height: 250px; }
   }
 
-  .main-carousel {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  /* --- 3. PRODUCT CARDS (Premium) --- */
+  .prod-card {
+    background: white; border-radius: 12px; overflow: hidden;
+    position: relative; transition: 0.3s; border: 1px solid #eee;
   }
+  .prod-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+  
+  .prod-image-wrap {
+    position: relative; padding-top: 100%; background: #f4f4f4; overflow: hidden;
+  }
+  .prod-image-wrap img {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+  }
+  
+  /* Etiquetas flotantes */
+  .tag-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: black; color: white; font-size: 10px; font-weight: 800;
+    padding: 4px 10px; text-transform: uppercase; border-radius: 4px;
+  }
+  .tag-sale { background: #dc2626; } /* Rojo */
 
-  .promo-card {
-    height: 100%;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  /* Botón Quick Add que aparece al hover */
+  .quick-add {
+    position: absolute; bottom: -50px; left: 0; right: 0;
+    background: white; color: black; font-weight: 700;
+    text-align: center; padding: 12px;
+    transition: 0.3s; border-top: 1px solid #eee;
   }
+  .prod-card:hover .quick-add { bottom: 0; }
+  .quick-add:hover { background: var(--emerald); color: white; }
 
-  .promo-card .card-body {
-    padding: 1.5rem;
+  /* --- 4. VIDEO SECTION --- */
+  .video-section {
+    position: relative; height: 500px; margin: 4rem 0;
+    background: #000; border-radius: 20px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
   }
+  .video-bg { opacity: 0.6; width: 100%; height: 100%; object-fit: cover; }
+  .play-btn {
+    position: absolute; width: 80px; height: 80px;
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 2rem; border: 2px solid white;
+    cursor: pointer; transition: 0.3s; z-index: 10;
+  }
+  .play-btn:hover { transform: scale(1.1); background: white; color: black; }
 
-  /* Sección de productos */
-  .product-grid {
-    margin-top: 2rem;
+  /* --- 5. REVIEWS (Dark Mode) --- */
+  .reviews-section {
+    background: var(--dark); color: white; padding: 5rem 0;
+    position: relative;
   }
-  
-  .product-card {
-    margin-bottom: 1.5rem;
+  .review-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    padding: 2rem; border-radius: 16px; margin: 10px;
   }
-  
-  /* Testimonios */
-  .testimonial-card {
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    margin: 0 0.5rem;
-    height: 100%;
-  }
-  
-  .testimonial-carousel .carousel-indicators {
-    bottom: -40px;
-  }
-  
-  .testimonial-carousel .carousel-indicators button {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #6c757d;
-  }
-  
-  .testimonial-carousel .carousel-indicators button.active {
-    background-color: #0d6efd;
-  }
-  
-  .testimonial-img {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #0d6efd;
-    margin: 0 auto 1rem;
-  }
-
-  /* Ajustes para márgenes laterales */
-  .full-width-section {
-    margin-left: -15px;
-    margin-right: -15px;
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-  
-  /* Ajustes responsive */
-  @media (max-width: 767px) {
-    .carousel img {
-      height: 200px;
-    }
-    
-    .promo-wide-card .card-img-top {
-      height: 150px;
-    }
-    
-    .main-carousel-card {
-      margin-bottom: 1rem;
-    }
-    
-    .navbar-spacer {
-      height: 20px;
-    }
-    
-    .testimonial-img {
-      width: 60px;
-      height: 60px;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .card-promo {
-      margin-bottom: 0;
-    }
-    
-    .promo-wide-card {
-      margin-bottom: 0;
-    }
-  }
+  .stars { color: var(--gold); }
 </style>
 
-
-<div class="container mt-5 pt-3">
-
-  <!-- Carrusel + Cards -->
-  <div class="container px-0">
-    <div class="row main-carousel-card mx-0">
-      <!-- Carrusel -->
-      <div class="col-lg-8 mb-3 mb-lg-0 px-2">
-        <div id="productCarousel" class="carousel slide main-carousel h-100" data-bs-ride="carousel">
-          <div class="carousel-inner h-100">
-            <div class="carousel-item active h-100">
-              <img src="https://picsum.photos/id/1011/1200/600" class="d-block w-100" alt="Producto 1">
-              <div class="carousel-caption">
-                <a href="#" class="btn btn-sm btn-primary px-3">Ver Detalles</a>
-              </div>
+<section class="hero-wrapper">
+    <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');"></div>
+    
+    <div class="hero-overlay">
+        <div class="hero-content">
+            <span class="badge bg-warning text-dark mb-3 px-3 py-2">NUEVA TEMPORADA 2025</span>
+            <h1 class="display-2 fw-bold mb-4" style="line-height: 1;">Redefine<br>Tu Estilo.</h1>
+            <p class="lead mb-5 opacity-75">Colecciones exclusivas diseñadas para destacar. Calidad premium, envío gratuito y la mejor experiencia de compra.</p>
+            <div class="d-flex gap-3">
+                <a href="{% url 'shop' %}" class="btn-hero">
+                    Comprar Ahora <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="#" class="btn btn-outline-light rounded-pill px-4 py-3 fw-bold">Ver Video</a>
             </div>
-            <div class="carousel-item h-100">
-              <img src="https://picsum.photos/id/1025/1200/600" class="d-block w-100" alt="Producto 2">
-              <div class="carousel-caption">
-                <a href="#" class="btn btn-sm btn-primary px-3">Ver Detalles</a>
-              </div>
-            </div>
-            <div class="carousel-item h-100">
-              <img src="https://picsum.photos/id/1035/1200/600" class="d-block w-100" alt="Producto 3">
-              <div class="carousel-caption">
-                <a href="#" class="btn btn-sm btn-primary px-3">Ver Detalles</a>
-              </div>
-            </div>
-          </div>
-          <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-          </button>
-          <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-          </button>
         </div>
-      </div>
-
-      <!-- Cards Promo Destacadas -->
-      <div class="col-lg-4 px-2">
-        <div class="d-flex flex-column h-100">
-          <div class="promo-card mb-3 bg-gradient-primary text-white">
-            <div class="card-body">
-              <span class="badge bg-warning text-dark mb-2">🔥 HOT</span>
-              <h5 class="card-title fw-bold">OFERTA DEL DÍA</h5>
-              <p class="card-text">Descuentos exclusivos por tiempo limitado</p>
-              <a href="#" class="btn btn-light btn-sm">Ver Ofertas</a>
-            </div>
-          </div>
-          <div class="promo-card bg-dark text-white">
-            <div class="card-body">
-              <span class="badge bg-danger mb-2">🚀 NUEVO</span>
-              <h5 class="card-title fw-bold">PRODUCTOS NUEVOS</h5>
-              <p class="card-text">Descubre nuestras últimas novedades</p>
-              <a href="#" class="btn btn-outline-light btn-sm">Explorar</a>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-
-  <!-- Promociones destacadas - 2 cards anchas -->
-  <div class="container px-0 mt-3">
-    <div class="row g-3 mx-0">
-      <div class="col-md-6 px-2">
-        <div class="card promo-wide-card border-0 shadow-sm">
-          <div class="position-relative">
-            <img src="https://picsum.photos/id/1044/1200/600" class="card-img-top" alt="Promo 1">
-            <span class="badge bg-danger position-absolute top-0 start-0 m-2">50% OFF</span>
-          </div>
-          <div class="card-body text-center p-3">
-            <h5 class="card-title fw-bold mb-2">Smartphone X10 Pro</h5>
-            <div class="d-flex justify-content-center align-items-center mb-2">
-              <span class="text-muted me-2"><s>$599.99</s></span>
-              <span class="text-success fw-bold fs-5">$299.99</span>
-            </div>
-            <a href="#" class="btn btn-danger w-100">Comprar Ahora</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6 px-2">
-        <div class="card promo-wide-card border-0 shadow-sm">
-          <div class="position-relative">
-            <img src="https://picsum.photos/id/1041/1200/600" class="card-img-top" alt="Promo 2">
-            <span class="badge bg-danger position-absolute top-0 start-0 m-2">30% OFF</span>
-          </div>
-          <div class="card-body text-center p-3">
-            <h5 class="card-title fw-bold mb-2">Audífonos Pro Max</h5>
-            <div class="d-flex justify-content-center align-items-center mb-2">
-              <span class="text-muted me-2"><s>$199.99</s></span>
-              <span class="text-success fw-bold fs-5">$139.99</span>
-            </div>
-            <a href="#" class="btn btn-danger w-100">Comprar Ahora</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Productos vistos recientemente -->
-  {% if recent_views %}
-  <div class="container px-0 mt-3">
-    <div class="row g-3 mx-0">
-      {% for view in recent_views %}
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          {% if view.product.image %}
-          <div class="position-relative">
-            <img src="{{ view.product.image.url }}" class="card-img-top" alt="{{ view.product.title }}">
-            <span class="badge bg-secondary position-absolute top-0 start-0 m-2">Reciente</span>
-          </div>
-          {% endif %}
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">{{ view.product.title|truncatechars:30 }}</h6>
-            <p class="text-success fw-bold mb-2">${{ view.product.price }}</p>
-            <a href="{% url 'product_detail' view.product.id %}" class="btn btn-sm btn-outline-secondary w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- Grid de productos -->
-  <div class="container px-0 product-grid mt-3">
-    <div class="row g-3 mx-0">
-      <!-- Ejemplo de productos - puedes reemplazar con tu loop -->
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          <img src="https://picsum.photos/id/20/300/200" class="card-img-top" alt="Producto 1">
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">Laptop Elite</h6>
-            <p class="text-success fw-bold mb-2">$899.99</p>
-            <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          <img src="https://picsum.photos/id/30/300/200" class="card-img-top" alt="Producto 2">
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">Cámara DSLR</h6>
-            <p class="text-success fw-bold mb-2">$499.99</p>
-            <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          <img src="https://picsum.photos/id/40/300/200" class="card-img-top" alt="Producto 3">
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">Drone Pro</h6>
-            <p class="text-success fw-bold mb-2">$349.99</p>
-            <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          <img src="https://picsum.photos/id/50/300/200" class="card-img-top" alt="Producto 4">
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">Teclado Mecánico</h6>
-            <p class="text-success fw-bold mb-2">$79.99</p>
-            <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          <img src="https://picsum.photos/id/60/300/200" class="card-img-top" alt="Producto 5">
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">Mouse Gamer</h6>
-            <p class="text-success fw-bold mb-2">$49.99</p>
-            <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 col-md-4 col-lg-2 px-2">
-        <div class="card card-promo">
-          <img src="https://picsum.photos/id/70/300/200" class="card-img-top" alt="Producto 6">
-          <div class="card-body text-center p-2">
-            <h6 class="card-title fw-bold mb-1">Monitor 24"</h6>
-            <p class="text-success fw-bold mb-2">$179.99</p>
-            <a href="#" class="btn btn-outline-primary btn-sm w-100">Ver</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Presentación del negocio -->
-  <section class="py-5 bg-light mt-4 full-width-section">
-    <div class="container">
-      <div class="row align-items-center">
-        <div class="col-lg-6 mb-4 mb-lg-0">
-          <h2 class="fw-bold mb-3">Bienvenido a Tu Tienda Online</h2>
-          <p class="lead text-muted">Confiable, rápida y siempre con las mejores ofertas. Somos una tienda pensada para vos, ofreciendo productos de calidad, atención personalizada y envíos a todo el país.</p>
-          <ul class="list-unstyled">
-            <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Envío rápido a todo el país</li>
-            <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Soporte personalizado</li>
-            <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Pagos seguros</li>
-            <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i> Garantía en todos los productos</li>
-          </ul>
-          <a href="#" class="btn btn-primary mt-3">Conoce más sobre nosotros</a>
-        </div>
-        <div class="col-lg-6">
-          <div class="ratio ratio-16x9 shadow-lg rounded overflow-hidden">
-            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Presentación Tienda" allowfullscreen></iframe>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Beneficios -->
-  <section class="py-5 full-width-section">
-    <div class="container">
-      <h2 class="text-center fw-bold mb-5">¿Por qué elegirnos?</h2>
-      <div class="row g-4">
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100 text-center p-4">
-            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-4" style="width: 70px; height: 70px; line-height: 70px;">
-              <i class="bi bi-truck fs-3"></i>
-            </div>
-            <h5 class="fw-bold">Envíos rápidos</h5>
-            <p class="text-muted">Tu pedido en la puerta de tu casa en 24/48hs con seguimiento en tiempo real.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100 text-center p-4">
-            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-4" style="width: 70px; height: 70px; line-height: 70px;">
-              <i class="bi bi-shield-lock fs-3"></i>
-            </div>
-            <h5 class="fw-bold">Pagos seguros</h5>
-            <p class="text-muted">Procesamos los pagos con los mejores estándares de seguridad del mercado.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card border-0 shadow-sm h-100 text-center p-4">
-            <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-4" style="width: 70px; height: 70px; line-height: 70px;">
-              <i class="bi bi-headset fs-3"></i>
-            </div>
-            <h5 class="fw-bold">Soporte 24/7</h5>
-            <p class="text-muted">Nuestro equipo está disponible para ayudarte cuando lo necesites.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="py-5 bg-light">
-  <div class="container">
-    <h2 class="text-center fw-bold mb-5">Lo que dicen nuestros clientes</h2>
-    <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
-      <div class="carousel-inner">
-        <!-- Testimonio 1 -->
-        <div class="carousel-item active">
-          <div class="card border-0 shadow-sm mx-auto" style="max-width: 700px;">
-            <div class="card-body text-center px-4 py-5">
-              <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="María González"
-                   class="rounded-circle mb-4" style="width: 90px; height: 90px; object-fit: cover;">
-              <h5 class="fw-semibold mb-1">María González</h5>
-              <div class="text-warning mb-3">
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-              </div>
-              <p class="text-muted">"Excelente servicio al cliente y productos de alta calidad. Mi pedido llegó antes de lo esperado y todo estaba perfectamente empaquetado. ¡Definitivamente volveré a comprar!"</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Testimonio 2 -->
-        <div class="carousel-item">
-          <div class="card border-0 shadow-sm mx-auto" style="max-width: 700px;">
-            <div class="card-body text-center px-4 py-5">
-              <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Carlos Rodríguez"
-                   class="rounded-circle mb-4" style="width: 90px; height: 90px; object-fit: cover;">
-              <h5 class="fw-semibold mb-1">Carlos Rodríguez</h5>
-              <div class="text-warning mb-3">
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-half"></i>
-              </div>
-              <p class="text-muted">"Me impresionó la rapidez del envío y la calidad de los productos. Tuve un pequeño problema con mi pedido y el equipo de soporte lo resolvió inmediatamente. Muy recomendable."</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Testimonio 3 -->
-        <div class="carousel-item">
-          <div class="card border-0 shadow-sm mx-auto" style="max-width: 700px;">
-            <div class="card-body text-center px-4 py-5">
-              <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Laura Martínez"
-                   class="rounded-circle mb-4" style="width: 90px; height: 90px; object-fit: cover;">
-              <h5 class="fw-semibold mb-1">Laura Martínez</h5>
-              <div class="text-warning mb-3">
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-              </div>
-              <p class="text-muted">"Las ofertas son increíbles y los productos superan mis expectativas. He comprado varias veces y siempre tengo una excelente experiencia. ¡Gracias por su gran servicio!"</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Controles -->
-      <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
-      </button>
-
-      <!-- Indicadores -->
-      <div class="carousel-indicators mt-4">
-        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="0" class="active"></button>
-        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="1"></button>
-        <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="2"></button>
-      </div>
-    </div>
-  </div>
 </section>
 
+<div class="container" style="margin-top: -50px; position: relative; z-index: 10;">
+    <div class="bg-white p-4 rounded-4 shadow-lg">
+        <div class="row text-center g-4">
+            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
+                <i class="bi bi-truck fs-1 text-success"></i>
+                <div class="text-start"><h6 class="fw-bold m-0">Envío Gratis</h6><small class="text-muted">En pedidos +$100</small></div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
+                <i class="bi bi-shield-check fs-1 text-primary"></i>
+                <div class="text-start"><h6 class="fw-bold m-0">Pago Seguro</h6><small class="text-muted">Encriptación SSL</small></div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
+                <i class="bi bi-arrow-repeat fs-1 text-warning"></i>
+                <div class="text-start"><h6 class="fw-bold m-0">Devoluciones</h6><small class="text-muted">30 días gratis</small></div>
+            </div>
+            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
+                <i class="bi bi-star-fill fs-1" style="color: var(--gold);"></i>
+                <div class="text-start"><h6 class="fw-bold m-0">4.9/5 Estrellas</h6><small class="text-muted">Clientes felices</small></div>
+            </div>
+        </div>
+    </div>
+</div>
 
-  <!-- Productos que te han gustado -->
-  {% if liked_products %}
-  <section class="py-4 full-width-section">
+<section class="container py-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+        <div>
+            <h2 class="fw-bold display-6">Explora & Descubre</h2>
+            <p class="text-muted">Selección curada para ti.</p>
+        </div>
+        <a href="{% url 'shop' %}" class="btn btn-link text-dark fw-bold text-decoration-none">Ver Todo <i class="bi bi-arrow-right"></i></a>
+    </div>
+
+    <div class="bento-grid">
+        <div class="bento-item span-row-2">
+            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Moda">
+            <div class="bento-content">
+                <h3>Tendencias</h3>
+                <p>Lo último en moda</p>
+            </div>
+        </div>
+        
+        <div class="bento-item span-2">
+            <img src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Tecnología">
+            <div class="bento-content">
+                <h3>Tecnología</h3>
+                <span class="badge bg-danger">Hasta 40% OFF</span>
+            </div>
+        </div>
+        
+        <div class="bento-item">
+            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Hogar">
+            <div class="bento-content">
+                <h5>Hogar</h5>
+            </div>
+        </div>
+        <div class="bento-item">
+            <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Accesorios">
+            <div class="bento-content">
+                <h5>Accesorios</h5>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="bg-white py-5">
     <div class="container">
-      <h2 class="text-center fw-bold mb-4">Tus favoritos</h2>
-      <div class="row g-3 mx-0">
-        {% for product in liked_products %}
-        <div class="col-6 col-md-4 col-lg-2 px-2">
-          <div class="card card-promo">
-            {% if product.image %}
-            <div class="position-relative">
-              <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.title }}">
-              <span class="badge bg-danger position-absolute top-0 start-0 m-2">Favorito</span>
+        <div class="text-center mb-5">
+            <span class="text-uppercase text-warning fw-bold tracking-wider">Top Sellers</span>
+            <h2 class="display-5 fw-bold mt-2">Los Favoritos de la Semana</h2>
+        </div>
+
+        <div class="row g-4">
+            {% for item in promotional_products|default:daily_offers|slice:":4" %}
+            <div class="col-6 col-md-3">
+                <div class="prod-card h-100">
+                    <div class="prod-image-wrap">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
+                        {% elif item.image %}
+                            <img src="{{ item.image.url }}" alt="{{ item.title }}">
+                        {% else %}
+                            <img src="https://dummyimage.com/600x600/f0f0f0/999" alt="Sin imagen">
+                        {% endif %}
+                        
+                        <div class="tag-badge tag-sale">OFERTA</div>
+                    </div>
+                    <div class="p-3">
+                        <small class="text-muted text-uppercase">{{ item.product.category.name|default:"General" }}</small>
+                        <h6 class="fw-bold text-truncate mb-2">{{ item.product.title|default:item.title }}</h6>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="fw-bold fs-5">${{ item.product.price|default:item.price }}</span>
+                            <div class="text-warning small"><i class="bi bi-star-fill"></i> 5.0</div>
+                        </div>
+                    </div>
+                    <a href="{% url 'product_detail' item.product.id|default:item.id %}" class="quick-add text-decoration-none">
+                        VER DETALLES <i class="bi bi-eye ms-1"></i>
+                    </a>
+                </div>
             </div>
-            {% endif %}
-            <div class="card-body text-center p-2">
-              <h6 class="card-title fw-bold mb-1">{{ product.title|truncatechars:30 }}</h6>
-              <p class="text-success fw-bold mb-2">${{ product.price }}</p>
-              <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-danger btn-sm w-100">Ver</a>
+            {% empty %}
+                <div class="col-12 text-center py-5 bg-light rounded-4">
+                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                    <p class="mt-3 text-muted">Cargando las mejores ofertas para ti...</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div class="video-section">
+        <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="video-bg" alt="Video Cover">
+        
+        <div class="position-absolute text-center text-white px-3">
+            <h2 class="display-4 fw-bold mb-4">La Experiencia NextGen</h2>
+            <p class="fs-5 mb-4">Descubre cómo seleccionamos cada producto pensando en ti.</p>
+            <div class="play-btn" data-bs-toggle="modal" data-bs-target="#videoModal">
+                <i class="bi bi-play-fill ms-1"></i>
             </div>
-          </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="videoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-black">
+            <div class="modal-body p-0">
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" title="YouTube video" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="reviews-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <h2 class="display-5 fw-bold mb-3">Amado por<br>Miles.</h2>
+                <p class="opacity-75 mb-4">No solo lo decimos nosotros. Mira lo que nuestra comunidad opina.</p>
+                <div class="d-flex align-items-center gap-4">
+                    <div>
+                        <h3 class="fw-bold mb-0">15k+</h3>
+                        <small class="opacity-50">Clientes</small>
+                    </div>
+                    <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.2);"></div>
+                    <div>
+                        <h3 class="fw-bold mb-0">4.9</h3>
+                        <small class="opacity-50">Rating Promedio</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8">
+                <div class="d-flex gap-4 overflow-auto pb-3" style="scrollbar-width: none;">
+                    <div class="review-card flex-shrink-0" style="width: 300px;">
+                        <div class="stars mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p>"La calidad supera el precio. El envío fue rapidísimo y el packaging es precioso."</p>
+                        <div class="d-flex align-items-center gap-3 mt-4">
+                            <img src="https://randomuser.me/api/portraits/women/1.jpg" class="rounded-circle" width="40" alt="User">
+                            <div><h6 class="m-0 fw-bold">Ana G.</h6><small class="opacity-50">Verificado</small></div>
+                        </div>
+                    </div>
+                    <div class="review-card flex-shrink-0" style="width: 300px;">
+                        <div class="stars mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p>"Excelente atención al cliente. Tuve una duda con el talle y me ayudaron al instante."</p>
+                        <div class="d-flex align-items-center gap-3 mt-4">
+                            <img src="https://randomuser.me/api/portraits/men/2.jpg" class="rounded-circle" width="40" alt="User">
+                            <div><h6 class="m-0 fw-bold">Marcos L.</h6><small class="opacity-50">Verificado</small></div>
+                        </div>
+                    </div>
+                    <div class="review-card flex-shrink-0" style="width: 300px;">
+                        <div class="stars mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i></div>
+                        <p>"Me encanta la variedad de productos. Definitivamente mi tienda favorita este año."</p>
+                        <div class="d-flex align-items-center gap-3 mt-4">
+                            <img src="https://randomuser.me/api/portraits/women/3.jpg" class="rounded-circle" width="40" alt="User">
+                            <div><h6 class="m-0 fw-bold">Lucía P.</h6><small class="opacity-50">Verificado</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% if recent_views %}
+<div class="container py-5">
+    <h4 class="fw-bold mb-4">Vistos Recientemente</h4>
+    <div class="d-flex gap-3 overflow-auto pb-2" style="scrollbar-width: none;">
+        {% for view in recent_views %}
+        <div class="flex-shrink-0" style="width: 200px;">
+            <div class="prod-card h-100 p-2">
+                <div style="height: 150px; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
+                    <img src="{{ view.product.image.url }}" alt="{{ view.product.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <h6 class="small fw-bold text-truncate">{{ view.product.title }}</h6>
+                <div class="fw-bold text-success">${{ view.product.price }}</div>
+                <a href="{% url 'product_detail' view.product.id %}" class="stretched-link"></a>
+            </div>
         </div>
         {% endfor %}
-      </div>
     </div>
-  </section>
-  {% endif %}
-
 </div>
+{% endif %}
 
 {% endblock content %}
 

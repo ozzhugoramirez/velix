@@ -31,7 +31,12 @@ urlpatterns = [
 
     path('share/<uuid:product_id>/', ShareProductView.as_view(), name='share_product'),
     path('change-language/', views.change_language, name='change_language'),
-    path('chatbot-message/', views.chatbot_message, name='chatbot_message'),
+
+   
+    path('botOLO/', include('apps.OLO.urls')),
+
+
+
     path("", HomeView.as_view(), name="home"),
     path('search/', SearchView.as_view(), name="Search") ,
     path('search/suggestions/', SearchSuggestionsView.as_view(), name='search_suggestions'),

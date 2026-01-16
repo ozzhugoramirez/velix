@@ -1,224 +1,333 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block navbar %}
     {% include "components/web/navbar.html" %}
 {% endblock navbar %}
 
 {% block content %}
-<div class="container my-5 py-5" style="min-height: 80vh;">
-    {% if items %}
-    <div class="row g-5">
-        <!-- Productos -->
-        <div class="col-lg-7">
-            <h3 class="mb-4 fw-bold border-bottom pb-2 text-secondary-emphasis">🛒 Tu carrito</h3>
-
-            {% for item in items %}
-            <div class="card shadow-sm border-0 mb-4 bg-white">
-                <div class="card-body d-flex align-items-center">
-                    <img src="{% if item.product.image %}{{ item.product.image.url }}{% else %}/static/images/default-product.png{% endif %}" 
-                         class="rounded-3 shadow-sm me-3" 
-                         style="width: 80px; height: 80px; object-fit: cover;">
-
-                    <div class="flex-grow-1">
-                        <h5 class="fw-semibold mb-1">{{ item.product.title }}</h5>
-                        <p class="text-muted small mb-2">{{ item.product.description|truncatewords:12 }}</p>
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <strong class="text-success">${{ item.product.price }}</strong>
-                                <span class="mx-2 text-muted">x {{ item.quantity }}</span>
-                                <strong class="text-danger">${{ item.total_price }}</strong>
-                            </div>
-                            <div class="d-flex">
-                                <form action="{% url 'add_to_cart' item.product.id %}" method="post" class="me-1">{% csrf_token %}
-                                    <button class="btn btn-sm btn-outline-success"><i class="bi bi-plus-lg"></i></button>
-                                </form>
-                                <form action="{% url 'decrease_quantity' item.product.id %}" method="post" class="me-1">{% csrf_token %}
-                                    <button class="btn btn-sm btn-outline-warning"><i class="bi bi-dash-lg"></i></button>
-                                </form>
-                                <form action="{% url 'remove_from_cart' item.product.id %}" method="post">{% csrf_token %}
-                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
-        <!-- Panel derecho -->
-        <div class="col-lg-5">
-            <!-- Resumen del pedido -->
-            <div class="card shadow-sm border-0 mb-4 bg-white">
-                <div class="card-header bg-gradient text-white text-center" style="background: linear-gradient(to right, #3ba6f6, #6198e8);">
-                    <h5 class="mb-0"><i class="bi bi-receipt"></i> Resumen del Pedido</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush mb-3">
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>Subtotal</span><strong>${{ subtotal_original }}</strong>
-                        </li>
-                        {% if cart.coupon %}
-                        <li class="list-group-item d-flex justify-content-between text-success">
-                            <span>Descuento ({{ cart.coupon.code }})</span>
-                            {% if cart.coupon.discount_type == 'percent' %}
-                                <strong>-{{ cart.coupon.discount_value }}%</strong>
-                            {% elif cart.coupon.discount_type == 'fixed' %}
-                                <strong>-${{ cart.coupon.discount_value }}</strong>
-                            {% endif %}
-                        </li>
-                        {% endif %}
-                        <li class="list-group-item d-flex justify-content-between text-danger fw-bold">
-                            <span>Total</span><span>${{ total_price|floatformat:2 }}</span>
-                        </li>
-                    </ul>
-
-                    <!-- Monedas virtuales -->
-                     <!-- Opción de Monedas Virtuales -->
-<!-- Monedas virtuales -->
-<li class="list-group-item border-0 px-0">
-  <label for="use_coins" class="coins-option w-100 d-flex justify-content-between align-items-center rounded-3 border bg-light p-3 shadow-sm position-relative">
-    
-    <!-- Parte izquierda (80%) -->
-    <div class="d-flex align-items-start w-75">
-      <input type="checkbox" id="use_coins" name="use_coins" class="form-check-input me-3 mt-1" style="cursor: pointer;">
-      <div>
-        <div class="fw-semibold text-dark">
-          <i class="bi bi-coin text-warning me-1"></i> Usar monedas virtuales
-        </div>
-        <small class="text-muted">Saldo disponible: 
-          <strong class="text-success">{{ user.perfil.coins }}</strong>
-        </small>
-      </div>
-    </div>
-
-    <!-- Separador visual -->
-    <div class="border-start mx-3" style="height: 100%;"></div>
-
-    <!-- Parte derecha (20%) -->
-    <div class="text-end d-flex flex-column align-items-end justify-content-center w-25">
-      <a href="" class="text-primary text-decoration-none small d-flex align-items-center">
-        <i class="bi bi-info-circle-fill me-1 fs-5"></i> Saber más
-      </a>
-    </div>
-    
-  </label>
-</li>
-
-
-
-
-                    <!-- Botón de pago -->
-                    <a href="{% url 'checkout' %}" class="btn btn-lg w-100 mb-3 btn-success shadow-sm" style="transition: all 0.2s;">
-                        <i class="bi bi-cart-check"></i> Finalizar Compra
-                    </a>
-
-                    <!-- Cuadro de cupón debajo del botón -->
-                    <div class="mt-4">
-                        <h6 class="text-center mb-3"><i class="bi bi-ticket-perforated"></i> ¿Tienes un cupón?</h6>
-                        <form method="post">{% csrf_token %}
-                            {{ coupon_form.as_p }}
-                            <button class="btn btn-outline-primary w-100 mt-2"><i class="bi bi-gift"></i> Aplicar Cupón</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Envío -->
-            <div class="card shadow-sm border-0 mb-4 bg-white">
-                <div class="card-header bg-light text-primary text-center">
-                    <h6 class="mb-0"><i class="bi bi-truck"></i> Información de Envío</h6>
-                </div>
-                <div class="card-body small">
-                    <ul class="mb-0">
-                        <li>⏱️ Compra antes de <strong>00:00</strong> → entrega <strong>mañana por la mañana</strong>.</li>
-                        <li>📦 Después de las 00:00 → entrega al día siguiente.</li>
-                        <li>🚚 Horario de entrega: <strong>7:00 a 12:00 hs</strong> todos los días.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Pagos -->
-            <div class="card shadow-sm border-0 bg-white">
-                <div class="card-header bg-light text-success text-center">
-                    <h6 class="mb-0"><i class="bi bi-credit-card-2-front"></i> Medios de Pago</h6>
-                </div>
-                <div class="card-body small">
-                    <ul class="mb-2">
-                        <li>💵 Efectivo</li>
-                        <li>🏦 Transferencia</li>
-                        <li>💳 Tarjetas</li>
-                    </ul>
-                    <p class="text-muted mb-0">⚠️ Efectivo o transferencia se entrega <strong>tras confirmación personal del pago</strong>.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <!-- Carrito vacío -->
-    <div class="text-center py-5 my-5">
-        <div class="bg-light p-5 shadow rounded-4 d-inline-block">
-            <i class="bi bi-cart-x fs-1 text-danger mb-3"></i>
-            <h4 class="fw-semibold">Tu carrito está vacío</h4>
-            <p class="text-muted">Parece que aún no has agregado productos.</p>
-            <a href="{% url 'shop' %}" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
-                <i class="bi bi-shop"></i> Ir a la tienda
-            </a>
-        </div>
-    </div>
-    {% endif %}
-</div>
-
 <style>
-
-  .coins-option {
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  cursor: pointer;
-}
-
-.coins-option:hover {
-  border-color: #ffc107;
-  background-color: #fff8e1;
-  box-shadow: 0 0 14px rgba(255, 193, 7, 0.2);
-  transform: scale(1.01);
-}
-
+    :root {
+        --emerald: rgb(25,90,89);
+        --emerald-dark: rgb(15, 60, 60);
+        --gold: rgb(200,160,90);
+        --bg-body: #fdfdfd;
+        --text-main: #111;
+    }
 
     body {
-        background-color: #f0f2f5;
+        background-color: var(--bg-body);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
 
-    .card {
-        border-radius: 12px;
+    /* --- ESTILO DE LISTA DE PRODUCTOS (Izquierda) --- */
+    .cart-header {
+        border-bottom: 2px solid #eee;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
     }
 
-    .card-header {
-        border-radius: 12px 12px 0 0;
+    .cart-row {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #f3f3f3;
+        transition: background 0.2s;
+    }
+    .cart-row:hover {
+        background: #fafafa;
+    }
+
+    .product-thumb {
+        width: 90px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 8px;
+        background: #f0f0f0;
+    }
+
+    /* Stepper de cantidad minimalista */
+    .stepper {
+        display: inline-flex;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .stepper button {
+        background: white;
+        border: none;
+        width: 30px;
+        height: 36px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        color: #555;
+        transition: 0.2s;
+    }
+    .stepper button:hover { background: #eee; }
+    .stepper span {
+        width: 34px;
+        display: flex; align-items: center; justify-content: center;
         font-weight: 600;
+        font-size: 0.9rem;
+        border-left: 1px solid #ddd;
+        border-right: 1px solid #ddd;
     }
 
-    .btn-lg {
-        font-size: 1.05rem;
-        padding: 0.8rem;
+    /* --- PANEL DE RESUMEN (Derecha) --- */
+    .summary-panel {
+        background: #f8f9fa; /* Fondo gris muy suave */
+        border-radius: 20px;
+        padding: 2.5rem;
+        position: sticky;
+        top: 100px;
     }
 
-    footer {
-        margin-top: 100px;
+    /* Input de Cupón VISIBLE y ESTILIZADO */
+    .coupon-container {
+        background: white;
+        border: 2px dashed #e0e0e0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.2s;
+    }
+    .coupon-container:focus-within {
+        border-color: var(--emerald);
+        background: #f0fdf4;
+    }
+    
+    .coupon-input-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .coupon-input {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        width: 100%;
+        outline: none;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .coupon-btn {
+        background: #111;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0 1.2rem;
+        font-weight: 600;
+        transition: 0.2s;
+    }
+    .coupon-btn:hover { background: var(--emerald); }
+
+    /* Totales */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        color: #555;
+    }
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #ddd;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--emerald);
     }
 
-    .btn-success:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 20px rgba(0, 128, 0, 0.15);
+    /* Botón Finalizar */
+    .btn-checkout-primary {
+        background: var(--emerald);
+        color: white;
+        width: 100%;
+        padding: 1.2rem;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border: none;
+        margin-top: 1.5rem;
+        box-shadow: 0 10px 20px rgba(25,90,89,0.2);
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        text-align: center;
+        text-decoration: none;
+    }
+    .btn-checkout-primary:hover {
+        background: var(--emerald-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(25,90,89,0.3);
+        color: white;
+    }
+
+    /* Switch Coins */
+    .coins-box {
+        background: #fff8e1; /* Fondo dorado suave */
+        border: 1px solid #ffe082;
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
     }
 </style>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const popovers = document.querySelectorAll('[data-bs-toggle="popover"]');
-    popovers.forEach(el => new bootstrap.Popover(el));
-  });
-</script>
+<div class="container py-5" style="min-height: 80vh;">
+    
+    {% if items %}
+    <div class="row g-5">
+        
+        <div class="col-lg-7">
+            <div class="cart-header d-flex justify-content-between align-items-end">
+                <h2 class="fw-bold mb-0">Bolsa de Compras</h2>
+                <span class="text-muted">{{ items|length }} artículos</span>
+            </div>
+
+            <div class="cart-list">
+                {% for item in items %}
+                <div class="cart-row">
+                    <a href="{% url 'product_detail' item.product.id %}" class="me-4">
+                        <img src="{% if item.product.image %}{{ item.product.image.url }}{% else %}/static/images/default-product.png{% endif %}" 
+                             class="product-thumb shadow-sm" alt="{{ item.product.title }}">
+                    </a>
+
+                    <div class="flex-grow-1">
+                        <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">{{ item.product.category.name|default:"General" }}</div>
+                        <h5 class="fw-bold mb-1">
+                            <a href="{% url 'product_detail' item.product.id %}" class="text-dark text-decoration-none">
+                                {{ item.product.title }}
+                            </a>
+                        </h5>
+                        <p class="text-muted small mb-3">{{ item.product.description|truncatewords:8 }}</p>
+                        
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stepper">
+                                <form action="{% url 'decrease_quantity' item.product.id %}" method="post" class="d-flex m-0">
+                                    {% csrf_token %}
+                                    <button type="submit">-</button>
+                                </form>
+                                <span>{{ item.quantity }}</span>
+                                <form action="{% url 'add_to_cart' item.product.id %}" method="post" class="d-flex m-0">
+                                    {% csrf_token %}
+                                    <button type="submit">+</button>
+                                </form>
+                            </div>
+                            
+                            <form action="{% url 'remove_from_cart' item.product.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button class="btn btn-link text-muted p-0 text-decoration-none small">
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="text-end ps-3">
+                        <div class="fw-bold fs-5">${{ item.total_price }}</div>
+                        <div class="small text-muted">${{ item.product.price }} c/u</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-4">
+                <a href="{% url 'shop' %}" class="text-decoration-none fw-bold" style="color: var(--emerald);">
+                    <i class="bi bi-arrow-left"></i> Seguir viendo productos
+                </a>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="summary-panel">
+                <h4 class="fw-bold mb-4">Resumen</h4>
+
+                <div class="coupon-container">
+                    <label class="small fw-bold text-muted mb-1 d-block"><i class="bi bi-ticket-perforated-fill"></i> CÓDIGO DE DESCUENTO</label>
+                    <form method="post" class="coupon-input-group">
+                        {% csrf_token %}
+                        <input type="text" name="code" class="coupon-input" placeholder="EJE: VERANO2025" required>
+                        <button type="submit" class="coupon-btn">APLICAR</button>
+                    </form>
+                    {% if cart.coupon %}
+                        <div class="mt-2 text-success small fw-bold">
+                            <i class="bi bi-check-circle"></i> Cupón "{{ cart.coupon.code }}" aplicado
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="coins-box">
+                    <div>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-coin text-warning"></i> Usar mis Coins
+                        </div>
+                        <div class="small text-muted">Saldo: <strong>{{ user.perfil.coins|default:0 }}</strong></div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="coinsSwitch" style="width: 3em; height: 1.5em; cursor: pointer;">
+                    </div>
+                </div>
+
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span class="fw-bold">${{ subtotal_original }}</span>
+                </div>
+                
+                {% if cart.coupon %}
+                <div class="summary-row text-success">
+                    <span>Descuento</span>
+                    <span>- ${{ cart.coupon.discount_value }}</span>
+                </div>
+                {% endif %}
+
+                <div class="summary-row">
+                    <span>Envío estimado</span>
+                    <span class="text-muted">Gratis</span> </div>
+
+                <div class="summary-total">
+                    <span>TOTAL</span>
+                    <span>${{ total_price|floatformat:2 }}</span>
+                </div>
+
+                <a href="{% url 'checkout' %}" class="btn-checkout-primary">
+                    Proceder al Pago <i class="bi bi-lock-fill ms-2"></i>
+                </a>
+                
+                <div class="text-center mt-3 text-muted small">
+                    <i class="bi bi-shield-check"></i> Checkout encriptado y seguro
+                </div>
+
+                <div class="mt-4 pt-4 border-top text-center opacity-50">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" height="20" class="mx-1">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" height="20" class="mx-1">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" height="20" class="mx-1">
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% else %}
+    <div class="text-center py-5 my-5">
+        <div class="mb-4">
+            <span class="bg-light p-4 rounded-circle d-inline-block">
+                <i class="bi bi-basket3 display-4 text-muted opacity-50"></i>
+            </span>
+        </div>
+        <h3 class="fw-bold">Tu bolsa está vacía</h3>
+        <p class="text-muted col-md-6 mx-auto mb-4">No has añadido productos todavía. Explora nuestra colección y encuentra algo único.</p>
+        <a href="{% url 'shop' %}" class="btn btn-dark rounded-pill px-5 py-3 fw-bold">
+            Ir a la Tienda
+        </a>
+    </div>
+    {% endif %}
+
+</div>
 
 {% endblock content %}
 

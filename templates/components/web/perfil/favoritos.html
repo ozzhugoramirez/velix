@@ -1,51 +1,43 @@
-
-
 {% extends "pages/web/perfil.html" %}
 
-{% block title %}{% endblock title %}
+{% block profile_inner %}
+<h5 class="fw-bold mb-4">Mis Favoritos <span class="text-muted small fw-normal">({{ productos_favoritos.count }})</span></h5>
 
-{% block navbar %}
-   {% include "components/web/navbar.html" %}
-   {% include "pages/web/perfil.html" %}
-
-{% endblock navbar %}
-
-{% block content %}
-   
-
-    {% if productos_favoritos %}
-      {% for producto in productos_favoritos %}
-        <div class="col-md-6 col-lg-4">
-          <div class="card h-100 border-0 shadow-sm">
-            <img src="{{ producto.image.url }}" class="card-img-top" alt="{{ producto.title }}">
-            <div class="card-body d-flex flex-column">
-              <h6 class="card-title text-truncate">{{ producto.title }}</h6>
-              <p class="card-text text-muted small">{{ producto.description|truncatewords:15 }}</p>
-              <div class="mt-auto d-flex justify-content-between align-items-center">
-                <a href="{{ producto.get_absolute_url }}" class="btn btn-sm btn-outline-primary">Ver más</a>
-
+{% if productos_favoritos %}
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+    {% for producto in productos_favoritos %}
+    <div class="col">
+        <div class="card h-100 border-0 shadow-sm" style="transition: transform 0.2s;">
+            <div class="position-relative">
+                <img src="{{ producto.image.url }}" class="card-img-top" alt="{{ producto.title }}" 
+                     style="height: 200px; object-fit: cover; border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem;">
                 
-
-              </div>
+                <button class="btn btn-sm btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-2 text-danger">
+                    <i class="bi bi-heart-fill"></i>
+                </button>
             </div>
-          </div>
+            
+            <div class="card-body d-flex flex-column p-3">
+                <h6 class="card-title text-truncate fw-bold mb-1">{{ producto.title }}</h6>
+                <p class="text-muted small mb-3">{{ producto.category.name }}</p>
+                
+                <div class="mt-auto d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-dark">${{ producto.price }}</span>
+                    <a href="{% url 'product_detail' producto.id %}" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
         </div>
-      {% endfor %}
-    {% else %}
-      <div class="col-12 text-center text-muted mt-4">
-        <i class="bi bi-heart-slash display-5 mb-2"></i>
-        <p>No has añadido productos a tus favoritos.</p>
-        <a href="{% url 'shop' %}" class="btn btn-outline-primary">Explorar productos</a>
-      </div>
-    {% endif %}
-
-
-
-
-{% endblock content %}
-
-{% block footer %}
-
-  {% include "components/web/footer.html" %}
-
-{% endblock footer %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 bg-white rounded-3 shadow-sm">
+    <i class="bi bi-heart text-muted opacity-25" style="font-size: 4rem;"></i>
+    <h5 class="mt-3">Tu lista de deseos está vacía</h5>
+    <p class="text-muted">Guarda los productos que te gustan para comprarlos después.</p>
+    <a href="{% url 'shop' %}" class="btn btn-outline-dark rounded-pill px-4">Explorar Tienda</a>
+</div>
+{% endif %}
+{% endblock profile_inner %}

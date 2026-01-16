@@ -1,47 +1,80 @@
 {% extends "pages/web/perfil.html" %}
 
-{% block title %}{% endblock title %}
+{% block profile_inner %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold mb-0">Historial de Pedidos</h5>
+    <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Últimos 30 días
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Todos</a></li>
+            <li><a class="dropdown-item" href="#">Este año</a></li>
+        </ul>
+    </div>
+</div>
 
-{% block navbar %}
-   {% include "components/web/navbar.html" %}
-   {% include "pages/web/perfil.html" %}
+<div class="row g-3">
+    {% for compra in ordenes %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card-body p-0">
+                <div class="d-flex flex-wrap flex-md-nowrap">
+                    
+                    <div class="d-none d-md-block" style="width: 6px; background-color: 
+                        {% if compra.status == 'COMPLETED' %}#198754{% elif compra.status == 'PENDING' %}#ffc107{% else %}#6c757d{% endif %};">
+                    </div>
 
-{% endblock navbar %}
+                    <div class="p-3 p-md-4 flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="fw-bold mb-0">Orden #{{ compra.numero_orden }}</h6>
+                                <small class="text-muted">{{ compra.created_at|date:"d de F, Y" }}</small>
+                            </div>
+                            <span class="badge rounded-pill 
+                                {% if compra.status == 'COMPLETED' %}bg-success
+                                {% elif compra.status == 'PENDING' %}bg-warning text-dark
+                                {% elif compra.status == 'CANCELLED' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ compra.get_status_display }}
+                            </span>
+                        </div>
+                        
+                        <div class="my-3 py-2 border-top border-bottom bg-light rounded px-2">
+                            {% for item in compra.orderitem_set.all|slice:":2" %}
+                            <div class="d-flex align-items-center justify-content-between small mb-1">
+                                <span><span class="fw-bold">{{ item.quantity }}x</span> {{ item.product.title|truncatechars:40 }}</span>
+                                <span class="text-muted">${{ item.total_price }}</span>
+                            </div>
+                            {% endfor %}
+                            {% if compra.orderitem_set.count > 2 %}
+                            <div class="small text-muted fst-italic text-center mt-1">+ {{ compra.orderitem_set.count|add:"-2" }} productos más</div>
+                            {% endif %}
+                        </div>
 
-{% block content %}
-   {% for compra in ordenes %}
-  <div class="card mb-3 p-3">
-      <p>
-          <strong>N° Orden:</strong> {{ compra.numero_orden }} <br>
-          <strong>Fecha:</strong> {{ compra.created_at|date:"d/m/Y H:i" }} <br>
-          <strong>Estado:</strong> {{ compra.get_status_display }} <br>
-          <strong>Monto total:</strong> ${{ compra.monto_total }}
-          
-      </p>
-
-      <h6>Productos:</h6>
-      <ul>
-        {% for item in compra.orderitem_set.all %}
-            <li>{{ item.product.title }} (x{{ item.quantity }}) - ${{ item.total_price }}</li>
-        {% endfor %}
-      </ul>
-
-      <a href="{% url 'detalle_compra' compra.id %}" class="btn btn-sm btn-outline-primary">
-        Ver más detalles
-      </a>
-  </div>
-{% empty %}
-  <div class="alert alert-info text-center">
-    No has realizado ninguna compra aún.
-  </div>
-{% endfor %}
-
-
-{% endblock content %}
-
-
-{% block footer %}
-
-  {% include "components/web/footer.html" %}
-
-{% endblock footer %}
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <small class="text-muted text-uppercase fw-bold">Total</small>
+                                <div class="h5 mb-0 fw-bold text-dark">${{ compra.monto_total }}</div>
+                            </div>
+                            <a href="{% url 'detalle_compra' compra.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-4">
+                                Ver Detalles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="mb-3">
+            <i class="bi bi-bag-x display-4 text-muted opacity-25"></i>
+        </div>
+        <h5>No tienes compras registradas</h5>
+        <p class="text-muted">¡Es un buen momento para buscar algo especial!</p>
+        <a href="{% url 'shop' %}" class="btn btn-primary rounded-pill mt-2">Ir a la Tienda</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock profile_inner %}

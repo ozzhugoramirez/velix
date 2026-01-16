@@ -1,75 +1,84 @@
 {% extends "pages/web/perfil.html" %}
 
-{% block title %}{% endblock title %}
-
-{% block navbar %}
-   {% include "components/web/navbar.html" %}
-   {% include "pages/web/perfil.html" %}
-
-{% endblock navbar %}
-
-{% block content %}
-   
-
-   <div class="tab-content">
-       
-            <div class="row g-3">
-                <div class="col-md-6">
-                <div class="border rounded p-3 bg-light h-100">
-                    <h6 class="text-muted">Nombre completo</h6>
-                    <p class="mb-0">{{ user.get_full_name }}</p>
-                </div>
-                </div>
-                <div class="col-md-6">
-                <div class="border rounded p-3 bg-light h-100">
-                    <h6 class="text-muted">Correo electrónico</h6>
-                    <p class="mb-0">{{ user.email }}</p>
-                </div>
-                </div>
-                <div class="col-md-6">
-                <div class="border rounded p-3 bg-light h-100">
-                    <h6 class="text-muted">Fecha de registro</h6>
-                    <p class="mb-0">{{ user.date_joined|date:"d M, Y" }}</p>
-                </div>
-                </div>
-                <div class="col-md-6">
-                <div class="border rounded p-3 bg-light h-100">
-                    <h6 class="text-muted">Último acceso</h6>
-                    <p class="mb-0">{{ user.last_login|date:"d M, Y H:i" }}</p>
-                </div>
-                </div>
-
-                <div class="col-12">
-                <div class="border rounded p-3 bg-white shadow-sm">
-                    <h6 class="text-muted mb-2">Biografía</h6>
-                    <p class="mb-0 fst-italic text-secondary">
-                    {% if user.profile.bio %}
-                        {{ user.profile.bio }}
-                    {% else %}
-                        No has añadido una biografía aún. <a href="#">Editar perfil</a>
-                    {% endif %}
-                    </p>
-                </div>
+{% block profile_inner %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between">
+                <h5 class="fw-bold mb-0">Información Personal</h5>
+                <button class="btn btn-sm btn-light text-primary"><i class="bi bi-pencil"></i> Editar</button>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="small text-muted">Nombre Completo</label>
+                        <div class="fw-medium">{{ user.get_full_name|default:"Sin definir" }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="small text-muted">Email</label>
+                        <div class="fw-medium">{{ user.email }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="small text-muted">Teléfono</label>
+                        <div class="fw-medium">{{ user.profile.phone|default:"-- --" }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="small text-muted">Ubicación</label>
+                        <div class="fw-medium">{{ user.profile.address|default:"No especificada" }}</div>
+                    </div>
+                    
+                    <div class="col-12 mt-4">
+                        <label class="small text-muted mb-2">Biografía</label>
+                        <div class="p-3 bg-light rounded-3 text-muted fst-italic small">
+                            {% if user.profile.bio %}
+                                {{ user.profile.bio }}
+                            {% else %}
+                                "No has escrito nada sobre ti aún. ¡Añade una descripción para personalizar tu perfil!"
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="mt-4">
-                <h5 class="mb-3">Configuraciones rápidas</h5>
-                <div class="d-flex flex-wrap gap-2">
-                <a href="" class="btn btn-outline-primary">
-                    <i class="bi bi-pencil-square me-1"></i> Editar Perfil
-                </a>
-                <a href="#" class="btn btn-outline-danger">
-                    <i class="bi bi-trash me-1"></i> Eliminar Cuenta
-                </a>
-                </div>
-            </div>
+        </div>
     </div>
 
-{% endblock content %}
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm bg-primary text-white mb-4" style="background: linear-gradient(135deg, var(--emerald) 0%, #1e6b6a 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0 text-white-50">Saldo Disponible</h6>
+                    <i class="bi bi-wallet2 h5 mb-0 text-warning"></i>
+                </div>
+                <h2 class="fw-bold mb-0">${{ user.balance|default:"0.00" }}</h2>
+                <div class="mt-3">
+                     <a href="{% url 'coins_perfil' %}" class="btn btn-sm btn-light rounded-pill px-3 text-dark fw-bold" style="font-size: 0.8rem;">
+                        Ver Historial
+                     </a>
+                </div>
+            </div>
+        </div>
 
-{% block footer %}
-
-  {% include "components/web/footer.html" %}
-
-{% endblock footer %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="fw-bold mb-3">Seguridad</h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="small"><i class="bi bi-shield-check text-success me-2"></i>Contraseña</span>
+                        <a href="#" class="btn btn-sm btn-outline-secondary py-0" style="font-size: 0.75rem;">Cambiar</a>
+                    </li>
+                    <li class="d-flex justify-content-between align-items-center">
+                        <span class="small"><i class="bi bi-phone text-muted me-2"></i>2FA</span>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="2fa" disabled>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-3 text-center">
+            <small class="text-muted">Último acceso: {{ user.last_login|date:"d M, H:i" }}</small>
+        </div>
+    </div>
+</div>
+{% endblock profile_inner %}

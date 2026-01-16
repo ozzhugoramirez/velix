@@ -1,87 +1,108 @@
 {% extends "pages/web/perfil.html" %}
 
-{% block title %}{% endblock title %}
+{% block profile_inner %}
+<style>
+    .coin-card {
+        background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+        color: #7c4d08;
+        border: none;
+    }
+    .level-card {
+        background: white;
+        border: 1px solid #eee;
+    }
+    .progress-thin {
+        height: 6px;
+        border-radius: 10px;
+        background-color: #eee;
+    }
+</style>
 
-{% block navbar %}
-   {% include "components/web/navbar.html" %}
-   {% include "pages/web/perfil.html" %}
-
-{% endblock navbar %}
-
-{% block content %}
-
-    <div >
-            <div class="text-center mb-4">
-                <div class="d-inline-flex align-items-center gap-3 p-3 bg-warning bg-opacity-10 rounded shadow-sm">
-                <i class="bi bi-coin text-warning display-4"></i>
-                <div>
-                    <h4 class="mb-0 fw-bold text-warning">120 Coins</h4>
-                    <small class="text-muted">¡Sigue acumulando para desbloquear recompensas!</small>
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card coin-card shadow h-100">
+            <div class="card-body d-flex flex-column justify-content-center p-4">
+                <div class="d-flex align-items-center gap-2 mb-2 opacity-75">
+                    <i class="bi bi-piggy-bank-fill"></i> BALANCE TOTAL
                 </div>
-                </div>
+                <h1 class="display-4 fw-bold mb-0">{{ coins_balance|default:"0" }}</h1>
+                <div class="small fw-bold mt-2">NEXTGEN COINS</div>
             </div>
-
-            <!-- Barra de progreso hacia una meta -->
-            <div class="mb-4 px-4">
-                <label class="form-label fw-semibold">Meta: Descuento de $10</label>
-                <div class="progress" style="height: 20px;">
-                <div class="progress-bar bg-warning" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">
-                    60%
-                </div>
-                </div>
-            </div>
-
-            <!-- Recompensas disponibles -->
-            <div class="row g-3 px-2">
-                <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                    <h6 class="card-title">Cupón de $5</h6>
-                    <p class="text-muted small">Canjea 100 coins y obtén un descuento instantáneo.</p>
-                    <button class="btn btn-outline-warning btn-sm w-100">Canjear por 100 coins</button>
-                    </div>
-                </div>
-                </div>
-
-                <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                    <h6 class="card-title">Envío Gratis</h6>
-                    <p class="text-muted small">Obtén envío gratis en tu próxima compra por 150 coins.</p>
-                    <button class="btn btn-outline-warning btn-sm w-100">Canjear por 150 coins</button>
-                    </div>
-                </div>
-                </div>
-
-                <div class="col-md-6 col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                    <h6 class="card-title">Regalo sorpresa</h6>
-                    <p class="text-muted small">Recibe un pequeño obsequio exclusivo por 200 coins.</p>
-                    <button class="btn btn-outline-warning btn-sm w-100" disabled>Requiere 200 coins</button>
-                    </div>
-                </div>
-                </div>
-            </div>
-
-                    <!-- Tip / info extra -->
-                    <div class="alert alert-light border mt-4 shadow-sm small">
-                        <i class="bi bi-lightbulb me-2 text-warning"></i>
-                        Ganas coins con cada compra, reseña o recomendación de productos. ¡Sigue participando!
-                    </div>
-            
-                 <div class="info-bar">
-                    <small class="text-muted">Última actualización: hoy a las 17:00</small>
-                    
-                </div>
+        </div>
     </div>
 
+    <div class="col-md-6 col-lg-8">
+        <div class="row g-4 h-100">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-success"><i class="bi bi-people-fill me-2"></i>Programa de Referidos</h6>
+                        <p class="small text-muted mt-2">Invita a 3 amigos y gana envío gratis.</p>
+                        
+                        <div class="d-flex justify-content-between small fw-bold mb-1">
+                            <span>Progreso</span>
+                            <span>{{ share_conversions|default:"0" }} / {{ share_required|default:"3" }}</span>
+                        </div>
+                        <div class="progress progress-thin mb-3">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 33%"></div>
+                        </div>
 
-{% endblock content %}
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control bg-light" value="{{ referral_link|default:'https://nextgen.com/ref/user123' }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button"><i class="bi bi-files"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <div class="col-md-6">
+                 <div class="card border-0 shadow-sm h-100 bg-dark text-white" style="background: var(--emerald) !important;">
+                    <div class="card-body p-4 position-relative overflow-hidden">
+                        <i class="bi bi-star-fill position-absolute top-0 end-0 m-n3 opacity-25" style="font-size: 8rem; transform: rotate(15deg);"></i>
+                        <h6 class="fw-bold text-warning">PROMO ACTIVA</h6>
+                        <h4 class="mt-3">{{ promo_message|default:"2x Coins en Reseñas" }}</h4>
+                        <small class="opacity-75">Vence el: {{ coins_expiry_date|default:"Fin de mes" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-{% block footer %}
-
-  {% include "components/web/footer.html" %}
-
-{% endblock footer %}
+<h5 class="fw-bold mb-3">Historial de Movimientos</h5>
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">Fecha</th>
+                    <th>Concepto</th>
+                    <th>Estado</th>
+                    <th class="text-end pe-4">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in coins_history %}
+                <tr>
+                    <td class="ps-4 text-muted small">{{ h.date|date:"d M Y" }}</td>
+                    <td>
+                        <div class="fw-bold">{{ h.label|default:"Compra en Tienda" }}</div>
+                        <small class="text-muted">{{ h.source }}</small>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill bg-light text-dark border">Completado</span>
+                    </td>
+                    <td class="text-end pe-4 fw-bold {% if h.delta > 0 %}text-success{% else %}text-danger{% endif %}">
+                        {% if h.delta > 0 %}+{% endif %}{{ h.delta }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">No hay movimientos recientes</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock profile_inner %}

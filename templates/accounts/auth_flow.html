@@ -1,354 +1,589 @@
-<!-- templates/accounts/auth_flow.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>Acceso / Registro</title>
+  <title>Acceso Seguro | NextGen</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
     :root {
-      /* Paleta solicitada: esmeralda profundo + dorado metálico */
-      --emerald-1: #10b981;         /* emerald */
-      --emerald-2: #059669;         /* deep emerald */
-      --emerald-3: #065f46;         /* darker */
-      --gold-1: #d6b36a;            /* metallic gold light */
-      --gold-2: #b68a2a;            /* metallic gold mid */
-      --gold-3: #8c6b1f;            /* metallic gold dark */
-
-      --brand: var(--emerald-2);
-      --ink: #0f172a;
-      --muted: #64748b;
-      --ring: rgba(16,185,129,.28); /* emerald ring */
-      --bg: #f5f7fb;
-      --card: #ffffff;
+      /* --- PALETA DE LUJO --- */
+      --emerald-dark: #022c22;
+      --emerald-main: #059669;
+      --emerald-light: #d1fae5;
+      --gold-main: #d97706; /* Dorado rico */
+      --gold-light: #fcd34d;
+      --gold-glow: rgba(217, 119, 6, 0.25);
+      
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      
+      /* Sombras suaves */
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      --shadow-input: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     }
-    * { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial, sans-serif; }
-    body { background: var(--bg); color: var(--ink); }
 
-    .shell { max-width: 980px; margin: 0 auto; padding: clamp(20px, 5vw, 48px) 16px; }
-    .auth { display: grid; grid-template-columns: 1fr; background: var(--card); border-radius: 22px; border: 1px solid #e2e8f0; box-shadow: 0 18px 50px rgba(2,6,23,.08); overflow: clip; }
-    @media (min-width: 992px){ .auth { grid-template-columns: .95fr 1.05fr; } }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
 
-    /* Lado visual con acento esmeralda/dorado */
-    .side { position: relative; padding: clamp(24px, 4vw, 40px); background: linear-gradient(135deg, #ecfdf5, #fefce8); }
-    .side::after { content: ""; position: absolute; inset: 0; background:
-      radial-gradient(600px 280px at 0% 100%, rgba(214,179,106,.25), transparent 60%),
-      radial-gradient(600px 280px at 100% 0%, rgba(16,185,129,.18), transparent 60%);
-      pointer-events: none; }
-    .mark { width: 56px; height: 56px; border-radius: 14px; background: linear-gradient(135deg, rgba(16,185,129,.12), rgba(214,179,106,.14)); display: grid; place-items: center; border: 1px solid #d1fae5; color: var(--emerald-2); box-shadow: inset 0 0 0 1px rgba(214,179,106,.45); }
-    .h1 { font-size: clamp(1.25rem, 2.2vw, 1.6rem); font-weight: 800; margin: 10px 0 0; letter-spacing: .2px; }
-    .lead { color: var(--muted); margin: 6px 0 0; }
+    /* --- LAYOUT PRINCIPAL --- */
+    .auth-wrapper {
+      width: 100%;
+      max-width: 1100px;
+      min-height: 650px;
+      background: var(--bg-surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      overflow: hidden;
+      margin: 20px;
+      position: relative;
+    }
 
-    /* Cuerpo (formularios) */
-    .body { padding: clamp(18px, 4vw, 36px); }
+    /* COLUMNA IZQUIERDA (VISUAL) */
+    .auth-visual {
+      flex: 1;
+      background: radial-gradient(circle at top right, #047857, #064e3b);
+      position: relative;
+      display: none; /* Oculto en móvil */
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem;
+      color: white;
+      overflow: hidden;
+    }
+    
+    /* Patrón de fondo abstracto */
+    .auth-visual::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(252, 211, 77, 0.1) 0%, transparent 20%),
+        radial-gradient(circle at 90% 90%, rgba(252, 211, 77, 0.15) 0%, transparent 30%);
+      pointer-events: none;
+    }
+    
+    .auth-visual .glass-badge {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+    }
 
-    .stepbar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-bottom: 16px; }
-    .stepbar > span { display:block; height:100%; background: linear-gradient(90deg, var(--gold-1), var(--emerald-2)); width:25%; transition: width .3s ease; }
+    /* COLUMNA DERECHA (FORMULARIO) */
+    .auth-form-container {
+      flex: 1;
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
 
-    /* Inputs (alineación perfecta con ícono @) */
-    .body input[type="text"],
-    .body input[type="email"],
-    .body input[type="password"],
-    .body input[type="number"],
-    .body select,
-    .body .form-control {
-      width: 100%; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: .8rem 1rem; outline: none; transition: box-shadow .2s ease, border-color .2s ease; line-height: 1.25; }
-    .input-group { align-items: stretch; }
-    .input-group>.form-control, .input-group-text { height: 48px; }
-    .input-group-text { border-radius: 12px 0 0 12px; border: 1px solid #e2e8f0; background: #fff; display: inline-flex; align-items: center; justify-content: center; }
-    .body input:focus, .body select:focus, .form-control:focus { border-color: var(--ring); box-shadow: 0 0 0 6px rgba(16,185,129,.12); }
+    /* Barra de progreso */
+    .progress-container {
+      position: absolute;
+      top: 0; left: 0; width: 100%;
+      height: 4px;
+      background: #f1f5f9;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--emerald-main), var(--gold-main));
+      transition: width 0.5s ease-in-out;
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
 
-    /* Botones con esmeralda/dorado */
-    .btn-primary { background: linear-gradient(180deg, var(--emerald-1), var(--emerald-2)); border: 0; border-radius: 12px; padding: .95rem 1rem; font-weight: 800; letter-spacing:.2px; }
-    .btn-primary:hover { filter: brightness(1.02); transform: translateY(-1px); }
-    .btn-ghost { border-radius: 12px; padding: .9rem 1rem; font-weight: 800; background: linear-gradient(180deg, #fff, #fff); color: var(--gold-3); border: 1px solid var(--gold-2); box-shadow: 0 1px 0 rgba(214,179,106,.35) inset; }
-    .btn-ghost:hover { background: linear-gradient(180deg, #fffdf4, #fff7e0); }
+    /* Tipografía */
+    h1 { font-weight: 800; font-size: 1.75rem; color: var(--emerald-dark); margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
 
-    .muted { color: var(--muted); font-size: .9rem; }
+    /* Inputs Estilizados */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label { font-weight: 600; font-size: 0.85rem; color: var(--text-main); margin-bottom: 0.5rem; display: block; }
+    
+    .custom-input-group {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .custom-input-group i {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-muted);
+      z-index: 10;
+      transition: color 0.3s;
+    }
+    
+    .form-control {
+      padding: 0.8rem 1rem 0.8rem 2.8rem; /* espacio para el icono */
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+      background-color: #fcfcfc;
+    }
+    
+    /* Estados del input */
+    .form-control:focus {
+      background-color: #fff;
+      border-color: var(--emerald-main);
+      box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+    }
+    .form-control:focus + i, .custom-input-group:focus-within i {
+      color: var(--emerald-main);
+    }
 
-    /* OTP: cajas grandes para código */
-    .otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-    .otp input { text-align: center; font-size: 1.25rem; letter-spacing: .08em; padding: .85rem 0; }
+    /* Botones */
+    .btn-main {
+      width: 100%;
+      background: linear-gradient(135deg, var(--emerald-main), #047857);
+      color: white;
+      border: none;
+      padding: 0.9rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2);
+    }
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(5, 150, 105, 0.3);
+      filter: brightness(1.1);
+      color: white;
+    }
 
-    .fade { animation: fade .4s ease both; }
-    @keyframes fade { from {opacity:0; transform: translateY(6px);} to {opacity:1; transform: translateY(0);} }
+    .btn-magic {
+      width: 100%;
+      background: white;
+      color: var(--gold-main);
+      border: 2px solid #fde68a;
+      padding: 0.8rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-magic:hover {
+      background: #fffbeb;
+      border-color: var(--gold-main);
+    }
+
+    /* OTP Inputs */
+    .otp-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 1rem; }
+    .otp-input {
+      width: 100%;
+      height: 50px;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      background: white;
+      transition: all 0.2s;
+    }
+    .otp-input:focus {
+      border-color: var(--gold-main);
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
+      outline: none;
+      transform: scale(1.05);
+    }
+
+    /* Animaciones */
+    .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; transform: translateY(10px); }
+    @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* Media Queries */
+    @media (min-width: 992px) {
+      .auth-visual { display: flex; } /* Mostrar lado izquierdo en PC */
+    }
+    @media (max-width: 576px) {
+      .auth-wrapper { margin: 0; border-radius: 0; min-height: 100vh; box-shadow: none; }
+      .auth-form-container { padding: 2rem 1.5rem; }
+      .otp-grid { gap: 4px; }
+    }
   </style>
 </head>
 <body>
-  <main class="shell">
-    <section class="auth">
-      <!-- Lado visual -->
-      <div class="side d-flex align-items-start gap-3">
-        <div class="mark"><i class="bi bi-shield-lock"></i></div>
-        <div>
-          <h1 class="h1">Acceso a tu cuenta</h1>
-          <p class="lead">Autenticación clara y segura.</p>
-        </div>
+
+  <div class="auth-wrapper">
+    <div class="progress-container">
+      <div class="progress-bar-fill" style="width:
+        {% if step == 'email' %}25%
+        {% elif step == 'password' %}50%
+        {% elif step == 'code' %}75%
+        {% elif step == 'register' %}90%
+        {% else %}0%{% endif %}">
       </div>
+    </div>
 
-      <!-- Formularios -->
-      <div class="body">
-        <div class="stepbar" aria-hidden="true">
-          <span style="width:
-            {% if step == 'email' %}25%
-            {% elif step == 'password' %}50%
-            {% elif step == 'code' %}75%
-            {% elif step == 'register' %}90%
-            {% else %}25%{% endif %}"></span>
+    <div class="auth-visual">
+      <div>
+        <div class="glass-badge mb-4">
+          <i class="bi bi-shield-check text-warning"></i> Sistema Seguro
         </div>
+        <h2 class="display-6 fw-bold mb-3">Bienvenido a <br><span style="color: #fbbf24;">NextGen</span></h2>
+        <p class="opacity-75">La plataforma diseñada para potenciar tu experiencia digital con seguridad de grado bancario.</p>
+      </div>
+      
+      <div class="d-flex align-items-center gap-3 opacity-50 small">
+        <span><i class="bi bi-check-circle-fill text-warning me-1"></i> Encriptación SSL</span>
+        <span><i class="bi bi-check-circle-fill text-warning me-1"></i> Soporte 24/7</span>
+      </div>
+    </div>
 
-        {% if messages %}
-          <div class="mb-3 fade">
-            {% for msg in messages %}
-              <div class="alert alert-{{ msg.tags }} mb-2" role="alert">{{ msg }}</div>
-            {% endfor %}
+    <div class="auth-form-container">
+      
+      {% if messages %}
+        <div class="mb-4 fade-in-up">
+          {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} border-0 shadow-sm d-flex align-items-center gap-2" role="alert" style="font-size: 0.9rem;">
+              <i class="bi bi-info-circle-fill"></i> {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if step == 'email' %}
+        <div class="fade-in-up">
+          <div class="mb-4">
+            <div class="d-inline-block p-3 rounded-circle bg-light text-success mb-3">
+              <i class="bi bi-person-fill fs-3"></i>
+            </div>
+            <h1>¡Hola de nuevo!</h1>
+            <p class="subtitle">Ingresa tu correo para comenzar. Si no tienes cuenta, la crearemos juntos.</p>
           </div>
-        {% endif %}
 
-        <!-- STEP: EMAIL -->
-        {% if step == 'email' %}
-          <header class="mb-3">
-            <h2 class="h5 mb-1">Ingresá tu correo</h2>
-            <p class="muted">Debe ser un correo <strong>válido</strong> (ej: <em>nombre@dominio.com</em>).</p>
-          </header>
-
-          <form method="post" class="vstack gap-3 fade" id="emailForm" novalidate>
+          <form method="post" id="emailForm" novalidate>
             {% csrf_token %}
             <input type="hidden" name="action" value="submit_email">
             <input type="hidden" name="next" value="{{ next|default:'' }}">
 
             <div class="form-group">
-              <label class="form-label" for="id_email"><i class="bi bi-envelope me-1"></i> Correo electrónico</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-at"></i></span>
+              <label class="form-label">Correo electrónico</label>
+              <div class="custom-input-group">
+                <i class="bi bi-envelope"></i>
                 {{ email_form.email }}
               </div>
-              <div id="emailInvalid" class="text-danger small mt-2" style="display:none"><i class="bi bi-exclamation-triangle me-1"></i> Ingresá un correo válido.</div>
-              <div class="muted mt-1">Usaremos este correo para continuar el acceso.</div>
+              <div id="emailInvalid" class="text-danger small mt-2 fw-semibold" style="display:none">
+                <i class="bi bi-exclamation-circle me-1"></i> Por favor, ingresa un correo válido.
+              </div>
             </div>
 
-            <!-- Botón principal neutral -->
-            <button class="btn btn-primary w-100" id="emailSubmit" type="submit">Continuar</button>
+            <button class="btn-main mb-3" type="submit" id="emailSubmit">
+              Continuar <i class="bi bi-arrow-right-short"></i>
+            </button>
 
-            <!-- Acción alternativa: login sin contraseña (no redirige por ahora) -->
-            <a href="{% url 'magic_start' %}"
-                role="button"
-                style="
-                  display:inline-flex; align-items:center; justify-content:center;
-                  width:100%; padding:0.9rem 1rem; border-radius:12px;
-                  border:1px solid #b68a2a; background:#ffffff;
-                  text-decoration:none; color:#8c6b1f; font-weight:800; line-height:1;
-                  box-shadow:0 1px 0 rgba(214,179,106,.35) inset;
-                  transition:transform .15s ease, filter .15s ease;
-                "
-                onmouseover="this.style.filter='brightness(1.02)';this.style.transform='translateY(-1px)';"
-                onmouseout="this.style.filter='';this.style.transform='';">
-                <i class="bi bi-magic" style="margin-right:.5rem;"></i>
-                Ingresar sin contraseña
-              </a>
-
+            <a href="{% url 'magic_start' %}" class="btn-magic text-decoration-none" id="passlessBtn">
+              <i class="bi bi-stars"></i> Ingreso Mágico sin contraseña
+            </a>
           </form>
-        {% endif %}
+        </div>
+      {% endif %}
 
-        <!-- STEP: PASSWORD -->
-        {% if step == 'password' %}
-          <header class="mb-3">
-            <h2 class="h5 mb-1">Tu contraseña</h2>
-            <p class="muted">Correo: <strong>{{ email }}</strong></p>
-          </header>
-          <form method="post" class="vstack gap-3 fade" novalidate>
+      {% if step == 'password' %}
+        <div class="fade-in-up">
+          <div class="mb-4">
+            <a href="#" onclick="history.back()" class="text-decoration-none text-muted small mb-3 d-inline-block"><i class="bi bi-arrow-left"></i> Volver</a>
+            <h1>Ingresa tu clave</h1>
+            <p class="subtitle">Hola <strong>{{ email }}</strong>, introduce tu contraseña para acceder.</p>
+          </div>
+
+          <form method="post" novalidate>
             {% csrf_token %}
             <input type="hidden" name="action" value="submit_password">
             <input type="hidden" name="next" value="{{ next|default:'' }}">
+
             <div class="form-group">
-              <label class="form-label" for="id_password"><i class="bi bi-key me-1"></i> Contraseña</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+              <label class="form-label">Contraseña</label>
+              <div class="custom-input-group">
+                <i class="bi bi-key"></i>
                 {{ password_form.password }}
-                <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Mostrar/ocultar contraseña"><i class="bi bi-eye"></i></button>
+                <button class="btn border-0 position-absolute end-0 text-muted" type="button" id="togglePwd" style="z-index: 20;">
+                  <i class="bi bi-eye"></i>
+                </button>
               </div>
               <div class="text-danger small mt-1">{{ password_form.password.errors }}</div>
             </div>
-            <button class="btn btn-primary w-100" type="submit">Entrar</button>
-          </form>
-        {% endif %}
-
-        <!-- STEP: CODE -->
-        {% if step == 'code' %}
-          <header class="mb-3 d-flex align-items-center justify-content-between">
-            <div>
-              <h2 class="h5 mb-1">Ingresá el código</h2>
-              <p class="muted mb-0">Enviado a <strong>{{ email }}</strong></p>
+            
+            <div class="d-flex justify-content-end mb-4">
+              <a href="#" class="small text-decoration-none fw-semibold" style="color: var(--gold-main);">¿Olvidaste tu contraseña?</a>
             </div>
-            <!-- Volver a ingresar otro correo -->
-            <form id="restartEmail" method="post" class="ms-2">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="submit_email">
-              <button class="btn btn-ghost btn-sm" type="submit" title="Ingresar otro correo">
-                <i class="bi bi-arrow-left-circle me-1"></i> Ingresar otro correo
-              </button>
-            </form>
-          </header>
 
-          <!-- Mantiene widget original oculto y lo sincroniza con OTP -->
-          <form method="post" class="vstack gap-3 fade" id="codeForm" novalidate>
+            <button class="btn-main" type="submit">Iniciar Sesión</button>
+          </form>
+        </div>
+      {% endif %}
+
+      {% if step == 'code' %}
+        <div class="fade-in-up">
+          <div class="text-center mb-4">
+            <div class="d-inline-block p-3 rounded-circle bg-light text-warning mb-3">
+              <i class="bi bi-shield-lock-fill fs-3"></i>
+            </div>
+            <h1>Verificación</h1>
+            <p class="subtitle">Hemos enviado un código de 6 dígitos a <br><strong>{{ email }}</strong></p>
+          </div>
+
+          <form id="restartEmail" method="post" class="text-center mb-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit_email">
+            <button class="btn btn-sm btn-link text-muted text-decoration-none" type="submit">
+              ¿No es tu correo? Cambiar
+            </button>
+          </form>
+
+          <form method="post" id="codeForm" novalidate>
             {% csrf_token %}
             <input type="hidden" name="action" value="submit_code">
             <input type="hidden" name="next" value="{{ next|default:'' }}">
 
-            <div class="visually-hidden" aria-hidden="true">{{ code_form.code }}</div>
+            <div class="visually-hidden">{{ code_form.code }}</div>
 
-            <div class="otp" aria-label="Código de verificación de 6 dígitos">
-              <input inputmode="numeric" pattern="[0-9]*" maxlength="1" class="form-control" id="otp1">
-              <input inputmode="numeric" pattern="[0-9]*" maxlength="1" class="form-control" id="otp2">
-              <input inputmode="numeric" pattern="[0-9]*" maxlength="1" class="form-control" id="otp3">
-              <input inputmode="numeric" pattern="[0-9]*" maxlength="1" class="form-control" id="otp4">
-              <input inputmode="numeric" pattern="[0-9]*" maxlength="1" class="form-control" id="otp5">
-              <input inputmode="numeric" pattern="[0-9]*" maxlength="1" class="form-control" id="otp6">
+            <div class="otp-grid">
+              <input type="tel" maxlength="1" class="otp-input" id="otp1">
+              <input type="tel" maxlength="1" class="otp-input" id="otp2">
+              <input type="tel" maxlength="1" class="otp-input" id="otp3">
+              <input type="tel" maxlength="1" class="otp-input" id="otp4">
+              <input type="tel" maxlength="1" class="otp-input" id="otp5">
+              <input type="tel" maxlength="1" class="otp-input" id="otp6">
             </div>
-            <div class="text-danger small" id="codeErrors">{{ code_form.code.errors }}</div>
-            <div class="muted">Podés pegar el código completo y lo acomodamos automáticamente.</div>
+            
+            <div class="text-danger small text-center fw-bold mb-3" id="codeErrors">{{ code_form.code.errors }}</div>
 
-            <button class="btn btn-primary w-100" type="submit">Verificar código</button>
+            <button class="btn-main mt-2" type="submit">Verificar</button>
           </form>
 
-          <form method="post" class="mt-3 text-center" onsubmit="disableResend(this)" novalidate>
-            {% csrf_token %}
-            <input type="hidden" name="action" value="submit_email">
-            <input type="hidden" name="email" value="{{ email }}">
-            <input type="hidden" name="next" value="{{ next|default:'' }}">
-            <button id="resendBtn" class="btn btn-link p-0" type="submit"><i class="bi bi-arrow-repeat me-1"></i> Reenviar código</button>
-            <div class="small text-muted mt-1" id="resendHint"></div>
-          </form>
-        {% endif %}
+          <div class="mt-4 text-center">
+            <form method="post" onsubmit="disableResend(this)" novalidate>
+              {% csrf_token %}
+              <input type="hidden" name="action" value="submit_email">
+              <input type="hidden" name="email" value="{{ email }}">
+              <button id="resendBtn" class="btn btn-link text-decoration-none fw-bold" style="color: var(--emerald-main);" type="submit">
+                Reenviar código
+              </button>
+              <div class="small text-muted" id="resendHint"></div>
+            </form>
+          </div>
+        </div>
+      {% endif %}
 
-        <!-- STEP: REGISTER -->
-        {% if step == 'register' %}
-          <header class="mb-3">
-            <h2 class="h5 mb-1">Crear cuenta</h2>
-            <p class="muted">Correo verificado: <strong>{{ email }}</strong></p>
-          </header>
-          <form method="post" class="vstack gap-3 fade" novalidate>
+      {% if step == 'register' %}
+        <div class="fade-in-up">
+          <div class="mb-4">
+            <h1>Crear Cuenta</h1>
+            <p class="subtitle">Completa tus datos para finalizar el registro con <strong>{{ email }}</strong>.</p>
+          </div>
+
+          <form method="post" novalidate>
             {% csrf_token %}
             <input type="hidden" name="action" value="submit_register">
             <input type="hidden" name="next" value="{{ next|default:'' }}">
 
             <div class="row g-3">
-              <div class="col-12 col-md-6">
-                <label class="form-label" for="id_first_name"><i class="bi bi-person me-1"></i> Nombre</label>
-                {{ register_form.first_name }}
-                <div class="text-danger small mt-1">{{ register_form.first_name.errors }}</div>
+              <div class="col-6">
+                <div class="form-group">
+                  <label class="form-label">Nombre</label>
+                  <div class="custom-input-group">
+                    <i class="bi bi-person"></i>
+                    {{ register_form.first_name }}
+                  </div>
+                  <div class="text-danger small mt-1">{{ register_form.first_name.errors }}</div>
+                </div>
               </div>
-              <div class="col-12 col-md-6">
-                <label class="form-label" for="id_last_name"><i class="bi bi-person-badge me-1"></i> Apellido</label>
-                {{ register_form.last_name }}
-                <div class="text-danger small mt-1">{{ register_form.last_name.errors }}</div>
+              <div class="col-6">
+                <div class="form-group">
+                  <label class="form-label">Apellido</label>
+                  <div class="custom-input-group">
+                    <i class="bi bi-person-badge"></i>
+                    {{ register_form.last_name }}
+                  </div>
+                  <div class="text-danger small mt-1">{{ register_form.last_name.errors }}</div>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label class="form-label" for="id_password1"><i class="bi bi-lock me-1"></i> Contraseña</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+            <div class="form-group">
+              <label class="form-label">Contraseña</label>
+              <div class="custom-input-group">
+                <i class="bi bi-lock"></i>
                 {{ register_form.password1 }}
-                <button class="btn btn-outline-secondary" type="button" id="togglePwd1" aria-label="Mostrar/ocultar contraseña"><i class="bi bi-eye"></i></button>
+                <button class="btn border-0 position-absolute end-0 text-muted" type="button" id="togglePwd1" style="z-index: 20;">
+                  <i class="bi bi-eye"></i>
+                </button>
               </div>
               <div class="text-danger small mt-1">{{ register_form.password1.errors }}</div>
             </div>
 
-            <div>
-              <label class="form-label" for="id_password2"><i class="bi bi-lock-fill me-1"></i> Repetir contraseña</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+            <div class="form-group">
+              <label class="form-label">Repetir Contraseña</label>
+              <div class="custom-input-group">
+                <i class="bi bi-lock-fill"></i>
                 {{ register_form.password2 }}
-                <button class="btn btn-outline-secondary" type="button" id="togglePwd2" aria-label="Mostrar/ocultar contraseña"><i class="bi bi-eye"></i></button>
               </div>
               <div class="text-danger small mt-1">{{ register_form.password2.errors }}</div>
-              <div class="muted mt-1">La contraseña debe coincidir en ambos campos.</div>
             </div>
 
-            <button class="btn btn-primary w-100" type="submit">Crear cuenta</button>
+            <button class="btn-main mt-3" type="submit">Finalizar Registro</button>
           </form>
-        {% endif %}
-
-        <hr class="my-4">
-        <div class="d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-start align-items-sm-center">
-          <span class="muted"><i class="bi bi-lock-fill me-1"></i> Tus datos se transmiten de forma segura.</span>
-          <div class="d-flex gap-3">
-            <a class="link" href="#">Términos</a>
-            <a class="link" href="#">Privacidad</a>
-            <a class="link" href="#">Ayuda</a>
-          </div>
         </div>
+      {% endif %}
+      
+      <div class="mt-auto pt-5 text-center">
+        <p class="text-muted small mb-0">
+          Protegido por reCAPTCHA y sujeto a la <a href="#" class="text-decoration-none fw-bold" style="color: var(--emerald-main);">Política de Privacidad</a>.
+        </p>
       </div>
-    </section>
-  </main>
+
+    </div>
+  </div>
 
   <script>
-    // Toggle password visibility
-    const toggleVisibility = (btnId, inputId) => {
-      const btn = document.getElementById(btnId);
-      const input = document.getElementById(inputId);
-      if (!btn || !input) return;
-      btn.addEventListener('click', () => {
-        const isPwd = input.getAttribute('type') === 'password';
-        input.setAttribute('type', isPwd ? 'text' : 'password');
-        btn.querySelector('i').className = isPwd ? 'bi bi-eye-slash' : 'bi bi-eye';
-      });
-    };
-    toggleVisibility('togglePwd', 'id_password');
-    toggleVisibility('togglePwd1', 'id_password1');
-    toggleVisibility('togglePwd2', 'id_password2');
-
-    // Validación simple de correo (sin tocar el widget Django)
-    const emailInput = document.getElementById('id_email');
-    const emailInvalid = document.getElementById('emailInvalid');
-    const emailForm = document.getElementById('emailForm');
-    function isValidEmail(v){ return (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/).test(v || ''); }
-    function mark(valido){ if(!emailInput||!emailInvalid) return; emailInput.classList.toggle('is-invalid', !valido); emailInvalid.style.display = valido ? 'none' : 'block'; }
-    if (emailInput){ emailInput.addEventListener('input', () => mark(isValidEmail(emailInput.value))); emailInput.addEventListener('blur', () => mark(isValidEmail(emailInput.value))); }
-    if (emailForm){ emailForm.addEventListener('submit', (e) => { if (!emailInput || !isValidEmail(emailInput.value)){ e.preventDefault(); mark(false); emailInput?.focus(); } }); }
-
-    // Botón "Ingresar sin contraseña" (por ahora sin navegación). Feedback visual corto
-    const passlessBtn = document.getElementById('passlessBtn');
-    if (passlessBtn){ passlessBtn.addEventListener('click', (e) => { e.preventDefault(); passlessBtn.classList.add('disabled'); setTimeout(() => passlessBtn.classList.remove('disabled'), 900); }); }
-
-    // OTP: auto-avance, backspace y pegar completo
-    const otpIds = ['otp1','otp2','otp3','otp4','otp5','otp6'];
-    const otpInputs = otpIds.map(id => document.getElementById(id)).filter(Boolean);
-    const hiddenCode = document.getElementById('id_code');
-    const onlyDigits = (str) => (str||'').replace(/\D/g,'');
-    const syncHidden = () => { if (!hiddenCode || otpInputs.length !== 6) return; hiddenCode.value = otpInputs.map(i => i.value).join(''); };
-    otpInputs.forEach((input, idx) => {
-      input?.addEventListener('input', () => { input.value = onlyDigits(input.value).slice(0,1); if (input.value && idx < otpInputs.length - 1) otpInputs[idx+1].focus(); syncHidden(); });
-      input?.addEventListener('keydown', (e) => { if (e.key === 'Backspace' && !input.value && idx > 0) otpInputs[idx-1].focus(); });
-      input?.addEventListener('paste', (e) => { const t=(e.clipboardData||window.clipboardData).getData('text'); if(!t) return; e.preventDefault(); const d=onlyDigits(t).slice(0,6).split(''); otpInputs.forEach((i,k)=>{ i.value=d[k]||''; }); (otpInputs[d.length-1]||otpInputs[0]).focus(); syncHidden(); });
+    // 1. Añadir clase 'form-control' a los inputs de Django si no la tienen
+    document.querySelectorAll('input').forEach(input => {
+      if(!input.classList.contains('form-control') && !input.classList.contains('otp-input') && input.type !== 'hidden') {
+        input.classList.add('form-control');
+      }
     });
 
-    // Deshabilitar "Reenviar código" tras enviar
+    // 2. Toggle Password
+    const setupToggle = (btnId, inputId) => {
+      const btn = document.getElementById(btnId);
+      // Buscamos el input dentro del mismo grupo o por ID si Django genera el ID esperado
+      // Como Django a veces cambia IDs, buscamos el input hermano previo
+      if(btn) {
+        btn.addEventListener('click', () => {
+          const input = btn.previousElementSibling;
+          if(input) {
+            const isPwd = input.getAttribute('type') === 'password';
+            input.setAttribute('type', isPwd ? 'text' : 'password');
+            btn.querySelector('i').className = isPwd ? 'bi bi-eye-slash' : 'bi bi-eye';
+          }
+        });
+      }
+    };
+    setupToggle('togglePwd', 'dummy'); // El input es hermano previo
+    setupToggle('togglePwd1', 'dummy');
+
+    // 3. Validación de Email Visual
+    const emailInput = document.getElementById('id_email');
+    const emailInvalid = document.getElementById('emailInvalid');
+    
+    if(emailInput) {
+      const validateEmail = () => {
+        const val = emailInput.value;
+        const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
+        if(val.length > 0 && !isValid) {
+          emailInput.classList.add('border-danger');
+          emailInvalid.style.display = 'block';
+        } else {
+          emailInput.classList.remove('border-danger');
+          emailInvalid.style.display = 'none';
+        }
+      };
+      emailInput.addEventListener('blur', validateEmail);
+      emailInput.addEventListener('input', () => {
+        // Limpiar error al escribir
+        emailInput.classList.remove('border-danger');
+        emailInvalid.style.display = 'none';
+      });
+    }
+
+    // 4. OTP Logic (Pegar y Auto-focus)
+    const otpInputs = Array.from(document.querySelectorAll('.otp-input'));
+    const hiddenCode = document.querySelector('input[name="code"]'); // El input de Django
+
+    if(otpInputs.length > 0) {
+      const syncHidden = () => {
+        if(hiddenCode) {
+          hiddenCode.value = otpInputs.map(i => i.value).join('');
+        }
+      };
+
+      otpInputs.forEach((input, index) => {
+        // Al escribir número
+        input.addEventListener('input', (e) => {
+          // Solo números
+          input.value = input.value.replace(/[^0-9]/g, '');
+          
+          if(input.value.length === 1) {
+            // Saltar al siguiente
+            if(index < 5) otpInputs[index + 1].focus();
+          }
+          syncHidden();
+        });
+
+        // Borrar (Backspace)
+        input.addEventListener('keydown', (e) => {
+          if(e.key === 'Backspace' && !input.value && index > 0) {
+            otpInputs[index - 1].focus();
+          }
+        });
+
+        // Pegar código completo
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const data = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
+          data.split('').forEach((char, i) => {
+            if(otpInputs[i]) otpInputs[i].value = char;
+          });
+          syncHidden();
+          // Enfocar el último o el siguiente vacío
+          const nextEmpty = otpInputs.find(i => !i.value);
+          if(nextEmpty) nextEmpty.focus();
+          else otpInputs[5].focus();
+        });
+      });
+    }
+
+    // 5. Timer de Reenvío
     function disableResend(form) {
       const btn = document.getElementById('resendBtn');
       const hint = document.getElementById('resendHint');
-      if (!btn) return;
-      btn.disabled = true;
-      let seconds = 60;
-      const tick = () => {
-        if (seconds <= 0) { btn.disabled = false; hint.textContent = ''; return; }
-        hint.textContent = `Podrás reenviar en ${seconds}s`;
-        seconds -= 1;
-        setTimeout(tick, 1000);
-      };
-      tick();
+      if(!btn) return;
+      
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.5';
+      let count = 60;
+      
+      const timer = setInterval(() => {
+        count--;
+        hint.textContent = `Espera ${count}s para reenviar`;
+        if(count === 0) {
+          clearInterval(timer);
+          btn.style.pointerEvents = 'auto';
+          btn.style.opacity = '1';
+          hint.textContent = '';
+        }
+      }, 1000);
     }
   </script>
 </body>

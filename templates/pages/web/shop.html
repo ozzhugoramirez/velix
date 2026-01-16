@@ -1,102 +1,339 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block navbar %}
-{% include "components/web/navbar.html" %}
+    {% include "components/web/navbar.html" %}
 {% endblock navbar %}
 
 {% block content %}
-<div class="container-fluid px-3 px-md-4 mt-4">  <!-- container-fluid y padding reducido -->
-    {% if messages %}
-    <div class="alert alert-danger mb-3">
-        {% for message in messages %}
-            <p class="mb-0">{{ message }}</p>
-        {% endfor %}
+<style>
+    :root {
+        --emerald: rgb(25,90,89);
+        --gold: rgb(200,160,90);
+        --dark-bg: #111827;
+        --card-bg: #ffffff;
+        --bg-body: #f8f9fa;
+    }
+
+    body {
+        background-color: var(--bg-body);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* --- 1. BARRA DE FILTROS SUPERIOR (Sticky) --- */
+    .filters-top-bar {
+        position: sticky;
+        top: 60px; /* Ajustar según la altura real de tu navbar */
+        z-index: 1020;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    }
+
+    .filter-scroller {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px; /* Espacio para scrollbar oculta */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE */
+    }
+    .filter-scroller::-webkit-scrollbar { display: none; }
+
+    .filter-pill {
+        padding: 8px 20px;
+        border-radius: 50px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        color: #4b5563;
+        font-size: 0.9rem;
+        font-weight: 500;
+        white-space: nowrap;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-pill:hover {
+        border-color: var(--emerald);
+        color: var(--emerald);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(25,90,89,0.1);
+    }
+    .filter-pill.active {
+        background: var(--emerald);
+        color: white;
+        border-color: var(--emerald);
+        box-shadow: 0 4px 12px rgba(25,90,89,0.25);
+    }
+
+    /* --- 2. TARJETAS DE PRODUCTO (Premium) --- */
+    .pro-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.03);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    .pro-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    }
+    
+    .pro-img-wrap {
+        position: relative;
+        padding-top: 100%; /* Ratio 1:1 */
+        background: #f3f4f6;
+        overflow: hidden;
+    }
+    .pro-img {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+    }
+    .pro-card:hover .pro-img { transform: scale(1.08); }
+
+    /* Acciones flotantes */
+    .hover-actions {
+        position: absolute;
+        bottom: 15px;
+        left: 0; right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease;
+    }
+    .pro-card:hover .hover-actions { opacity: 1; transform: translateY(0); }
+    
+    .btn-action {
+        width: 42px; height: 42px;
+        border-radius: 50%;
+        background: white;
+        color: #111;
+        display: flex; align-items: center; justify-content: center;
+        border: none;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: 0.2s;
+    }
+    .btn-action:hover {
+        background: var(--gold);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    /* --- 3. BANNERS PUBLICITARIOS (In-Feed) --- */
+    .ad-banner {
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+        color: white;
+        margin: 2rem 0;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        min-height: 250px;
+        transition: transform 0.3s;
+    }
+    .ad-banner:hover { transform: scale-[1.01]; }
+
+    .ad-bg-1 {
+        background: linear-gradient(135deg, #111827 0%, #374151 100%);
+    }
+    .ad-bg-2 {
+        background: linear-gradient(135deg, var(--emerald) 0%, #10b981 100%);
+    }
+
+    .ad-content {
+        position: relative;
+        z-index: 2;
+        padding: 3rem;
+        max-width: 60%;
+    }
+    
+    .ad-image {
+        position: absolute;
+        right: 0; top: 0; bottom: 0;
+        width: 50%;
+        object-fit: cover;
+        mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+        -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
+    }
+</style>
+
+<div class="filters-top-bar">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between">
+            
+            <div class="filter-scroller flex-grow-1 me-4">
+                <a href="?category=all" class="filter-pill {% if not selected_category %}active{% endif %}">
+                    <i class="bi bi-grid-fill"></i> Todo
+                </a>
+                <a href="?category=tecnologia" class="filter-pill">
+                    <i class="bi bi-laptop"></i> Tecnología
+                </a>
+                <a href="?category=moda" class="filter-pill">
+                    <i class="bi bi-bag"></i> Moda
+                </a>
+                <a href="?category=hogar" class="filter-pill">
+                    <i class="bi bi-house"></i> Hogar
+                </a>
+                <a href="?category=ofertas" class="filter-pill" style="border-color: var(--gold); color: #b48532;">
+                    <i class="bi bi-lightning-fill"></i> Ofertas Flash
+                </a>
+                <a href="#" class="filter-pill">Deportes</a>
+                <a href="#" class="filter-pill">Gamer</a>
+                <a href="#" class="filter-pill">Accesorios</a>
+            </div>
+
+            <div class="dropdown flex-shrink-0">
+                <button class="btn btn-light rounded-pill border px-3 d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-filter-right"></i> <span class="d-none d-sm-inline">Ordenar</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2">
+                    <li><h6 class="dropdown-header">Criterio</h6></li>
+                    <li><a class="dropdown-item" href="?sort=price_asc">Menor Precio</a></li>
+                    <li><a class="dropdown-item" href="?sort=price_desc">Mayor Precio</a></li>
+                    <li><a class="dropdown-item" href="?sort=newest">Más Nuevos</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
+</div>
+
+<div class="container py-5">
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-info rounded-pill text-center mb-4">{{ message }}</div>
+        {% endfor %}
     {% endif %}
 
-    <div class="row g-2 g-md-3">  <!-- gutter reducido entre cards -->
+    <div class="row g-4">
+        
         {% for item in products %}
         {% with product=item.product status=item.status %}
-        <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="card h-100 border-0 shadow-sm hover-shadow transition-all mb-2">  <!-- mb-2 en lugar de mb-4 -->
-                <div class="position-relative" style="height: 160px; overflow: hidden;">  <!-- altura imagen reducida -->
+        
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="pro-card h-100">
+                <div class="pro-img-wrap">
                     {% if product.image %}
-                        <img src="{{ product.image.url }}" class="card-img-top w-100 h-100" style="object-fit: cover;" alt="{{ product.title }}">
-                    {% else %}
-                        <img src="/static/images/default-product.png" class="card-img-top w-100 h-100" style="object-fit: cover;" alt="Imagen no disponible">
+                        <img src="{{ product.image.url }}" class="pro-img" alt="{{ product.title }}">
                     {% endif %}
-                    <div class="badge bg-danger position-absolute top-0 end-0 m-1 p-1 small">{{ status }}</div>
-                </div>
-                <div class="card-body p-2 d-flex flex-column">  <!-- padding interno reducido -->
-                    <h6 class="card-title mb-1 text-truncate">{{ product.title }}</h6>
-                    <div class="d-flex justify-content-between small mb-1">  <!-- margen inferior reducido -->
-                        <span class="text-muted">👁️ 234</span>
-                        <span class="text-muted">❤️ 87</span>
-                    </div>
-                    <p class="card-text mb-1"><small class="text-success fw-bold">${{ product.price }}</small></p>
-                    <p class="card-text mb-1"><small class="text-muted">{{ product.category.name }}</small></p>  <!-- margen inferior reducido -->
-                    <div class="d-flex justify-content-between mt-auto pt-1">  <!-- padding top reducido -->
                     
-                        <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-outline-primary py-0 px-1">Ver</a>  <!-- padding interno reducido -->
+                    <div class="position-absolute top-0 start-0 p-2">
+                        {% if status == 'Oferta' %}
+                            <span class="badge bg-danger rounded-pill shadow-sm small">SALE</span>
+                        {% elif status == 'Nuevo' %}
+                            <span class="badge bg-success rounded-pill shadow-sm small">NEW</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="hover-actions">
+                        <a href="{% url 'product_detail' product.id %}" class="btn-action" title="Ver Detalle">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% if user.is_authenticated %}
+                        <form action="{% url 'add_to_cart' product.id %}" method="POST">
+                            {% csrf_token %}
+                            <button class="btn-action" title="Al Carrito"><i class="bi bi-bag-plus"></i></button>
+                        </form>
+                        {% else %}
+                        <a href="{% url 'login' %}" class="btn-action"><i class="bi bi-lock"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="p-3 d-flex flex-column flex-grow-1">
+                    <div class="text-muted small text-uppercase" style="font-size: 0.7rem;">{{ product.category.name|default:"General" }}</div>
+                    <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
+                        <h6 class="fw-bold my-1 text-truncate">{{ product.title }}</h6>
+                    </a>
+                    <div class="mt-auto d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="fw-bold" style="color: var(--emerald);">${{ product.price }}</span>
+                            {% if product.old_price %}
+                            <small class="text-decoration-line-through text-muted ms-1" style="font-size: 0.8rem">${{ product.old_price }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="text-warning small"><i class="bi bi-star-fill"></i> 4.8</div>
                     </div>
                 </div>
             </div>
         </div>
+
+        {# AD #1: Aparece después del 4to producto #}
+        {% if forloop.counter == 4 %}
+        <div class="col-12">
+            <div class="ad-banner ad-bg-1">
+                <div class="ad-content">
+                    <span class="badge bg-warning text-dark mb-2">LIMITED EDITION</span>
+                    <h2 class="fw-bold display-6">Colección de Invierno</h2>
+                    <p class="lead opacity-75">Diseños exclusivos con materiales premium. Solo por tiempo limitado.</p>
+                    <a href="#" class="btn btn-light rounded-pill px-4 fw-bold mt-2">Ver Colección</a>
+                </div>
+                <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="ad-image" alt="Fashion">
+            </div>
+        </div>
+        {% endif %}
+
+        {# AD #2: Aparece después del 8vo producto #}
+        {% if forloop.counter == 8 %}
+        <div class="col-12">
+            <div class="ad-banner ad-bg-2">
+                <div class="ad-content">
+                    <h2 class="fw-bold display-6">Envío Gratis + 10% OFF</h2>
+                    <p class="lead opacity-75">Únete al club NextGen y obtén beneficios exclusivos en tu primera compra.</p>
+                    <div class="d-flex gap-2 mt-3">
+                        <input type="email" class="form-control rounded-pill border-0" placeholder="Tu email..." style="max-width: 250px;">
+                        <button class="btn btn-dark rounded-pill">Suscribirse</button>
+                    </div>
+                </div>
+                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="ad-image" alt="Payment">
+            </div>
+        </div>
+        {% endif %}
+
         {% endwith %}
         {% endfor %}
     </div>
 
-    <!-- Paginación compacta -->
-    <div class="mt-2 d-flex justify-content-center">  <!-- margen superior reducido -->
-        {% if page_obj.has_other_pages %}
-            <nav>
-                <ul class="pagination pagination-sm mb-2">  <!-- margen inferior reducido -->
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page=1{% if selected_category %}&category={{ selected_category }}{% endif %}">&laquo;&laquo;</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">&laquo;</a>
-                        </li>
-                    {% endif %}
-                    {% for num in page_obj.paginator.page_range %}
-                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                            <a class="page-link" href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}">{{ num }}</a>
-                        </li>
-                    {% endfor %}
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}">&raquo;</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if selected_category %}&category={{ selected_category }}{% endif %}">&raquo;&raquo;</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
+    {% if page_obj.has_other_pages %}
+    <div class="mt-5 d-flex justify-content-center">
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link border-0 text-dark rounded-circle mx-1" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item">
+                    <a class="page-link border-0 rounded-circle mx-1 {% if page_obj.number == num %}bg-dark text-white fw-bold{% else %}text-dark bg-light{% endif %}" 
+                       href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link border-0 text-dark rounded-circle mx-1" href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
-</div>
+    {% endif %}
 
-<style>
-    .hover-shadow {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .hover-shadow:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(0,0,0,0.08) !important;
-    }
-    .card {
-        border-radius: 6px !important;
-    }
-    .card-img-top {
-        border-top-left-radius: 6px !important;
-        border-top-right-radius: 6px !important;
-    }
-    body {
-        padding-top: 70px; /* Asegura espacio fijo bajo el navbar */
-    }
-</style>
+</div>
 
 {% endblock content %}
 

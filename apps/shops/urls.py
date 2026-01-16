@@ -12,8 +12,7 @@ urlpatterns = [
      
    path('Categoria/<str:category_name>/', HomeShoptCategoriaView.as_view(), name='shop_categoria_list'),
    
-    path('confirmar-pedido/', ConfirmarPedidoTokenView.as_view(), name='confirmar_pedido'),
-
+  
      path('cart', CarritoView.as_view(), name="cart") ,
      path('cart/add/<uuid:product_id>/', AddToCartView.as_view(), name='add_to_cart'),
      path('cart/remove/<uuid:product_id>/', RemoveFromCartView.as_view(), name='remove_from_cart'),

@@ -1,72 +1,262 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block content %}
 
-<div class="container mt-5">
-    <!-- Título principal -->
-    <h2 class="text-center fw-bold text-success mb-4"><i class="bi bi-bag-check-fill"></i> ¡Compra Confirmada!</h2>
+<style>
+    :root {
+        --success-color: #195A59; /* Tu verde Emerald */
+        --bg-card: #ffffff;
+        --bg-body: #f9f9f9;
+        --text-main: #1d1d1f;
+        --text-muted: #86868b;
+        --border-color: #e5e5e5;
+    }
 
-    <!-- Información del pedido -->
-    <div class="card shadow-lg mb-4">
-        <div class="card-body">
-            <h4 class="card-title text-secondary"><i class="bi bi-receipt-cutoff"></i> Información del Pedido</h4>
-            <hr>
-            <p><strong>Pedido ID:</strong> {{ order.numero_orden }}</p>
-            <p><strong>Estado:</strong> <span class="badge bg-info text-dark">{{ order.get_status_display }}</span></p>
-            <p><strong>Dirección:</strong> {{ order.address }}</p>
-            <p><strong>Método de Pago:</strong> <span class="badge bg-success">{{ order.get_payment_method_display }}</span></p>
+    body { background-color: var(--bg-body); }
+
+    /* Header de Confirmación */
+    .confirmation-header {
+        text-align: center;
+        padding: 50px 0 30px;
+    }
+    .icon-success {
+        font-size: 4rem;
+        color: var(--success-color);
+        margin-bottom: 15px;
+        animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* Tarjetas */
+    .order-card {
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+    }
+
+    .section-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+    }
+
+    /* Lista de Productos */
+    .item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 0;
+        border-bottom: 1px solid #f5f5f5;
+    }
+    .item-row:last-child { border-bottom: none; }
+    
+    .item-info { display: flex; align-items: center; gap: 15px; }
+    .item-qty { 
+        background: #f0f0f0; color: #333; 
+        width: 30px; height: 30px; border-radius: 8px; 
+        display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600;
+    }
+    .item-title { font-weight: 600; color: var(--text-main); font-size: 1rem; }
+    .item-price { font-weight: 700; color: var(--text-main); }
+
+    /* Código de Entrega (Estilo Ticket) */
+    .security-box {
+        background: #F5F7FA;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    .security-label { font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+    .security-code { 
+        font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; color: var(--text-main);
+        font-family: 'Courier New', Courier, monospace; 
+        background: white; padding: 5px 15px; border-radius: 6px; display: inline-block;
+    }
+
+    /* Resumen Financiero */
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.95rem; color: #555; }
+    .summary-total { 
+        display: flex; justify-content: space-between; margin-top: 20px; padding-top: 15px; 
+        border-top: 2px solid var(--text-main); font-size: 1.3rem; font-weight: 800; color: var(--text-main);
+    }
+
+    /* Detalles Dirección */
+    .info-group { margin-bottom: 15px; }
+    .info-label { font-size: 0.8rem; color: var(--text-muted); display: block; }
+    .info-value { font-size: 1rem; font-weight: 500; color: var(--text-main); }
+
+    /* Botones */
+    .btn-profile {
+        background: var(--text-main); color: white;
+        width: 100%; padding: 15px; border-radius: 12px;
+        font-weight: 600; transition: 0.3s; text-decoration: none; display: inline-block; text-align: center;
+    }
+    .btn-profile:hover { background: var(--success-color); color: white; transform: translateY(-2px); }
+
+    /* Timeline simple */
+    .order-steps { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; }
+    .order-steps::before { content:''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #e5e5e5; z-index: 0; }
+    .step { position: relative; z-index: 1; background: var(--bg-body); padding: 0 10px; text-align: center; }
+    .step-dot { width: 12px; height: 12px; background: #e5e5e5; border-radius: 50%; display: inline-block; margin-bottom: 5px; }
+    .step.active .step-dot { background: var(--success-color); transform: scale(1.3); }
+    .step-text { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .step.active .step-text { color: var(--success-color); }
+
+</style>
+
+<div class="container pb-5">
+    
+    <div class="confirmation-header">
+        <i class="bi bi-check-circle-fill icon-success"></i>
+        <h1 class="fw-bold mb-2">¡Gracias por tu compra!</h1>
+        <p class="text-muted fs-5">Tu pedido <span class="text-dark fw-bold">#{{ order.numero_orden }}</span> ha sido confirmado.</p>
+        <p class="small text-muted">Hemos enviado un correo de confirmación a {{ user.email }}</p>
+    </div>
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-6">
+            <div class="order-steps">
+                <div class="step active">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Confirmado</span>
+                </div>
+                <div class="step">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Preparando</span>
+                </div>
+                <div class="step">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Enviado</span>
+                </div>
+                <div class="step">
+                    <span class="step-dot"></span>
+                    <span class="step-text">Entregado</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Lista de productos -->
-    <div class="card shadow-lg mb-4">
-        <div class="card-body">
-            <h4 class="card-title text-secondary"><i class="bi bi-box-seam"></i> Productos en el Pedido</h4>
-            <hr>
-            <ul class="list-group">
-                {% for item in order.orderitem_set.all %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ item.quantity }} x {{ item.product.title }}</span>
-                    <span class="badge bg-primary rounded-pill">${{ item.price }}</span>
-                </li>
-                {% endfor %}
-            </ul>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="order-card">
+                <h3 class="section-title">Detalle de Productos</h3>
+                <div class="products-list">
+                    {% for item in order.orderitem_set.all %}
+                    <div class="item-row">
+                        <div class="item-info">
+                            <span class="item-qty">{{ item.quantity }}x</span>
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="img" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                            {% endif %}
+                            <div>
+                                <div class="item-title">{{ item.product.title }}</div>
+                                <small class="text-muted">ID: {{ item.product.id }}</small>
+                            </div>
+                        </div>
+                        <div class="item-price">${{ item.price }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="order-card h-100">
+                        <h3 class="section-title">Dirección de Envío</h3>
+                        <div class="info-group">
+                            <span class="info-value">{{ order.address }}</span>
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Usuario</span>
+                            <span class="info-value">{{ user.get_full_name|default:user.username }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="order-card h-100">
+                        <h3 class="section-title">Método de Pago</h3>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            {% if order.payment_method == 'card' %}
+                                <i class="bi bi-credit-card-2-front-fill fs-4 text-primary"></i>
+                                <span class="fw-bold">Tarjeta de Crédito/Débito</span>
+                            {% else %}
+                                <i class="bi bi-wallet-fill fs-4 text-success"></i>
+                                <span class="fw-bold">{{ order.get_payment_method_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="info-group">
+                            <span class="info-label">Estado del pago</span>
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 rounded-pill">
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Código de entrega -->
-    <div class="card shadow-lg mb-4 text-center">
-        <div class="card-body">
-            <h5 class="text-danger"><i class="bi bi-key-fill"></i> Palabra clave para la entrega del pedido:</h5>
-            <p class="fs-4 fw-bold bg-light p-2 rounded d-inline-block">{{ order.delivery_code }}</p>
+        <div class="col-lg-4">
+            <div class="order-card" style="background: #fff; border-color: #195A59;">
+                <h3 class="section-title text-center text-dark border-0 mb-2">Código de Entrega</h3>
+                <p class="text-center small text-muted mb-3">Dale este código al repartidor para recibir tu pedido.</p>
+                
+                <div class="security-box">
+                    <div class="security-label">Palabra Clave</div>
+                    <div class="security-code">{{ order.delivery_code }}</div>
+                </div>
+                
+                <div class="alert alert-warning d-flex align-items-start gap-2 p-2 mb-0" style="font-size: 0.8rem;">
+                    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <div>No compartas este código hasta tener el paquete en tus manos.</div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <h3 class="section-title">Resumen</h3>
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span>${{ order.monto_total }}</span> </div>
+                <div class="summary-row">
+                    <span>Envío</span>
+                    <span class="text-success">Gratis</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total Pagado</span>
+                    <span>${{ order.monto_total }}</span>
+                </div>
+            </div>
+
+            <a href="{% url 'profile' %}" class="btn-profile">
+                Ir a Mis Pedidos <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+            <div class="text-center mt-3">
+                <a href="{% url 'shop' %}" class="text-muted text-decoration-none small hover-underline">Seguir Comprando</a>
+            </div>
         </div>
-    </div>
-
-    <!-- Total -->
-    <div class="text-center mb-4">
-        <h4 class="text-secondary"><i class="bi bi-cash-stack"></i> Total del Pedido: <span class="text-success fw-bold">${{ order.monto_total }}</span></h4>
-    </div>
-
-    <!-- Botón para ir al perfil -->
-    <div class="text-center">
-        <a href="{% url 'profile' %}" class="btn btn-primary btn-lg shadow">
-            <i class="bi bi-person-circle"></i> OK, ir a perfil
-        </a>
     </div>
 </div>
 
-<!-- Bloquear navegación hacia atrás y teclas de retroceso -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Reemplaza la URL en la historia del navegador para evitar que vuelva atrás
+        // Bloquear historial
         window.history.replaceState(null, "", window.location.href);
         
-        // Detectar si el usuario intenta presionar "Atrás"
         window.onpopstate = function () {
             window.location.href = "{% url 'profile' %}";
         };
 
-        // Prevenir el uso de teclas para volver atrás
+        // Bloquear teclas
         document.addEventListener("keydown", function (event) {
             if (event.key === "Backspace" && !["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
                 event.preventDefault();
@@ -77,28 +267,11 @@
             }
         });
 
-        // Evitar el caché para que no pueda recargar la página anterior
+        // Anti caché
         if (window.performance && window.performance.navigation.type === 2) {
             window.location.href = "{% url 'profile' %}";
         }
     });
 </script>
 
-<!-- Estilos adicionales -->
-<style>
-    .btn-lg {
-        transition: all 0.3s ease-in-out;
-        font-size: 1.2rem;
-    }
-    .btn-lg:hover {
-        transform: scale(1.05);
-        background-color: #0056b3;
-    }
-    .card {
-        transition: box-shadow 0.3s ease-in-out;
-    }
-    .card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    }
-</style>
 {% endblock %}

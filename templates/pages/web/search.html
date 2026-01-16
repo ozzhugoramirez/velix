@@ -1,150 +1,309 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block navbar %}
     {% include "components/web/navbar.html" %}
 {% endblock navbar %}
 
 {% block content %}
-<div class="container mt-5 pt-4">
-    {% if query %}
-        <div class="text-center mb-5">
-            <h3 class="fw-bold text-uppercase">Resultados para: <span class="text-primary">"{{ query }}"</span></h3>
-            <p class="text-muted">Explora nuestras mejores opciones basadas en tu búsqueda</p>
+<style>
+    :root {
+        --emerald: #059669;
+        --dark: #0f172a;
+        --bg-soft: #f8fafc;
+        --hot-red: #ef4444;
+    }
+
+    body { background-color: var(--bg-soft); font-family: 'Inter', sans-serif; }
+
+    /* --- ENCABEZADO MINIMALISTA --- */
+    .search-meta-bar {
+        background: white;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* --- HERO PRODUCT (COINCIDENCIA EXACTA) --- */
+    .spotlight-wrapper {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        margin-bottom: 3rem;
+        position: relative;
+    }
+
+    /* Efecto de borde brillante sutil */
+    .spotlight-wrapper::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px;
+        background: linear-gradient(90deg, var(--emerald), #34d399, var(--emerald));
+    }
+
+    .spotlight-img-container {
+        background: #f1f5f9;
+        height: 100%; min-height: 400px;
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem; position: relative;
+    }
+    .spotlight-img {
+        max-width: 80%; max-height: 350px;
+        filter: drop-shadow(0 20px 30px rgba(0,0,0,0.15));
+        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .spotlight-wrapper:hover .spotlight-img { transform: scale(1.05) rotate(-2deg); }
+
+    /* Gatillos de Marketing */
+    .live-view-badge {
+        position: absolute; top: 20px; left: 20px;
+        background: rgba(255,255,255,0.9); backdrop-filter: blur(4px);
+        padding: 8px 16px; border-radius: 30px;
+        font-size: 0.85rem; font-weight: 700; color: #333;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .pulse-dot {
+        width: 8px; height: 8px; background: var(--hot-red); border-radius: 50%;
+        box-shadow: 0 0 0 rgba(239, 68, 68, 0.4);
+        animation: pulse-red 2s infinite;
+    }
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .stock-bar-container {
+        background: #e2e8f0; height: 6px; border-radius: 10px;
+        margin: 10px 0 5px 0; overflow: hidden; width: 100%; max-width: 250px;
+    }
+    .stock-bar-fill {
+        height: 100%; background: var(--hot-red); width: 85%; /* Simulado */
+        border-radius: 10px;
+    }
+
+    /* --- GRID DE RELACIONADOS --- */
+    .related-card {
+        background: white; border: 1px solid transparent;
+        border-radius: 16px; padding: 15px;
+        transition: 0.3s;
+    }
+    .related-card:hover {
+        border-color: var(--emerald);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    /* --- SIDEBAR DE PUBLICIDAD --- */
+    .promo-box {
+        background: linear-gradient(145deg, #111827, #000);
+        color: white; border-radius: 16px; padding: 2rem;
+        text-align: center; margin-bottom: 2rem;
+        position: relative; overflow: hidden;
+    }
+    .promo-box-gold {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        color: #92400e; border: 1px solid #fcd34d;
+    }
+    
+    .dashed-coupon {
+        border: 2px dashed rgba(255,255,255,0.3);
+        padding: 10px; margin-top: 15px;
+        font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;
+        border-radius: 8px; cursor: pointer;
+        transition: 0.2s;
+    }
+    .dashed-coupon:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+</style>
+
+<div class="search-meta-bar">
+    <div class="container d-flex align-items-center justify-content-between">
+        <div>
+            <span class="text-muted small text-uppercase fw-bold">Búsqueda:</span>
+            <h1 class="h3 fw-bold mb-0 d-inline-block ms-2">"{{ query }}"</h1>
         </div>
-
-        <!-- Coincidencias exactas -->
-        {% if exact_matches %}
-            <h4 class="text-success fw-bold mb-3">Coincidencias Exactas</h4>
-            <div class="row g-4">
-                {% for item in exact_matches %}
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card product-card shadow-sm border-0 position-relative">
-                            <!-- Badges de promoción -->
-                            {% if item.is_currently_promotional %}
-                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">🔥 En Promoción</span>
-                            {% elif item.is_daily_offer %}
-                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">⚡ Oferta del Día</span>
-                            {% endif %}
-
-                            <!-- Imagen del producto con verificación de existencia -->
-                            <div class="product-image-wrapper">
-                                {% if item.image and item.image.url %}
-                                    <img src="{{ item.image.url }}" class="product-image img-fluid" alt="{{ item.title }}">
-                                {% else %}
-                                    <img src="/static/images/default-product.png" class="product-image img-fluid" alt="Imagen no disponible">
-                                {% endif %}
-                            </div>
-
-                            <div class="card-body text-center">
-                                <h6 class="fw-bold text-truncate">{{ item.title }}</h6>
-                                <p class="text-muted small">{{ item.description|truncatewords:10 }}</p>
-                                <p class="fw-bold fs-5 text-danger">$ {{ item.price }}</p>
-
-                                <a href="{% url 'product_detail' item.id %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
-                                    <i class="bi bi-eye"></i> Ver Detalles
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-danger text-center">No hay coincidencias exactas para "{{ query }}".</p>
-        {% endif %}
-
-        <!-- Otros resultados relacionados -->
-        {% if other_matches %}
-            <h4 class="text-info fw-bold mt-5">Otros productos relacionados</h4>
-            <div class="row g-4">
-                {% for item in other_matches %}
-                    <div class="col-lg-3 col-md-4 col-sm-6">
-                        <div class="card product-card shadow-sm border-0 position-relative">
-                            {% if item.is_currently_promotional %}
-                                <span class="badge bg-danger position-absolute top-0 start-0 m-2">🔥 En Promoción</span>
-                            {% elif item.is_daily_offer %}
-                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">⚡ Oferta del Día</span>
-                            {% endif %}
-
-                            <div class="product-image-wrapper">
-                                {% if item.image and item.image.url %}
-                                    <img src="{{ item.image.url }}" class="product-image img-fluid" alt="{{ item.title }}">
-                                {% else %}
-                                    <img src="/static/images/default-product.png" class="product-image img-fluid" alt="Imagen no disponible">
-                                {% endif %}
-                            </div>
-
-                            <div class="card-body text-center">
-                                <h6 class="fw-bold text-truncate">{{ item.title }}</h6>
-                                <p class="text-muted small">{{ item.description|truncatewords:10 }}</p>
-                                <p class="fw-bold fs-5 text-danger">$ {{ item.price }}</p>
-
-                                <a href="{% url 'product_detail' item.id %}" class="btn btn-outline-primary btn-sm w-100 mt-2">
-                                    <i class="bi bi-eye"></i> Ver Detalles
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% else %}
-        <p class="text-center text-muted fs-5">Introduce un término de búsqueda para ver resultados.</p>
-    {% endif %}
+        <div class="text-end d-none d-sm-block">
+            <span class="badge bg-dark rounded-pill px-3 py-2">
+                {{ exact_matches|length|add:other_matches|length }} Resultados
+            </span>
+        </div>
+    </div>
 </div>
 
-<!-- Estilos Personalizados -->
-<style>
-    /* Contenedor de los productos */
-    .product-card {
-        border-radius: 10px;
-        overflow: hidden;
-        transition: all 0.3s ease-in-out;
-    }
+<div class="container py-5">
+    <div class="row g-5">
+        
+        <div class="col-lg-8">
+            
+            {% if query %}
+                
+                {% if exact_matches %}
+                    {% for item in exact_matches %}
+                    <div class="spotlight-wrapper">
+                        <div class="row g-0">
+                            <div class="col-md-5">
+                                <div class="spotlight-img-container">
+                                    <div class="live-view-badge">
+                                        <div class="pulse-dot"></div>
+                                        <span>14 personas viendo</span>
+                                    </div>
+                                    {% if item.image %}
+                                        <img src="{{ item.image.url }}" class="spotlight-img" alt="{{ item.title }}">
+                                    {% else %}
+                                        <img src="https://dummyimage.com/500x500/eee/aaa" class="spotlight-img" alt="Default">
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-7 p-4 p-md-5 d-flex flex-column justify-content-center">
+                                <div class="mb-2">
+                                    <span class="text-danger fw-bold text-uppercase small tracking-wide">
+                                        <i class="bi bi-fire"></i> Artículo Top Ventas
+                                    </span>
+                                </div>
+                                
+                                <h2 class="fw-bold mb-3">{{ item.title }}</h2>
+                                <p class="text-muted mb-4">{{ item.description|truncatewords:20 }}</p>
 
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
-    }
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between small fw-bold mb-1">
+                                        <span class="text-dark">¡Casi agotado!</span>
+                                        <span class="text-danger">Quedan pocas unidades</span>
+                                    </div>
+                                    <div class="stock-bar-container">
+                                        <div class="stock-bar-fill"></div>
+                                    </div>
+                                </div>
 
-    /* Imagen de producto */
-    .product-image-wrapper {
-        height: 180px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #f8f9fa;
-        padding: 10px;
-    }
+                                <div class="d-flex align-items-end gap-3 mb-4">
+                                    <div class="display-6 fw-bold text-dark">${{ item.price }}</div>
+                                    {% if item.old_price %}
+                                        <div class="text-muted text-decoration-line-through fs-5 mb-2">${{ item.old_price }}</div>
+                                    {% endif %}
+                                </div>
 
-    .product-image {
-        max-height: 160px;
-        object-fit: contain;
-        transition: transform 0.3s ease-in-out;
-    }
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <form action="{% url 'add_to_cart' item.id %}" method="post" class="flex-grow-1">
+                                        {% csrf_token %}
+                                        <button class="btn btn-dark w-100 py-3 rounded-pill fw-bold shadow-sm">
+                                            COMPRAR AHORA
+                                        </button>
+                                    </form>
+                                    <a href="{% url 'product_detail' item.id %}" class="btn btn-outline-secondary px-4 py-3 rounded-pill">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                                
+                                <div class="mt-3 text-center text-md-start">
+                                    <small class="text-muted"><i class="bi bi-shield-check text-success"></i> Garantía de satisfacción 30 días</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
 
-    .product-image:hover {
-        transform: scale(1.05);
-    }
+                {% if exact_matches and other_matches %}
+                    <div class="d-flex align-items-center my-5">
+                        <span class="fw-bold text-dark fs-5 me-3">También te recomendamos</span>
+                        <div class="flex-grow-1 border-bottom"></div>
+                    </div>
+                {% endif %}
 
-    /* Botón de acción */
-    .btn-outline-primary {
-        transition: all 0.3s ease-in-out;
-    }
+                {% if other_matches %}
+                    <div class="row g-3">
+                        {% for item in other_matches %}
+                        <div class="col-6 col-md-4">
+                            <div class="related-card h-100">
+                                <div class="position-relative mb-3">
+                                    {% if item.is_daily_offer %}
+                                        <span class="badge bg-warning text-dark position-absolute top-0 start-0">OFERTA</span>
+                                    {% endif %}
+                                    
+                                    <a href="{% url 'product_detail' item.id %}">
+                                        <div style="height: 180px; display:flex; align-items:center; justify-content:center; background:#f9fafb; border-radius:12px;">
+                                            {% if item.image %}
+                                                <img src="{{ item.image.url }}" alt="{{ item.title }}" style="max-height:100%; max-width:100%; mix-blend-mode:multiply;">
+                                            {% else %}
+                                                <img src="https://dummyimage.com/300x300/eee/aaa" alt="Img">
+                                            {% endif %}
+                                        </div>
+                                    </a>
+                                </div>
+                                
+                                <h6 class="fw-bold text-truncate mb-1">{{ item.title }}</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-success">${{ item.price }}</span>
+                                    <a href="{% url 'product_detail' item.id %}" class="btn btn-sm btn-light rounded-circle border">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
-    .btn-outline-primary:hover {
-        background-color: #0071e3;
-        color: white;
-    }
+                {% if not exact_matches and not other_matches %}
+                    <div class="text-center py-5 bg-white rounded-4 shadow-sm border border-dashed">
+                        <i class="bi bi-search fs-1 text-muted opacity-50"></i>
+                        <h3 class="fw-bold mt-3">Ups, no encontramos eso.</h3>
+                        <p class="text-muted mb-4">Pero mira lo que otros clientes están comprando ahora.</p>
+                        <a href="{% url 'shop' %}" class="btn btn-dark rounded-pill px-5">Ir a la Tienda</a>
+                    </div>
+                {% endif %}
 
-    /* Texto truncado para títulos */
-    .text-truncate {
-        display: block;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-</style>
+            {% else %}
+                <div class="text-center py-5">
+                    <h3>¿Qué deseas buscar hoy?</h3>
+                </div>
+            {% endif %}
+
+        </div>
+
+        <div class="col-lg-4">
+            <div class="ps-lg-4" style="position: sticky; top: 100px;">
+                
+                <div class="promo-box">
+                    <div class="mb-3">
+                        <i class="bi bi-gift-fill fs-1 text-warning"></i>
+                    </div>
+                    <h4 class="fw-bold">¿Es tu primera vez?</h4>
+                    <p class="small opacity-75">Usa este código en el checkout y obtén un descuento especial.</p>
+                    
+                    <div class="dashed-coupon" onclick="navigator.clipboard.writeText('BIENVENIDO10'); alert('¡Código copiado!');">
+                        BIENVENIDO10
+                        <i class="bi bi-files ms-2 small"></i>
+                    </div>
+                    <small class="d-block mt-2 opacity-50">Click para copiar</small>
+                </div>
+
+                <div class="promo-box-gold rounded-4 p-4 mb-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-check me-2"></i>Compra Protegida</h5>
+                    <ul class="list-unstyled small mb-0 d-flex flex-column gap-2 text-start">
+                        <li><i class="bi bi-check-circle-fill me-2"></i> Envío asegurado a todo el país</li>
+                        <li><i class="bi bi-check-circle-fill me-2"></i> Devolución gratis x 30 días</li>
+                        <li><i class="bi bi-check-circle-fill me-2"></i> Soporte humano real</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded-4 border">
+                    <h6 class="fw-bold text-uppercase text-muted small mb-3">Tendencias hoy</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{% url 'shop' %}" class="badge bg-light text-dark text-decoration-none border px-3 py-2">Auriculares</a>
+                        <a href="{% url 'shop' %}" class="badge bg-light text-dark text-decoration-none border px-3 py-2">iPhone</a>
+                        <a href="{% url 'shop' %}" class="badge bg-light text-dark text-decoration-none border px-3 py-2">Gamer</a>
+                        <a href="{% url 'shop' %}" class="badge bg-light text-dark text-decoration-none border px-3 py-2">Ofertas</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
 {% endblock content %}
 
 {% block footer %}
+    {% include "components/web/footer.html" %}
 {% endblock footer %}

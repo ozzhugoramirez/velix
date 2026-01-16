@@ -1,163 +1,287 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
-            <h2 class="text-center mb-4 fw-bold"><i class="bi bi-credit-card-fill"></i> Pago con Tarjeta</h2>
-            <div class="card shadow-lg border-0">
-                <div class="card-body p-4">
-                    <form method="post" action="{% url 'payment_card' %}" id="paymentForm">
-                        {% csrf_token %}
 
-                        <!-- Nombre del titular -->
-                        <div class="mb-3">
-                            <label for="cardholder_name" class="form-label fw-bold"><i class="bi bi-person-fill"></i> Nombre del Titular</label>
-                            <input type="text" id="cardholder_name" name="cardholder_name" class="form-control" placeholder="Ej: Juan Pérez" required>
-                            <div class="invalid-feedback">Ingrese un nombre válido (solo letras).</div>
-                        </div>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 
-                        <!-- Número de tarjeta -->
-                        <div class="mb-3">
-                            <label for="card_number" class="form-label fw-bold"><i class="bi bi-credit-card"></i> Número de Tarjeta</label>
-                            <input type="text" id="card_number" name="card_number" class="form-control" placeholder="#### #### #### ####" maxlength="19" required>
-                            <div class="invalid-feedback">Ingrese un número de tarjeta válido.</div>
-                        </div>
-
-                        <!-- Fecha de Expiración y CVV -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="expiration_date" class="form-label fw-bold"><i class="bi bi-calendar-event"></i> Fecha de Expiración</label>
-                                <input type="text" id="expiration_date" name="expiration_date" class="form-control" placeholder="MM/AA" maxlength="5" required>
-                                <div class="invalid-feedback">Formato inválido (MM/AA).</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="cvv" class="form-label fw-bold"><i class="bi bi-lock-fill"></i> CVV</label>
-                                <input type="text" id="cvv" name="cvv" class="form-control" placeholder="###" maxlength="4" required>
-                                <div class="invalid-feedback">Ingrese un CVV válido (3-4 dígitos).</div>
-                            </div>
-                        </div>
-
-                        <!-- Botón de confirmación con animación -->
-                        <button type="submit" class="btn btn-primary w-100 btn-lg mt-3 shadow" id="payButton">
-                            <i class="bi bi-check-circle-fill"></i> Confirmar Pago
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Estilos y animaciones adicionales -->
 <style>
-    /* Estilo del botón */
-    #payButton {
-        transition: all 0.3s ease-in-out;
-        font-size: 1.1rem;
-    }
-    #payButton:hover {
-        transform: scale(1.05);
-        background-color: #0056b3;
+    :root {
+        --card-bg: linear-gradient(135deg, #195A59, #0f172a);
+        --input-focus: #195A59;
     }
 
-    /* Sombras en la tarjeta */
-    .card {
-        transition: box-shadow 0.3s ease-in-out;
-    }
-    .card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    /* --- ESTILO DE LA TARJETA VIRTUAL --- */
+    .virtual-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 25px;
+        color: white;
+        height: 240px;
+        width: 100%;
+        max-width: 400px;
+        position: relative;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin: 0 auto 30px;
+        transition: transform 0.3s;
+        font-family: 'Share Tech Mono', monospace;
     }
 
-    /* Input con iconos */
-    .form-control {
-        transition: all 0.2s ease-in-out;
+    .virtual-card:hover { transform: translateY(-5px); }
+    
+    .card-top { display: flex; justify-content: space-between; align-items: start; }
+    .chip {
+        width: 50px; height: 35px;
+        background: linear-gradient(135deg, #d4af37, #fceeb5);
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
     }
-    .form-control:focus {
-        border-color: #0071e3;
-        box-shadow: 0 0 10px rgba(0, 113, 227, 0.3);
+    .chip::after {
+        content: ''; position: absolute; top:0; left:0; right:0; bottom:0;
+        border: 1px solid rgba(0,0,0,0.2); border-radius: 6px;
+    }
+    
+    .card-logo i { font-size: 2.5rem; opacity: 0.9; }
+
+    .card-number-display {
+        font-size: 1.6rem;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 2px rgba(0,0,0,0.3);
+    }
+
+    .card-details { display: flex; justify-content: space-between; text-transform: uppercase; font-size: 0.8rem; }
+    .card-details label { font-size: 0.6rem; opacity: 0.7; display: block; margin-bottom: 2px; }
+    
+    /* --- FORMULARIO --- */
+    .payment-form-label {
+        font-weight: 600; font-size: 0.85rem; color: #555; margin-bottom: 8px;
+    }
+    .input-group-text { background: #f8f9fa; border-right: none; color: #888; }
+    .form-control-lg {
+        border-left: none;
+        background: #f8f9fa;
+        font-size: 0.95rem;
+        border-color: #ddd;
+    }
+    .form-control-lg:focus {
+        background: white;
+        box-shadow: none;
+        border-color: var(--input-focus);
+    }
+    .input-group:focus-within .input-group-text {
+        background: white;
+        border-color: var(--input-focus);
+        color: var(--input-focus);
+    }
+
+    .btn-pay {
+        background: var(--input-focus);
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        transition: 0.3s;
+        border: none;
+    }
+    .btn-pay:hover {
+        background: #0f172a;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        color: white;
+    }
+
+    @media (max-width: 992px) {
+        .virtual-card { margin-bottom: 40px; }
     }
 </style>
 
-<!-- Validaciones en tiempo real con JavaScript -->
+<div class="container py-5">
+    <div class="row align-items-center justify-content-center">
+        
+        <div class="col-lg-5 order-lg-2 mb-4 mb-lg-0">
+            <div class="virtual-card">
+                <div class="card-top">
+                    <div class="chip"></div>
+                    <div class="card-logo" id="brandLogo">
+                        <i class="fab fa-cc-visa"></i> </div>
+                </div>
+                
+                <div class="card-number-display" id="displayNumber">#### #### #### ####</div>
+                
+                <div class="card-details">
+                    <div>
+                        <label>Titular</label>
+                        <span id="displayName">NOMBRE APELLIDO</span>
+                    </div>
+                    <div>
+                        <label>Expira</label>
+                        <span id="displayDate">MM/AA</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 d-none d-lg-block">
+                <p class="small text-muted mb-2"><i class="bi bi-shield-lock-fill text-success"></i> Pagos encriptados de extremo a extremo</p>
+                <div class="opacity-50 grayscale">
+                    <img src="https://img.icons8.com/color/48/visa.png" width="30">
+                    <img src="https://img.icons8.com/color/48/mastercard.png" width="30">
+                    <img src="https://img.icons8.com/color/48/amex.png" width="30">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 order-lg-1">
+            <div class="bg-white p-4 p-md-5 rounded-4 shadow-sm border">
+                <h3 class="fw-bold mb-1">Detalles de Pago</h3>
+                <p class="text-muted mb-4">Finaliza tu compra de forma segura.</p>
+
+                <form method="post" action="{% url 'payment_card' %}" id="paymentForm">
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label class="payment-form-label">Nombre del Titular</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                            <input type="text" id="cardholder_name" name="cardholder_name" class="form-control form-control-lg" placeholder="Como aparece en la tarjeta" required>
+                        </div>
+                        <div class="invalid-feedback">Solo letras permitidas.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="payment-form-label">Número de Tarjeta</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
+                            <input type="text" id="card_number" name="card_number" class="form-control form-control-lg" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                        </div>
+                        <div class="invalid-feedback">Número inválido.</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-4">
+                            <label class="payment-form-label">Expiración</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                                <input type="text" id="expiration_date" name="expiration_date" class="form-control form-control-lg" placeholder="MM/AA" maxlength="5" required>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-4">
+                            <label class="payment-form-label">CVV / CVC</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" id="cvv" name="cvv" class="form-control form-control-lg" placeholder="123" maxlength="4" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border d-flex align-items-center gap-3 mb-4" role="alert">
+                        <i class="bi bi-info-circle-fill text-primary fs-4"></i>
+                        <div class="small text-muted lh-sm">
+                            No guardaremos los datos de tu tarjeta. La transacción se procesa de forma segura mediante tokenización.
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-pay w-100 btn-lg shadow" id="payButton">
+                        <i class="bi bi-bag-check-fill me-2"></i> Pagar ${{ cart.total_price|default:"Total" }}
+                    </button>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'checkout' %}" class="text-decoration-none text-muted small">
+                            <i class="bi bi-arrow-left"></i> Volver al Checkout
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const form = document.getElementById("paymentForm");
-        const cardHolderInput = document.getElementById("cardholder_name");
-        const cardNumberInput = document.getElementById("card_number");
-        const expirationDateInput = document.getElementById("expiration_date");
+        // Inputs
+        const nameInput = document.getElementById("cardholder_name");
+        const numberInput = document.getElementById("card_number");
+        const dateInput = document.getElementById("expiration_date");
         const cvvInput = document.getElementById("cvv");
+        const form = document.getElementById("paymentForm");
+        
+        // Elementos Visuales
+        const dispNumber = document.getElementById("displayNumber");
+        const dispName = document.getElementById("displayName");
+        const dispDate = document.getElementById("displayDate");
+        const brandLogo = document.getElementById("brandLogo");
 
-        // Validar solo letras en el nombre del titular
-        cardHolderInput.addEventListener("input", function () {
-            this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-        });
-
-        // Formato para el número de tarjeta #### #### #### ####
-        cardNumberInput.addEventListener("input", function () {
-            this.value = this.value.replace(/\D/g, "").replace(/(\d{4})/g, "$1 ").trim();
-        });
-
-        // Formato para la fecha MM/AA
-        expirationDateInput.addEventListener("input", function () {
-            this.value = this.value.replace(/\D/g, "").replace(/(\d{2})(\d{0,2})/, "$1/$2").trim();
-        });
-
-        // Validar que el mes sea entre 01 y 12
-        expirationDateInput.addEventListener("blur", function () {
-            const parts = this.value.split("/");
-            if (parts.length === 2) {
-                const month = parseInt(parts[0]);
-                const year = parseInt(parts[1]);
-                if (month < 1 || month > 12 || isNaN(year)) {
-                    this.classList.add("is-invalid");
-                } else {
-                    this.classList.remove("is-invalid");
-                }
-            }
-        });
-
-        // Solo permitir 3 o 4 dígitos en CVV
-        cvvInput.addEventListener("input", function () {
-            this.value = this.value.replace(/\D/g, "").slice(0, 4);
-        });
-
-        // Validar el formulario antes de enviar
-        form.addEventListener("submit", function (event) {
-            let valid = true;
-
-            if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(cardHolderInput.value.trim())) {
-                cardHolderInput.classList.add("is-invalid");
-                valid = false;
+        // --- 1. FORMATO NÚMERO Y DETECCIÓN LOGO ---
+        numberInput.addEventListener("input", function (e) {
+            // Permitir solo números
+            let value = e.target.value.replace(/\D/g, "");
+            
+            // Detectar marca (Visa 4, Master 5)
+            if(value.startsWith("4")) {
+                brandLogo.innerHTML = '<i class="fab fa-cc-visa"></i>';
+            } else if (value.startsWith("5")) {
+                brandLogo.innerHTML = '<i class="fab fa-cc-mastercard"></i>';
+            } else if (value.startsWith("3")) {
+                brandLogo.innerHTML = '<i class="fab fa-cc-amex"></i>';
             } else {
-                cardHolderInput.classList.remove("is-invalid");
+                brandLogo.innerHTML = '<i class="bi bi-credit-card-2-front"></i>';
             }
 
-            if (!/^\d{4} \d{4} \d{4} \d{4}$/.test(cardNumberInput.value.trim())) {
-                cardNumberInput.classList.add("is-invalid");
-                valid = false;
+            // Agrupar de 4 en 4
+            let formatted = value.match(/.{1,4}/g)?.join(" ") || "";
+            e.target.value = formatted;
+            
+            // Actualizar Tarjeta Visual
+            dispNumber.textContent = formatted || "#### #### #### ####";
+        });
+
+        // --- 2. FORMATO NOMBRE ---
+        nameInput.addEventListener("input", function (e) {
+            let val = e.target.value.toUpperCase();
+            // Solo letras y espacios
+            e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+            dispName.textContent = val || "NOMBRE APELLIDO";
+        });
+
+        // --- 3. FORMATO FECHA (MM/AA) ---
+        dateInput.addEventListener("input", function (e) {
+            let value = e.target.value.replace(/\D/g, "");
+            
+            if (value.length >= 2) {
+                value = value.substring(0,2) + "/" + value.substring(2,4);
+            }
+            e.target.value = value;
+            dispDate.textContent = value || "MM/AA";
+        });
+
+        // --- 4. VALIDACIÓN AL ENVIAR ---
+        form.addEventListener("submit", function (e) {
+            let isValid = true;
+            
+            // Validar Número (Simple longitud)
+            if(numberInput.value.length < 16) {
+                numberInput.classList.add("is-invalid");
+                isValid = false;
             } else {
-                cardNumberInput.classList.remove("is-invalid");
+                numberInput.classList.remove("is-invalid");
             }
 
-            if (!/^\d{2}\/\d{2}$/.test(expirationDateInput.value.trim())) {
-                expirationDateInput.classList.add("is-invalid");
-                valid = false;
-            } else {
-                expirationDateInput.classList.remove("is-invalid");
-            }
-
-            if (!/^\d{3,4}$/.test(cvvInput.value.trim())) {
+            // Validar CVV
+            if(cvvInput.value.length < 3) {
                 cvvInput.classList.add("is-invalid");
-                valid = false;
+                isValid = false;
             } else {
                 cvvInput.classList.remove("is-invalid");
             }
 
-            if (!valid) {
-                event.preventDefault();
-            }
+            if(!isValid) e.preventDefault();
         });
     });
 </script>
+
 {% endblock %}

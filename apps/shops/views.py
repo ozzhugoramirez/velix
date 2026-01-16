@@ -440,78 +440,112 @@ class CheckoutView(LoginRequiredMixin, View):
 
 
 
+
+
 class PaymentCardView(LoginRequiredMixin, View):
     def get(self, request):
+        # 1. Seguridad: Verificar si hay items en el carrito
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart or not cart.items.exists():
+            messages.warning(request, "Tu carrito está vacío.")
+            return redirect('shop') # O 'home'
+
+        # 2. Verificar dirección
         address_id = request.session.get('address_id')
         if not address_id:
-            messages.error(request, "No se ha seleccionado dirección.")
+            messages.error(request, "Por favor selecciona una dirección de envío.")
             return redirect('checkout')
 
         address = get_object_or_404(Address, id=address_id, user=request.user)
+        
         context = {
             'address': address,
+            'cart': cart # Pasamos el carrito para mostrar el total en el botón
         }
         return render(request, 'pages/web/payment_card.html', context)
 
     def post(self, request):
-        # Obtener datos y validar tarjeta
-        card_number = request.POST.get('card_number')
+        # 1. Obtener datos
+        card_number = request.POST.get('card_number', '').replace(' ', '') # Quitamos espacios
         expiration_date = request.POST.get('expiration_date')
         cvv = request.POST.get('cvv')
+        holder_name = request.POST.get('cardholder_name')
 
-        if not all([card_number, expiration_date, cvv]):
-            messages.error(request, "Por favor completa todos los campos de la tarjeta.")
+        # 2. Validación básica Backend
+        if not all([card_number, expiration_date, cvv, holder_name]):
+            messages.error(request, "Todos los campos son obligatorios.")
             return redirect('payment_card')
 
-        # Crear la orden
+        if len(card_number) < 13: # Validación simple de longitud
+            messages.error(request, "Número de tarjeta inválido.")
+            return redirect('payment_card')
+
+        # 3. Procesar Orden
         address_id = request.session.get('address_id')
-        address = get_object_or_404(Address, id=address_id, user=request.user)
         cart = get_object_or_404(Cart, user=request.user)
         
+        # Validar stock o carrito vacío de nuevo por seguridad
+        if not cart.items.exists():
+            return redirect('shop')
 
-        with transaction.atomic():
-            order = Order.objects.create(
-                user=request.user,
-                cart=cart,
-                address=address,
-                coupon=cart.coupon,
-                estado_pago='confirmed',
-                payment_method='card',
-                monto_total=cart.total_price(),
-                fecha_entrega_estimada=timezone.now() + timedelta(hours=12)
-            )
-            
-            for item in cart.items.all():
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    quantity=item.quantity,
-                    price=item.product.price * item.quantity
+        try:
+            with transaction.atomic():
+                # A. Crear Orden
+                # Nota: NO guardamos datos sensibles de tarjeta en BD por seguridad (PCI Compliance)
+                # Solo guardamos que fue pagado con tarjeta
+                order = Order.objects.create(
+                    user=request.user,
+                    cart=cart,
+                    address_id=address_id, # Usamos el ID directamente
+                    coupon=cart.coupon,
+                    estado_pago='confirmed',
+                    payment_method='card',
+                    monto_total=cart.total_price(),
+                    fecha_entrega_estimada=timezone.now() + timedelta(days=5) # 5 días estándar
                 )
+                
+                # B. Mover items de Carrito a OrderItems
+                cart_items = cart.items.all()
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        quantity=item.quantity,
+                        price=item.product.price * item.quantity # Precio congelado al momento de compra
+                    )
+                    
+                    # Generar URL para comentar (Tu lógica)
+                    product = item.product
+                    # Asegúrate que 'leave_comment' existe en tus urls.py
+                    try:
+                        relative_url = reverse('leave_comment', args=[product.id])
+                        full_url = f"{settings.SITE_URL}{relative_url}"
+                        
+                        CommentURL.objects.create(
+                            order=order,
+                            product=product,
+                            user=request.user,
+                            url=full_url
+                        )
+                    except Exception as e:
+                        print(f"Error generando URL comentario: {e}")
 
-        # Procesar productos del carrito
-        cart_items = cart.items.all()
-        
-        comment_urls = []
-        for item in cart_items:
-            product = item.product
-            comment_url = CommentURL.objects.create(
-                order=order,
-                product=product,
-                user=request.user,
-                url=f"{settings.SITE_URL}{reverse('leave_comment', args=[product.id])}"
-            )
-            print(f"URL para comentar sobre {product.title}: {comment_url.url}")
+                # C. Código de entrega divertido
+                words = ["TIENDA", "RAPIDO", "AZUL", "CIELO", "EXITO", "NEXTGEN", "FUTURO", "SOL", "ESTRELLA"]
+                order.delivery_code = f"{random.choice(words)}-{random.randint(100,999)}"
+                order.save()
 
-        words = ["tienda", "perro", "azul", "cielo", "montaña", "fresa", "lago", "árbol", "sol", "estrella"]
-        order.delivery_code = random.choice(words)
-        order.save()
+                # D. Limpiar Carrito
+                cart.items.all().delete()
+                cart.clear_coupon()
+                
+                messages.success(request, f"¡Pago exitoso! Orden #{order.id} creada.")
+                return redirect('order_detail', order_id=order.id)
 
-        # Vaciar el carrito
-        cart.items.all().delete()
-        cart.clear_coupon()
-        messages.success(request, "Tu pedido ha sido creado exitosamente.")
-        return redirect('order_detail', order_id=order.id)
+        except Exception as e:
+            print(f"Error en transacción: {e}")
+            messages.error(request, "Hubo un error procesando el pago. Intenta nuevamente.")
+            return redirect('payment_card')
 
 
 
@@ -525,34 +559,7 @@ class PaymentTransferCashView(LoginRequiredMixin, View):
 
 
 
-class ConfirmarPedidoTokenView(LoginRequiredMixin, View):
-    def get(self, request):
-        token = request.GET.get("token")
-        if not token:
-            return HttpResponse("Token inválido.", status=400)
 
-        try:
-            order = Order.objects.get(confirm_token=token, confirmado_por_token=False)
-        except Order.DoesNotExist:
-            return HttpResponse("Este enlace ya fue usado o no es válido.")
-
-        # Validar que el usuario autenticado es el dueño del pedido
-        if request.user != order.user:
-            return HttpResponseForbidden("No tienes permiso para confirmar este pedido.")
-
-        # Confirmar pedido
-        order.confirmado_por_token = True
-        order.status = 'pending'
-        order.save()
-
-        # Vaciar el carrito
-        order.cart.items.all().delete()
-        order.cart.clear_coupon()
-
-        return render(request, 'pages/web/pedido_confirmado.html', {
-            "pedido": order,
-            "codigo_retiro": str(order.confirm_token).split("-")[0].upper()
-        })
 
         
 

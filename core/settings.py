@@ -10,7 +10,7 @@ environ.Env.read_env()
 ENVIROMENT =env 
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
-
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -38,6 +38,7 @@ PROJECT_APPS = [
     'apps.shops',
     'apps.user',
     'apps.api',
+    'apps.OLO', 
 
     
 ]
@@ -154,14 +155,11 @@ USE_TZ = True
 # settings.py
 
 
-
-
-
-
-
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-SESSION_COOKIE_AGE = 3600  # 1 hora
+SESSION_COOKIE_AGE = 1800  # 1 hora
+# Esto hace que la cookie de sesión se borre al cerrar el navegador
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True 
 SESSION_SAVE_EVERY_REQUEST = True  # Renovar la sesión con cada solicitud
 
 
