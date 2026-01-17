@@ -1,3 +1,6 @@
+{% load socialaccount %}
+
+
 <style>
     :root {
         --emerald: rgb(25, 90, 89);
@@ -399,7 +402,7 @@
                     {% endif %}
                 </a>
             {% else %}
-                <a href="{% url 'login' %}" class="nav-pill" style="font-weight: 500;">Ingresar</a>
+                <a href="{% provider_login_url 'google' %}" class="nav-pill" style="font-weight: 500;">Ingresar</a>
             {% endif %}
         </div>
     </div>

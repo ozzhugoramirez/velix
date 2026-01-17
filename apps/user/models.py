@@ -42,8 +42,8 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
         CUSTOMER = "CUS", "Cliente"
 
     email = models.EmailField(max_length=255, unique=True)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255, blank=True, null=True)
+    last_name = models.CharField(max_length=255, blank=True, null=True)
 
     avatar = models.ImageField(
         upload_to=user_avatar_upload_path,

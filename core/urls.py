@@ -14,6 +14,7 @@ handler404 = page_not_found
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
 
 
     path("access/auth/", AuthFlowView.as_view(), name="login"),
