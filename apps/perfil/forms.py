@@ -1,23 +1,36 @@
 from django import forms
 from .models import Address
 
+
 class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
-        fields = ['localidad', 'postal_code', 'barrio', 'whatsapp_number', 'email', 'main_street', 'secondary_street', 'house_number', 'description']
-        widgets = {
-            'localidad': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Localidad'}),
-            'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código postal'}),
-            'barrio': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Barrio'}),
-            'whatsapp_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de WhatsApp'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}),
-            'main_street': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Calle principal'}),
-            'secondary_street': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Calle secundaria'}),
-            'house_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Número de casa'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Descripción adicional', 'rows': 3}),
-        }
-
-
+        fields = [
+            'latitude', 'longitude', 
+            'localidad', 'postal_code', 'barrio', 
+            'main_street', 'secondary_street', 'house_number', 
+            'floor', 'apartment', 'description',
+            'whatsapp_number', 'email'
+        ]
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # --- CONFIGURACIÓN CRÍTICA ---
+        # Hacemos estos campos opcionales en la validación del formulario.
+        # Esto evita que falle si el JavaScript del mapa no envía el dato exacto 
+        # o si el usuario deja campos vacíos que el modelo permite.
+        self.fields['latitude'].required = False
+        self.fields['longitude'].required = False
+        self.fields['secondary_street'].required = False
+        self.fields['floor'].required = False
+        self.fields['apartment'].required = False
+        self.fields['description'].required = False
+        self.fields['postal_code'].required = False
+        self.fields['barrio'].required = False
+        
+        # Los campos obligatorios siguen siéndolo por definición del Modelo:
+        # main_street, localidad, house_number, whatsapp_number
 
 class CouponForm(forms.Form):
     code = forms.CharField(max_length=20, widget=forms.TextInput(attrs={

@@ -1,4 +1,5 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block navbar %}
     {% include "components/web/navbar.html" %}
@@ -6,180 +7,311 @@
 
 {% block content %}
 <style>
-    .notification-wrapper {
-        max-width: 800px;
-        margin: 5rem auto 2rem auto;
-        padding: 3rem;
-        background: linear-gradient(135deg, #f8f9fa, #ffffff);
-        border-radius: 1.5rem;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05);
-        position: relative;
+    :root {
+        --emerald: rgb(25, 90, 89);
+        --emerald-dim: rgba(25, 90, 89, 0.05);
+        --gold: rgb(200, 160, 90);
+        --dark-text: #1e293b;
+        --muted-text: #64748b;
+        --border-color: #e2e8f0;
+        --bg-page: #f8fafc;
     }
 
-    .notification-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+    body {
+        background-color: var(--bg-page);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* --- LAYOUT --- */
+    .notif-view-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+    }
+
+    /* Breadcrumb navegación */
+    .nav-breadcrumb {
         margin-bottom: 2rem;
+        font-size: 0.85rem;
+        color: var(--muted-text);
+        display: flex; align-items: center; gap: 8px;
+    }
+    .nav-breadcrumb a {
+        color: var(--muted-text); text-decoration: none; transition: 0.2s;
+        display: flex; align-items: center; gap: 5px;
+    }
+    .nav-breadcrumb a:hover { color: var(--emerald); }
+
+    /* Tarjeta Principal */
+    .detail-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        border: 1px solid white;
+        display: grid;
+        grid-template-columns: 1fr 280px; /* Contenido | Sidebar */
+        overflow: hidden;
     }
 
-    .notification-header i {
-        font-size: 2.5rem;
-        color: #0d6efd;
+    /* --- COLUMNA IZQUIERDA (CONTENIDO) --- */
+    .content-col {
+        padding: 3rem;
     }
 
-    .notification-header h2 {
-        margin: 0;
-        font-weight: 600;
+    .header-icon-large {
+        width: 64px; height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--emerald) 0%, #104040 100%);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
         font-size: 1.75rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 20px rgba(25, 90, 89, 0.2);
     }
 
-    .notification-section {
+    .detail-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--dark-text);
         margin-bottom: 1.5rem;
+        line-height: 1.2;
     }
 
-    .notification-section .label {
-        font-weight: 500;
-        color: #6c757d;
-        font-size: 0.9rem;
-        margin-bottom: 0.25rem;
+    .detail-message {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #475569;
+        margin-bottom: 2.5rem;
     }
 
-    .notification-section .content {
-        font-size: 1.1rem;
-    }
-
-    .coupon-box {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #e6f4ea;
-        border: 2px dashed #198754;
-        color: #198754;
-        font-weight: bold;
-        font-size: 1.4rem;
-        padding: 1rem 1.5rem;
-        border-radius: 1rem;
-        margin-bottom: 1rem;
+    /* CUPÓN ESTILO TICKET (CSS PURO) */
+    .ticket-container {
         position: relative;
+        background: #fffbeb; /* Fondo crema/dorado suave */
+        border: 2px dashed #dbeafe; /* Borde punteado inicial, lo pisamos luego */
+        border: 2px dashed rgba(200, 160, 90, 0.4);
+        border-radius: 12px;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    /* Efecto "Muesca" (Recorte circular) */
+    .ticket-container::before, .ticket-container::after {
+        content: ''; position: absolute; top: 50%; transform: translateY(-50%);
+        width: 20px; height: 20px; background-color: white; border-radius: 50%;
+        border: 1px solid rgba(0,0,0,0.05);
+    }
+    .ticket-container::before { left: -12px; border-right: 2px dashed rgba(200,160,90,0.4); }
+    .ticket-container::after { right: -12px; border-left: 2px dashed rgba(200,160,90,0.4); }
+
+    .ticket-info h6 {
+        text-transform: uppercase; letter-spacing: 1px;
+        color: var(--gold); font-size: 0.75rem; font-weight: 700; margin: 0 0 4px 0;
+    }
+    .ticket-code {
+        font-family: 'Courier New', monospace; font-size: 1.5rem; font-weight: 900; color: var(--dark-text);
     }
 
-    .btn-copy {
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        background-color: transparent;
-        border: none;
-        color: #198754;
-        cursor: pointer;
-        font-size: 1.2rem;
+    .btn-copy-ticket {
+        background: white; border: 1px solid var(--border-color);
+        padding: 8px 16px; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; color: var(--dark-text);
+        cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-copy-ticket:hover { background: var(--emerald); color: white; border-color: var(--emerald); }
+
+    /* ACCIONES */
+    .action-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    .action-card {
+        padding: 1rem; border: 1px solid var(--border-color); border-radius: 12px;
+        text-decoration: none; transition: 0.2s;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .action-card:hover {
+        background: var(--emerald-dim); border-color: var(--emerald); transform: translateY(-2px);
+    }
+    .action-icon {
+        width: 36px; height: 36px; background: #f1f5f9; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center; color: var(--dark-text);
+    }
+    .action-text {
+        display: flex; flex-direction: column;
+    }
+    .action-title { font-weight: 600; font-size: 0.9rem; color: var(--dark-text); }
+    .action-sub { font-size: 0.75rem; color: var(--muted-text); }
+
+
+    /* --- COLUMNA DERECHA (METADATA SIDEBAR) --- */
+    .meta-col {
+        background: #f8fafc;
+        border-left: 1px solid var(--border-color);
+        padding: 3rem 2rem;
+        display: flex; flex-direction: column; gap: 2rem;
     }
 
-    .footer-links {
-        text-align: center;
-        margin-top: 2rem;
+    .meta-group h6 {
+        font-size: 0.75rem; text-transform: uppercase; color: var(--muted-text);
+        letter-spacing: 0.5px; font-weight: 700; margin-bottom: 0.5rem;
+    }
+    .meta-value {
+        font-size: 0.95rem; color: var(--dark-text); font-weight: 500;
+        display: flex; align-items: center; gap: 8px;
     }
 
-    .footer-links a {
-        text-decoration: none;
-        font-weight: 500;
-        color: #0d6efd;
-        transition: all 0.2s;
+    .status-badge {
+        padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
     }
+    .badge-read { background: #e2e8f0; color: #475569; }
+    .badge-new { background: #dcfce7; color: #15803d; }
 
-    .footer-links a:hover {
-        text-decoration: underline;
-    }
-
-    @keyframes fadeInSlide {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .detail-card { grid-template-columns: 1fr; }
+        .meta-col { 
+            border-left: none; border-top: 1px solid var(--border-color); 
+            padding: 2rem; display: grid; grid-template-columns: 1fr 1fr;
         }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .notification-wrapper {
-        animation: fadeInSlide 0.6s ease-in-out;
+        .content-col { padding: 2rem; }
     }
 </style>
 
-<div class="notification-wrapper">
-    <!-- Encabezado -->
-    <div class="notification-header">
-        {% if notification.notification_type == "coupon" %}
-            <i class="bi bi-ticket-perforated-fill"></i>
-        {% elif notification.notification_type == "catalog" %}
-            <i class="bi bi-folder-fill"></i>
-        {% else %}
-            <i class="bi bi-info-circle-fill"></i>
-        {% endif %}
-        <h2>{{ notification.title }}</h2>
+<div class="notif-view-container animate__animated animate__fadeInUp">
+    
+    <div class="nav-breadcrumb">
+        <a href="{% url 'home' %}">Home</a>
+        <i class="bi bi-chevron-right" style="font-size: 0.6rem;"></i>
+        <a href="{% url 'profile' %}">Cuenta</a>
+        <i class="bi bi-chevron-right" style="font-size: 0.6rem;"></i>
+        <a href="{% url 'notification_list' %}">Notificaciones</a>
+        <i class="bi bi-chevron-right" style="font-size: 0.6rem;"></i>
+        <span>Detalle</span>
     </div>
 
-    <!-- Mensaje -->
-    <div class="notification-section">
-        <div class="label">Mensaje</div>
-        <div class="content">{{ notification.message }}</div>
-    </div>
+    <div class="detail-card">
+        
+        <div class="content-col">
+            
+            <div class="header-icon-large">
+                {% if 'orden' in notification.title|lower %}
+                    <i class="bi bi-box-seam"></i>
+                {% elif 'cupón' in notification.title|lower %}
+                    <i class="bi bi-ticket-perforated"></i>
+                {% elif 'seguridad' in notification.title|lower %}
+                    <i class="bi bi-shield-check"></i>
+                {% else %}
+                    <i class="bi bi-bell"></i>
+                {% endif %}
+            </div>
 
-    <!-- Código de cupón -->
-    {% if notification.coupon_code %}
-        <div class="notification-section text-center">
-            <div class="label">Código de Cupón</div>
-            <div class="coupon-box">
-                <span id="couponCode">{{ notification.coupon_code }}</span>
-                <button class="btn-copy" onclick="copyCoupon()" title="Copiar código">
-                    <i class="bi bi-clipboard"></i>
+            <h1 class="detail-title">{{ notification.title }}</h1>
+            
+            <div class="detail-message">
+                {{ notification.message|linebreaks }}
+            </div>
+
+            {% if notification.coupon_code %}
+            <div class="ticket-container">
+                <div class="ticket-info">
+                    <h6>Tu código exclusivo</h6>
+                    <div class="ticket-code" id="codeToCopy">{{ notification.coupon_code }}</div>
+                </div>
+                <button class="btn-copy-ticket" onclick="copyToClipboard(this)">
+                    <i class="bi bi-copy"></i> Copiar
                 </button>
             </div>
+            {% endif %}
+
+            <div class="action-grid">
+                {% if notification.link %}
+                <a href="{{ notification.link }}" target="_blank" class="action-card">
+                    <div class="action-icon text-primary"><i class="bi bi-link-45deg"></i></div>
+                    <div class="action-text">
+                        <span class="action-title">Abrir Enlace</span>
+                        <span class="action-sub">Visitar página externa</span>
+                    </div>
+                </a>
+                {% endif %}
+
+                {% if notification.file %}
+                <a href="{{ notification.file.url }}" download class="action-card">
+                    <div class="action-icon text-danger"><i class="bi bi-file-earmark-pdf"></i></div>
+                    <div class="action-text">
+                        <span class="action-title">Descargar</span>
+                        <span class="action-sub">Archivo adjunto</span>
+                    </div>
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'shop' %}" class="action-card">
+                    <div class="action-icon text-success"><i class="bi bi-shop"></i></div>
+                    <div class="action-text">
+                        <span class="action-title">Ir a la Tienda</span>
+                        <span class="action-sub">Explorar productos</span>
+                    </div>
+                </a>
+            </div>
+
         </div>
-    {% endif %}
 
-    <!-- Archivo descargable -->
-    {% if notification.file %}
-        <div class="notification-section text-center">
-            <div class="label">Archivo adjunto</div>
-            <a href="{{ notification.file.url }}" class="btn btn-outline-dark rounded-pill" download>
-                📎 Descargar archivo
-            </a>
+        <div class="meta-col">
+            <div class="meta-group">
+                <h6>Referencia ID</h6>
+                <div class="meta-value font-monospace">#{{ notification.id|stringformat:"s"|slice:":8"|upper }}</div>
+            </div>
+
+            <div class="meta-group">
+                <h6>Fecha de Recepción</h6>
+                <div class="meta-value">
+                    <i class="bi bi-calendar2-week text-muted"></i>
+                    {{ notification.created_at|date:"d M Y" }}
+                </div>
+                <div class="small text-muted mt-1">{{ notification.created_at|date:"H:i A" }}</div>
+            </div>
+
+            <div class="meta-group">
+                <h6>Tipo de Aviso</h6>
+                <div class="meta-value text-capitalize">
+                    {% if notification.notification_type %}
+                        {{ notification.get_notification_type_display }}
+                    {% else %}
+                        Información General
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="meta-group">
+                <h6>Estado</h6>
+                <span class="status-badge badge-read">Leído</span>
+            </div>
         </div>
-    {% endif %}
 
-    <!-- Enlace externo -->
-    {% if notification.link %}
-        <div class="notification-section text-center">
-            <a href="{{ notification.link }}" class="btn btn-outline-primary rounded-pill" target="_blank">
-                🌐 Ver enlace relacionado
-            </a>
-        </div>
-    {% endif %}
-
-    <!-- Fecha -->
-    <div class="notification-section text-center">
-        <small class="text-muted">
-            <i class="bi bi-clock me-1"></i>
-            {{ notification.created_at|date:"d M Y, H:i" }}
-        </small>
-    </div>
-
-    <!-- Volver -->
-    <div class="footer-links mt-4">
-        <a href="{% url 'notification_list' %}">
-            ← Volver a notificaciones
-        </a>
     </div>
 </div>
 
 <script>
-    function copyCoupon() {
-        const code = document.getElementById("couponCode").textContent;
+    function copyToClipboard(btn) {
+        const code = document.getElementById('codeToCopy').textContent;
+        const icon = btn.querySelector('i');
+        const originalText = btn.lastChild.textContent;
+
         navigator.clipboard.writeText(code).then(() => {
-            alert("¡Código copiado al portapapeles!");
+            btn.style.background = 'var(--emerald)';
+            btn.style.color = 'white';
+            btn.style.borderColor = 'var(--emerald)';
+            icon.className = 'bi bi-check-lg';
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Copiado';
+
+            setTimeout(() => {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.borderColor = '';
+                btn.innerHTML = '<i class="bi bi-copy"></i> Copiar';
+            }, 2000);
         });
     }
 </script>

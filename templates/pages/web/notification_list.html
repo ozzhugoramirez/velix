@@ -1,107 +1,272 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block navbar %}
   {% include "components/web/navbar.html" %}
 {% endblock navbar %}
 
 {% block content %}
-
-
 <style>
-    .timeline-item {
-  position: relative;
-  padding-left: 1.5rem;
-  border-left: 3px solid #0d6efd;
-}
+    :root {
+        --emerald: rgb(25, 90, 89);
+        --emerald-soft: rgba(25, 90, 89, 0.1);
+        --bg-body: #f8fafc;
+        --card-bg: #ffffff;
+        --card-bg-read: #f8fafc; /* Color para leídas */
+        --text-main: #0f172a;
+        --text-sub: #64748b;
+        --border-light: #e2e8f0;
+    }
 
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  top: 18px;
-  left: -9px;
-  width: 16px;
-  height: 16px;
-  background: #0d6efd;
-  border-radius: 50%;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 2px #0d6efd;
-}
+    body {
+        background-color: var(--bg-body);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
 
+    .notifications-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        min-height: 80vh;
+    }
+
+    /* --- HEADER --- */
+    .page-header {
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 1.5rem;
+    }
+
+    /* Filtros Segmentados */
+    .filter-pills {
+        background: #e2e8f0;
+        padding: 4px;
+        border-radius: 10px;
+        display: inline-flex;
+    }
+    .filter-btn {
+        border: none; background: transparent; padding: 6px 14px;
+        border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+        color: var(--text-sub); cursor: pointer; transition: 0.2s;
+    }
+    .filter-btn.active {
+        background: white; color: var(--text-main);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* --- TARJETA --- */
+    .notif-card {
+        display: flex;
+        gap: 1.25rem;
+        padding: 1.25rem;
+        border-radius: 16px;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+        position: relative;
+    }
+
+    /* Estilo: NO LEÍDO (Destacado) */
+    .notif-card.unread {
+        background: white;
+        border-color: var(--border-light);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    }
+    .notif-card.unread:hover {
+        border-color: var(--emerald);
+        transform: translateY(-2px);
+    }
+    /* Barra lateral decorativa para no leídas */
+    .notif-card.unread::before {
+        content: ''; position: absolute; left: 0; top: 15%; bottom: 15%;
+        width: 4px; background: var(--emerald); border-radius: 0 4px 4px 0;
+    }
+
+    /* Estilo: LEÍDO (Apagado) */
+    .notif-card.read {
+        background: var(--card-bg-read);
+        border-color: transparent;
+    }
+    .notif-card.read:hover {
+        background: white;
+        border-color: var(--border-light);
+    }
+
+    /* Icono */
+    .n-icon-box {
+        width: 48px; height: 48px; flex-shrink: 0;
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem;
+        transition: 0.2s;
+    }
+    .unread .n-icon-box { background: var(--emerald-soft); color: var(--emerald); }
+    .read .n-icon-box { background: #e2e8f0; color: #94a3b8; }
+
+    /* Contenido */
+    .n-body { flex: 1; min-width: 0; }
+    
+    .n-header {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        margin-bottom: 0.25rem;
+    }
+    .n-title {
+        font-size: 1rem; margin: 0; color: var(--text-main);
+    }
+    .unread .n-title { font-weight: 700; }
+    .read .n-title { font-weight: 500; }
+
+    .n-message {
+        font-size: 0.9rem; color: var(--text-sub); margin-bottom: 0.75rem;
+        line-height: 1.5;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* Footer con Metadata (Estado + Fecha) */
+    .n-footer {
+        display: flex; align-items: center; gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    /* Badges de Estado */
+    .status-badge {
+        padding: 2px 10px; border-radius: 20px;
+        font-weight: 600; font-size: 0.75rem;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .status-unread {
+        background: rgba(239, 68, 68, 0.1); color: #ef4444; /* Rojo suave */
+    }
+    .status-read {
+        background: #e2e8f0; color: #64748b; /* Gris */
+    }
+
+    .n-date {
+        color: #94a3b8; display: flex; align-items: center; gap: 4px;
+    }
+
+    .d-none-filter { display: none !important; }
 </style>
 
-
-
-
-<section class="bg-light py-5 mt-5">
-  <div class="container">
-    <!-- Encabezado -->
-    <div class="mb-5 text-center">
-        <div class="d-inline-flex align-items-center gap-3">
-            <div class="bg-primary bg-opacity-25 rounded-circle p-3">
-            <i class="bi bi-bell-fill text-primary fs-3"></i>
+<div class="container py-5">
+    <div class="notifications-wrapper animate__animated animate__fadeIn">
+        
+        <div class="page-header">
+            <div>
+                <h2 class="fw-bold mb-1" style="color: var(--text-main);">Tus Notificaciones</h2>
+                <p class="mb-0 text-muted small">Historial completo de alertas</p>
             </div>
-            <div class="text-start">
-            <h2 class="fw-bold mb-1">Tus Notificaciones</h2>
-            <p class="text-muted mb-0">Mantente informado con los últimos avisos y mensajes importantes.</p>
+            
+            <div class="filter-pills">
+                <button class="filter-btn active" data-filter="all">Todas</button>
+                <button class="filter-btn" data-filter="unread">
+                    No leídas <span id="unreadCounter" class="ms-1 fw-bold text-danger" style="display:none;"></span>
+                </button>
             </div>
         </div>
-        </div>
 
-
-    <!-- Lista de notificaciones -->
-    <div class="timeline">
-      {% for item in notification_data %}
-        <div class="timeline-item mb-4">
-          <div class="card shadow-sm border-0 rounded-4 
-            {% if item.is_read %}
-              bg-white
-            {% else %}
-              bg-primary bg-opacity-10
-            {% endif %}">
-            <div class="card-body d-flex justify-content-between align-items-start flex-wrap p-4">
-              
-              <!-- Ícono -->
-              <div class="me-3">
-                {% if item.is_read %}
-                  <i class="bi bi-envelope-open fs-4 text-secondary"></i>
-                {% else %}
-                  <i class="bi bi-envelope fs-4 text-primary"></i>
-                {% endif %}
-              </div>
-
-              <!-- Contenido de notificación -->
-              <div class="flex-grow-1">
-                <h5 class="fw-semibold mb-1">{{ item.notification.title }}</h5>
-                <p class="mb-2 text-muted small">{{ item.notification.message }}</p>
-                <div class="d-flex flex-wrap align-items-center gap-3">
-                  <span class="badge 
-                    {% if item.is_read %}bg-secondary{% else %}bg-danger{% endif %}">
-                    {% if item.is_read %}Leído{% else %}No leído{% endif %}
-                  </span>
-                  <small class="text-muted">
-                    <i class="bi bi-clock me-1"></i>
-                    {{ item.notification.created_at|date:"d M Y, H:i" }}
-                  </small>
+        <div id="notificationsList">
+            {% for item in notification_data %}
+            
+            <a href="{% url 'notification_detail' item.notification.id %}" 
+               class="notif-card {% if not item.is_read %}unread{% else %}read{% endif %}"
+               data-status="{% if not item.is_read %}unread{% else %}read{% endif %}">
+                
+                <div class="n-icon-box">
+                    {% with title=item.notification.title|lower %}
+                        {% if 'orden' in title or 'pedido' in title %}
+                            <i class="bi bi-box-seam"></i>
+                        {% elif 'pago' in title %}
+                            <i class="bi bi-credit-card"></i>
+                        {% elif 'seguridad' in title %}
+                            <i class="bi bi-shield-check"></i>
+                        {% else %}
+                            <i class="bi bi-bell"></i>
+                        {% endif %}
+                    {% endwith %}
                 </div>
-              </div>
 
-              <!-- Acción -->
-              <div class="mt-3 mt-md-0">
-                <a href="{% url 'notification_detail' item.notification.id %}" class="btn btn-outline-primary btn-sm rounded-pill">
-                  Ver más <i class="bi bi-chevron-right ms-1"></i>
-                </a>
-              </div>
+                <div class="n-body">
+                    <div class="n-header">
+                        <h5 class="n-title">{{ item.notification.title }}</h5>
+                    </div>
+                    
+                    <p class="n-message">{{ item.notification.message }}</p>
+                    
+                    <div class="n-footer">
+                        {% if not item.is_read %}
+                            <span class="status-badge status-unread">Nuevo</span>
+                        {% else %}
+                            <span class="status-badge status-read">Leído</span>
+                        {% endif %}
 
-            </div>
-          </div>
+                        <span class="n-date">
+                            <i class="bi bi-clock"></i>
+                            {{ item.notification.created_at|date:"d M Y, H:i" }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="align-self-center text-muted opacity-25">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+
+            </a>
+
+            {% empty %}
+                <div class="text-center py-5">
+                    <div class="bg-light rounded-circle d-inline-flex p-4 mb-3">
+                        <i class="bi bi-inbox fs-1 text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold text-muted">No tienes notificaciones</h5>
+                </div>
+            {% endfor %}
         </div>
-      {% empty %}
-        <div class="text-center py-5 text-muted">
-          <i class="bi bi-inbox-fill fs-1 mb-3"></i>
-          <p class="mb-0">No tienes notificaciones por ahora.</p>
-        </div>
-      {% endfor %}
     </div>
-  </div>
-</section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const items = document.querySelectorAll('.notif-card');
+    const counterBadge = document.getElementById('unreadCounter');
+    
+    // Contador real para el filtro
+    let unreadCount = 0;
+    items.forEach(item => {
+        if(item.dataset.status === 'unread') unreadCount++;
+    });
+    if(unreadCount > 0) {
+        counterBadge.textContent = unreadCount;
+        counterBadge.style.display = 'inline';
+    }
+
+    // Filtrado
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const filter = btn.dataset.filter;
+
+            items.forEach(item => {
+                if (filter === 'all') {
+                    item.classList.remove('d-none-filter');
+                    item.classList.add('animate__fadeIn');
+                } else if (filter === 'unread') {
+                    if (item.dataset.status === 'unread') {
+                        item.classList.remove('d-none-filter');
+                        item.classList.add('animate__fadeIn');
+                    } else {
+                        item.classList.add('d-none-filter');
+                    }
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

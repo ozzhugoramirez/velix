@@ -20,26 +20,50 @@
         font-family: 'Inter', system-ui, sans-serif;
     }
 
-    /* --- 1. BARRA DE FILTROS SUPERIOR (Sticky) --- */
+    /* --- 1. BARRA DE FILTROS MEJORADA --- */
     .filters-top-bar {
         position: sticky;
-        top: 60px; /* Ajustar según la altura real de tu navbar */
+        top: 60px;
         z-index: 1020;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(12px);
         border-bottom: 1px solid rgba(0,0,0,0.05);
         padding: 1rem 0;
         box-shadow: 0 4px 20px rgba(0,0,0,0.02);
     }
 
+    /* Contenedor relativo para posicionar las flechas */
+    .scroller-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        overflow: hidden; /* Oculta lo que sale del wrapper */
+        margin-right: 1rem;
+    }
+
     .filter-scroller {
         display: flex;
+        align-items: center;
         gap: 10px;
         overflow-x: auto;
-        padding-bottom: 5px; /* Espacio para scrollbar oculta */
+        flex-wrap: nowrap;
+        padding-bottom: 0; 
         scrollbar-width: none; /* Firefox */
         -ms-overflow-style: none; /* IE */
+        cursor: grab; /* Manito para indicar que se puede arrastrar */
+        user-select: none; /* Evita seleccionar texto al arrastrar */
+        scroll-behavior: smooth; 
+        width: 100%;
     }
+    
+    /* Clase activa cuando se está arrastrando */
+    .filter-scroller.active {
+        cursor: grabbing;
+        cursor: -webkit-grabbing;
+        transform: scale(1);
+    }
+
     .filter-scroller::-webkit-scrollbar { display: none; }
 
     .filter-pill {
@@ -52,25 +76,90 @@
         font-weight: 500;
         white-space: nowrap;
         text-decoration: none;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         display: flex;
         align-items: center;
         gap: 6px;
+        flex-shrink: 0;
     }
+    
     .filter-pill:hover {
         border-color: var(--emerald);
         color: var(--emerald);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(25,90,89,0.1);
     }
+    
     .filter-pill.active {
         background: var(--emerald);
         color: white;
         border-color: var(--emerald);
-        box-shadow: 0 4px 12px rgba(25,90,89,0.25);
     }
 
-    /* --- 2. TARJETAS DE PRODUCTO (Premium) --- */
+    .filter-pill.special-offer.active {
+        background: var(--gold) !important;
+        border-color: var(--gold) !important;
+        color: white !important;
+    }
+
+    /* BOTONES DE NAVEGACIÓN (FLECHAS) */
+    .scroll-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: white;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 10;
+        color: #333;
+        transition: all 0.2s;
+        opacity: 0; /* Ocultos por defecto, JS los muestra si es necesario */
+        pointer-events: none;
+    }
+    
+    .scroll-btn.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .scroll-btn:hover {
+        background: var(--emerald);
+        color: white;
+        border-color: var(--emerald);
+    }
+
+    .scroll-btn-left { left: 0; }
+    .scroll-btn-right { right: 0; }
+
+    /* Máscaras de desvanecimiento para indicar más contenido */
+    .scroller-wrapper::before, .scroller-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0; bottom: 0;
+        width: 40px;
+        z-index: 2;
+        pointer-events: none;
+        transition: opacity 0.3s;
+        opacity: 0;
+    }
+    .scroller-wrapper::before {
+        left: 0;
+        background: linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0));
+    }
+    .scroller-wrapper::after {
+        right: 0;
+        background: linear-gradient(to left, rgba(255,255,255,1), rgba(255,255,255,0));
+    }
+    .scroller-wrapper.show-left::before { opacity: 1; }
+    .scroller-wrapper.show-right::after { opacity: 1; }
+
+
+    /* --- ESTILOS DE PRODUCTO (Mismos de antes) --- */
     .pro-card {
         background: white;
         border-radius: 16px;
@@ -81,117 +170,45 @@
         display: flex;
         flex-direction: column;
     }
-    .pro-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-    }
-    
-    .pro-img-wrap {
-        position: relative;
-        padding-top: 100%; /* Ratio 1:1 */
-        background: #f3f4f6;
-        overflow: hidden;
-    }
-    .pro-img {
-        position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
-        object-fit: cover;
-        transition: transform 0.6s ease;
-    }
+    .pro-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
+    .pro-img-wrap { position: relative; padding-top: 100%; background: #f3f4f6; overflow: hidden; }
+    .pro-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
     .pro-card:hover .pro-img { transform: scale(1.08); }
-
-    /* Acciones flotantes */
-    .hover-actions {
-        position: absolute;
-        bottom: 15px;
-        left: 0; right: 0;
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        opacity: 0;
-        transform: translateY(20px);
-        transition: all 0.3s ease;
-    }
+    .hover-actions { position: absolute; bottom: 15px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; opacity: 0; transform: translateY(20px); transition: all 0.3s ease; }
     .pro-card:hover .hover-actions { opacity: 1; transform: translateY(0); }
+    .btn-action { width: 42px; height: 42px; border-radius: 50%; background: white; color: #111; display: flex; align-items: center; justify-content: center; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: 0.2s; }
+    .btn-action:hover { background: var(--gold); color: white; transform: scale(1.1); }
     
-    .btn-action {
-        width: 42px; height: 42px;
-        border-radius: 50%;
-        background: white;
-        color: #111;
-        display: flex; align-items: center; justify-content: center;
-        border: none;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        transition: 0.2s;
-    }
-    .btn-action:hover {
-        background: var(--gold);
-        color: white;
-        transform: scale(1.1);
-    }
-
-    /* --- 3. BANNERS PUBLICITARIOS (In-Feed) --- */
-    .ad-banner {
-        border-radius: 20px;
-        overflow: hidden;
-        position: relative;
-        color: white;
-        margin: 2rem 0;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-        display: flex;
-        align-items: center;
-        min-height: 250px;
-        transition: transform 0.3s;
-    }
-    .ad-banner:hover { transform: scale-[1.01]; }
-
-    .ad-bg-1 {
-        background: linear-gradient(135deg, #111827 0%, #374151 100%);
-    }
-    .ad-bg-2 {
-        background: linear-gradient(135deg, var(--emerald) 0%, #10b981 100%);
-    }
-
-    .ad-content {
-        position: relative;
-        z-index: 2;
-        padding: 3rem;
-        max-width: 60%;
-    }
-    
-    .ad-image {
-        position: absolute;
-        right: 0; top: 0; bottom: 0;
-        width: 50%;
-        object-fit: cover;
-        mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
-        -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%);
-    }
+    /* BANNERS */
+    .ad-banner { border-radius: 20px; overflow: hidden; position: relative; color: white; margin: 2rem 0; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: flex; align-items: center; min-height: 250px; transition: transform 0.3s; }
+    .ad-bg-1 { background: linear-gradient(135deg, #111827 0%, #374151 100%); }
+    .ad-bg-2 { background: linear-gradient(135deg, var(--emerald) 0%, #10b981 100%); }
+    .ad-content { position: relative; z-index: 2; padding: 3rem; max-width: 60%; }
+    .ad-image { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; object-fit: cover; mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%); -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%); }
 </style>
 
 <div class="filters-top-bar">
     <div class="container">
         <div class="d-flex align-items-center justify-content-between">
             
-            <div class="filter-scroller flex-grow-1 me-4">
-                <a href="?category=all" class="filter-pill {% if not selected_category %}active{% endif %}">
-                    <i class="bi bi-grid-fill"></i> Todo
-                </a>
-                <a href="?category=tecnologia" class="filter-pill">
-                    <i class="bi bi-laptop"></i> Tecnología
-                </a>
-                <a href="?category=moda" class="filter-pill">
-                    <i class="bi bi-bag"></i> Moda
-                </a>
-                <a href="?category=hogar" class="filter-pill">
-                    <i class="bi bi-house"></i> Hogar
-                </a>
-                <a href="?category=ofertas" class="filter-pill" style="border-color: var(--gold); color: #b48532;">
-                    <i class="bi bi-lightning-fill"></i> Ofertas Flash
-                </a>
-                <a href="#" class="filter-pill">Deportes</a>
-                <a href="#" class="filter-pill">Gamer</a>
-                <a href="#" class="filter-pill">Accesorios</a>
+            <div class="scroller-wrapper" id="scrollerWrapper">
+                <button class="scroll-btn scroll-btn-left" id="btnLeft"><i class="bi bi-chevron-left"></i></button>
+
+                <div class="filter-scroller" id="categoryScroller">
+                    <a href="?category=all{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="filter-pill {% if not selected_category or selected_category == 'all' %}active{% endif %}">
+                        <i class="bi bi-grid-fill"></i> Todo
+                    </a>
+                    <a href="?category=ofertas{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="filter-pill special-offer {% if selected_category == 'ofertas' %}active{% endif %}" style="border-color: var(--gold); color: #b48532;">
+                        <i class="bi bi-lightning-fill"></i> Ofertas Flash
+                    </a>
+                    {% for cat in categories %}
+                        <a href="?category={{ cat.name }}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="filter-pill {% if selected_category == cat.name %}active{% endif %}">
+                            <i class="bi bi-tag"></i> {{ cat.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+                <button class="scroll-btn scroll-btn-right" id="btnRight"><i class="bi bi-chevron-right"></i></button>
             </div>
 
             <div class="dropdown flex-shrink-0">
@@ -200,9 +217,9 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 mt-2">
                     <li><h6 class="dropdown-header">Criterio</h6></li>
-                    <li><a class="dropdown-item" href="?sort=price_asc">Menor Precio</a></li>
-                    <li><a class="dropdown-item" href="?sort=price_desc">Mayor Precio</a></li>
-                    <li><a class="dropdown-item" href="?sort=newest">Más Nuevos</a></li>
+                    <li><a class="dropdown-item {% if selected_sort == 'price_asc' %}active{% endif %}" href="?sort=price_asc{% if selected_category %}&category={{ selected_category }}{% endif %}">Menor Precio</a></li>
+                    <li><a class="dropdown-item {% if selected_sort == 'price_desc' %}active{% endif %}" href="?sort=price_desc{% if selected_category %}&category={{ selected_category }}{% endif %}">Mayor Precio</a></li>
+                    <li><a class="dropdown-item {% if selected_sort == 'newest' %}active{% endif %}" href="?sort=newest{% if selected_category %}&category={{ selected_category }}{% endif %}">Más Nuevos</a></li>
                 </ul>
             </div>
         </div>
@@ -218,125 +235,154 @@
     {% endif %}
 
     <div class="row g-4">
-        
         {% for item in products %}
         {% with product=item.product status=item.status %}
-        
         <div class="col-6 col-md-4 col-lg-3">
             <div class="pro-card h-100">
                 <div class="pro-img-wrap">
                     {% if product.image %}
                         <img src="{{ product.image.url }}" class="pro-img" alt="{{ product.title }}">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted"><i class="bi bi-image fs-1"></i></div>
                     {% endif %}
-                    
                     <div class="position-absolute top-0 start-0 p-2">
-                        {% if status == 'Oferta' %}
-                            <span class="badge bg-danger rounded-pill shadow-sm small">SALE</span>
-                        {% elif status == 'Nuevo' %}
-                            <span class="badge bg-success rounded-pill shadow-sm small">NEW</span>
-                        {% endif %}
+                        {% if status == 'Promoción' %}<span class="badge bg-primary rounded-pill shadow-sm small">PROMO</span>{% elif status == 'Oferta' %}<span class="badge bg-danger rounded-pill shadow-sm small">OFERTA</span>{% endif %}
                     </div>
-
                     <div class="hover-actions">
-                        <a href="{% url 'product_detail' product.id %}" class="btn-action" title="Ver Detalle">
-                            <i class="bi bi-eye"></i>
-                        </a>
+                        <a href="{% url 'product_detail' product.id %}" class="btn-action" title="Ver Detalle"><i class="bi bi-eye"></i></a>
                         {% if user.is_authenticated %}
-                        <form action="{% url 'add_to_cart' product.id %}" method="POST">
-                            {% csrf_token %}
-                            <button class="btn-action" title="Al Carrito"><i class="bi bi-bag-plus"></i></button>
-                        </form>
+                        <form action="{% url 'add_to_cart' product.id %}" method="POST">{% csrf_token %}<button class="btn-action" title="Al Carrito"><i class="bi bi-bag-plus"></i></button></form>
                         {% else %}
                         <a href="{% url 'login' %}" class="btn-action"><i class="bi bi-lock"></i></a>
                         {% endif %}
                     </div>
                 </div>
-
                 <div class="p-3 d-flex flex-column flex-grow-1">
                     <div class="text-muted small text-uppercase" style="font-size: 0.7rem;">{{ product.category.name|default:"General" }}</div>
-                    <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark">
-                        <h6 class="fw-bold my-1 text-truncate">{{ product.title }}</h6>
-                    </a>
+                    <a href="{% url 'product_detail' product.id %}" class="text-decoration-none text-dark"><h6 class="fw-bold my-1 text-truncate">{{ product.title }}</h6></a>
                     <div class="mt-auto d-flex align-items-center justify-content-between">
-                        <div>
-                            <span class="fw-bold" style="color: var(--emerald);">${{ product.price }}</span>
-                            {% if product.old_price %}
-                            <small class="text-decoration-line-through text-muted ms-1" style="font-size: 0.8rem">${{ product.old_price }}</small>
-                            {% endif %}
-                        </div>
+                        <div><span class="fw-bold" style="color: var(--emerald);">${{ product.price }}</span></div>
                         <div class="text-warning small"><i class="bi bi-star-fill"></i> 4.8</div>
                     </div>
                 </div>
             </div>
         </div>
-
-        {# AD #1: Aparece después del 4to producto #}
+        {# BANNERS #}
         {% if forloop.counter == 4 %}
-        <div class="col-12">
-            <div class="ad-banner ad-bg-1">
-                <div class="ad-content">
-                    <span class="badge bg-warning text-dark mb-2">LIMITED EDITION</span>
-                    <h2 class="fw-bold display-6">Colección de Invierno</h2>
-                    <p class="lead opacity-75">Diseños exclusivos con materiales premium. Solo por tiempo limitado.</p>
-                    <a href="#" class="btn btn-light rounded-pill px-4 fw-bold mt-2">Ver Colección</a>
-                </div>
-                <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="ad-image" alt="Fashion">
-            </div>
-        </div>
+        <div class="col-12"><div class="ad-banner ad-bg-1"><div class="ad-content"><span class="badge bg-warning text-dark mb-2">LIMITED</span><h2 class="fw-bold display-6">Colección Invierno</h2><p class="lead opacity-75">Diseños exclusivos.</p><a href="#" class="btn btn-light rounded-pill px-4 fw-bold mt-2">Ver</a></div><img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&w=1000&q=80" class="ad-image" alt="Ads"></div></div>
         {% endif %}
-
-        {# AD #2: Aparece después del 8vo producto #}
         {% if forloop.counter == 8 %}
-        <div class="col-12">
-            <div class="ad-banner ad-bg-2">
-                <div class="ad-content">
-                    <h2 class="fw-bold display-6">Envío Gratis + 10% OFF</h2>
-                    <p class="lead opacity-75">Únete al club NextGen y obtén beneficios exclusivos en tu primera compra.</p>
-                    <div class="d-flex gap-2 mt-3">
-                        <input type="email" class="form-control rounded-pill border-0" placeholder="Tu email..." style="max-width: 250px;">
-                        <button class="btn btn-dark rounded-pill">Suscribirse</button>
-                    </div>
-                </div>
-                <img src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" class="ad-image" alt="Payment">
-            </div>
-        </div>
+        <div class="col-12"><div class="ad-banner ad-bg-2"><div class="ad-content"><h2 class="fw-bold display-6">Envío Gratis</h2><p class="lead opacity-75">Únete al club.</p><div class="d-flex gap-2 mt-3"><input type="email" class="form-control rounded-pill border-0" placeholder="Email"><button class="btn btn-dark rounded-pill">OK</button></div></div><img src="https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?ixlib=rb-4.0.3&w=1000&q=80" class="ad-image" alt="Ads"></div></div>
         {% endif %}
-
         {% endwith %}
         {% endfor %}
     </div>
 
     {% if page_obj.has_other_pages %}
     <div class="mt-5 d-flex justify-content-center">
-        <nav>
-            <ul class="pagination">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link border-0 text-dark rounded-circle mx-1" href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
-                </li>
-                {% endif %}
-                
-                {% for num in page_obj.paginator.page_range %}
-                <li class="page-item">
-                    <a class="page-link border-0 rounded-circle mx-1 {% if page_obj.number == num %}bg-dark text-white fw-bold{% else %}text-dark bg-light{% endif %}" 
-                       href="?page={{ num }}">{{ num }}</a>
-                </li>
-                {% endfor %}
-                
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link border-0 text-dark rounded-circle mx-1" href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
+        <nav><ul class="pagination">
+            {% if page_obj.has_previous %}<li class="page-item"><a class="page-link border-0 text-dark rounded-circle mx-1" href="?page={{ page_obj.previous_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}"><i class="bi bi-chevron-left"></i></a></li>{% endif %}
+            {% for num in page_obj.paginator.page_range %}<li class="page-item"><a class="page-link border-0 rounded-circle mx-1 {% if page_obj.number == num %}bg-dark text-white fw-bold{% else %}text-dark bg-light{% endif %}" href="?page={{ num }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">{{ num }}</a></li>{% endfor %}
+            {% if page_obj.has_next %}<li class="page-item"><a class="page-link border-0 text-dark rounded-circle mx-1" href="?page={{ page_obj.next_page_number }}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}"><i class="bi bi-chevron-right"></i></a></li>{% endif %}
+        </ul></nav>
     </div>
     {% endif %}
-
 </div>
 
 {% endblock content %}
 
 {% block footer %}
 {% include "components/web/footer.html" %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const slider = document.getElementById('categoryScroller');
+        const wrapper = document.getElementById('scrollerWrapper');
+        const btnLeft = document.getElementById('btnLeft');
+        const btnRight = document.getElementById('btnRight');
+        
+        if (!slider) return;
+
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        // --- 1. CLICK Y ARRASTRAR (DRAG TO SCROLL) ---
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.classList.add('active');
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.classList.remove('active');
+        });
+
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.classList.remove('active');
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // La velocidad del arrastre
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
+        // --- 2. RUEDA DEL MOUSE (VERTICAL A HORIZONTAL) ---
+        slider.addEventListener("wheel", (evt) => {
+            if (evt.deltaY !== 0) {
+                evt.preventDefault();
+                slider.scrollLeft += evt.deltaY;
+            }
+        });
+
+        // --- 3. BOTONES DE NAVEGACIÓN ---
+        const scrollAmount = 200; // Cuánto mueve cada click
+
+        if(btnLeft && btnRight) {
+            btnLeft.addEventListener('click', () => {
+                slider.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+            
+            btnRight.addEventListener('click', () => {
+                slider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            // Mostrar/Ocultar flechas y sombras según posición
+            const updateUI = () => {
+                const maxScrollLeft = slider.scrollWidth - slider.clientWidth;
+                
+                // Botón Izquierdo
+                if (slider.scrollLeft > 10) {
+                    btnLeft.classList.add('visible');
+                    wrapper.classList.add('show-left');
+                } else {
+                    btnLeft.classList.remove('visible');
+                    wrapper.classList.remove('show-left');
+                }
+
+                // Botón Derecho (con margen de error de 1px)
+                if (slider.scrollLeft < maxScrollLeft - 1) {
+                    btnRight.classList.add('visible');
+                    wrapper.classList.add('show-right');
+                } else {
+                    btnRight.classList.remove('visible');
+                    wrapper.classList.remove('show-right');
+                }
+            };
+
+            // Escuchar evento scroll para actualizar botones
+            slider.addEventListener('scroll', updateUI);
+            window.addEventListener('resize', updateUI);
+            
+            // Inicializar estado
+            updateUI();
+        }
+    });
+</script>
 {% endblock footer %}

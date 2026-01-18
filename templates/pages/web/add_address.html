@@ -1,49 +1,402 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Agregar Nueva Dirección</h2>
-    <form method="post" action="{% url 'add_address' %}" class="mt-4">
-        {% csrf_token %}
-        <div class="form-group mb-3">
-            {{ form.localidad.label_tag }}
-            {{ form.localidad }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.postal_code.label_tag }}
-            {{ form.postal_code }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.barrio.label_tag }}
-            {{ form.barrio }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.whatsapp_number.label_tag }}
-            {{ form.whatsapp_number }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.email.label_tag }}
-            {{ form.email }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.main_street.label_tag }}
-            {{ form.main_street }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.secondary_street.label_tag }}
-            {{ form.secondary_street }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.house_number.label_tag }}
-            {{ form.house_number }}
-        </div>
-        <div class="form-group mb-3">
-            {{ form.description.label_tag }}
-            {{ form.description }}
-        </div>
-        <button type="submit" class="btn btn-primary">Guardar Dirección</button>
-        <a href="{% url 'checkout' %}" class="btn btn-secondary">Cancelar</a>
-    </form>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+<style>
+    :root {
+        --emerald: rgb(25,90,89);
+        --danger: #ef4444;
+        --bg-page: #f8fafc;
+        --card-bg: #ffffff;
+        --border-color: #e2e8f0;
+    }
+
+    body { background-color: var(--bg-page); }
+
+    .address-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        background: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        overflow: hidden;
+        border: 1px solid white;
+    }
+
+    /* Mapa */
+    .map-header-wrapper {
+        position: relative;
+        height: 350px;
+        width: 100%;
+        background-color: #e2e8f0;
+    }
+    #map-picker { height: 100%; width: 100%; z-index: 1; }
     
+    .btn-locate-me {
+        position: absolute; bottom: 20px; right: 20px; z-index: 400;
+        background: white; border: none; padding: 10px 15px; border-radius: 50px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15); font-weight: 600; font-size: 0.9rem;
+        color: var(--emerald); display: flex; align-items: center; gap: 8px;
+        cursor: pointer; transition: 0.2s;
+    }
+    .btn-locate-me:hover { transform: scale(1.05); }
+
+    .map-instruction {
+        position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+        z-index: 400; background: rgba(255, 255, 255, 0.95); padding: 8px 20px;
+        border-radius: 30px; font-size: 0.85rem; font-weight: 600;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: #334155; backdrop-filter: blur(4px);
+    }
+
+    /* Formulario */
+    .form-body { padding: 3rem; }
+    .section-label {
+        font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;
+        color: #94a3b8; font-weight: 700; margin-bottom: 1.5rem; display: block;
+        border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;
+    }
+
+    .modern-input-group { position: relative; margin-bottom: 1.5rem; }
+    .modern-input {
+        width: 100%; padding: 1rem 1rem 1rem 3rem; border: 2px solid #f1f5f9;
+        border-radius: 12px; background: #f8fafc; font-size: 1rem; transition: all 0.2s; color: #334155;
+    }
+    .modern-input:focus {
+        background: white; border-color: var(--emerald); outline: none;
+        box-shadow: 0 0 0 4px rgba(25,90,89,0.05);
+    }
+    .input-icon {
+        position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+        color: #94a3b8; font-size: 1.1rem; transition: 0.2s;
+    }
+    .modern-input:focus + .input-icon, .modern-input:not(:placeholder-shown) + .input-icon {
+        color: var(--emerald);
+    }
+    .modern-input::placeholder { color: #cbd5e1; font-weight: 500;}
+
+    /* Botones */
+    .btn-submit {
+        background: var(--emerald); color: white; font-weight: 700; padding: 1rem;
+        border-radius: 12px; border: none; font-size: 1.1rem; transition: 0.3s;
+        box-shadow: 0 10px 20px -5px rgba(25,90,89,0.3); flex: 1;
+    }
+    .btn-submit:hover { background: rgb(20, 75, 75); transform: translateY(-2px); }
+
+    .btn-delete {
+        background: #fee2e2; color: var(--danger); font-weight: 700; padding: 1rem;
+        border-radius: 12px; border: none; font-size: 1.1rem; transition: 0.3s;
+        margin-left: 10px; display: flex; align-items: center; justify-content: center;
+    }
+    .btn-delete:hover { background: #fecaca; color: #b91c1c; }
+
+    /* Estilo para errores */
+    .error-list { list-style: none; padding: 0; margin: 0; }
+    .is-invalid { border-color: var(--danger) !important; background-color: #fff5f5 !important; }
+    .invalid-feedback { color: var(--danger); font-size: 0.85rem; margin-top: 5px; display: block; }
+
+</style>
+
+<div class="container pb-5">
+    
+    <div class="address-container animate__animated animate__fadeInUp">
+        
+        <div class="px-5 pt-4 pb-0">
+            <h2 class="fw-bold h4 mb-0">
+                {% if mode == 'edit' %}Editar Dirección{% else %}Nueva Dirección{% endif %}
+            </h2>
+        </div>
+
+        <form method="post" id="addressForm">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="alert alert-danger mx-5 mt-4 border-0 shadow-sm">
+                <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-2"></i>Error al guardar:</h6>
+                <ul class="error-list">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li><strong>{{ field }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <input type="hidden" name="latitude" id="id_latitude" value="{{ form.latitude.value|stringformat:'f'|default:'' }}">
+            <input type="hidden" name="longitude" id="id_longitude" value="{{ form.longitude.value|stringformat:'f'|default:'' }}">
+
+            <div class="map-header-wrapper mt-4">
+                <div class="map-instruction">
+                    <i class="bi bi-pin-map-fill text-danger me-1"></i> 
+                    {% if mode == 'edit' %}Verifica la ubicación{% else %}Mueve el pin a la entrada exacta{% endif %}
+                </div>
+                <div id="map-picker"></div>
+                <button type="button" class="btn-locate-me" onclick="locateUser()">
+                    <i class="bi bi-crosshair"></i> Mi ubicación
+                </button>
+            </div>
+
+            <div class="form-body">
+                
+                <span class="section-label">Detalles de la Ubicación</span>
+                
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.main_street.name }}" 
+                                   value="{{ form.main_street.value|default_if_none:'' }}" 
+                                   class="modern-input {% if form.main_street.errors %}is-invalid{% endif %}" 
+                                   placeholder="Calle Principal / Avenida">
+                            <i class="bi bi-signpost-2-fill input-icon"></i>
+                            
+                            {% for error in form.main_street.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.house_number.name }}" 
+                                   value="{{ form.house_number.value|default_if_none:'' }}" 
+                                   class="modern-input {% if form.house_number.errors %}is-invalid{% endif %}" 
+                                   placeholder="Altura (1234)">
+                            <i class="bi bi-hash input-icon"></i>
+                            {% for error in form.house_number.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.secondary_street.name }}" 
+                                   value="{{ form.secondary_street.value|default_if_none:'' }}" 
+                                   class="modern-input" placeholder="Referencia / Entre calles (Opcional)">
+                            <i class="bi bi-arrow-left-right input-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.floor.name }}" 
+                                   value="{{ form.floor.value|default_if_none:'' }}" 
+                                   class="modern-input" placeholder="Piso">
+                            <i class="bi bi-layers input-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.apartment.name }}" 
+                                   value="{{ form.apartment.value|default_if_none:'' }}" 
+                                   class="modern-input" placeholder="Depto">
+                            <i class="bi bi-door-closed input-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.barrio.name }}" 
+                                   value="{{ form.barrio.value|default_if_none:'' }}" 
+                                   class="modern-input" placeholder="Barrio">
+                            <i class="bi bi-building input-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                     <div class="col-md-8">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.localidad.name }}" 
+                                   value="{{ form.localidad.value|default_if_none:'' }}" 
+                                   class="modern-input {% if form.localidad.errors %}is-invalid{% endif %}" 
+                                   placeholder="Ciudad / Localidad">
+                            <i class="bi bi-geo-alt input-icon"></i>
+                            {% for error in form.localidad.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.postal_code.name }}" 
+                                   value="{{ form.postal_code.value|default_if_none:'' }}" 
+                                   class="modern-input" placeholder="C. Postal">
+                            <i class="bi bi-envelope-paper input-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modern-input-group mt-2">
+                    <textarea name="{{ form.description.name }}" class="modern-input" rows="2" placeholder="Instrucciones para el repartidor (Ej: Rejas negras)">{{ form.description.value|default_if_none:'' }}</textarea>
+                    <i class="bi bi-chat-text input-icon" style="top: 25px;"></i>
+                </div>
+
+
+                <span class="section-label mt-4">Contacto para esta entrega</span>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="modern-input-group">
+                            <input type="text" name="{{ form.whatsapp_number.name }}" 
+                                   value="{{ form.whatsapp_number.value|default_if_none:'' }}" 
+                                   class="modern-input {% if form.whatsapp_number.errors %}is-invalid{% endif %}" 
+                                   placeholder="Celular / WhatsApp">
+                            <i class="bi bi-whatsapp input-icon"></i>
+                            {% for error in form.whatsapp_number.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="modern-input-group">
+                            <input type="email" name="{{ form.email.name }}" 
+                                   value="{{ form.email.value|default_if_none:user.email }}" 
+                                   class="modern-input" placeholder="Email de notificación">
+                            <i class="bi bi-envelope input-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-3 border-top d-flex">
+                    <button type="submit" class="btn-submit">
+                        {% if mode == 'edit' %}Guardar Cambios{% else %}Guardar Dirección{% endif %}
+                    </button>
+                    
+                    {% if mode == 'edit' %}
+                        <button type="button" class="btn-delete" data-bs-toggle="modal" data-bs-target="#deleteModal" title="Eliminar dirección">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <div class="text-center mt-3">
+                    <a href="{% url 'checkout' %}" class="text-decoration-none text-muted small fw-bold">Cancelar y volver</a>
+                </div>
+
+            </div>
+        </form>
+    </div>
 </div>
+
+{% if mode == 'edit' %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pb-5 pt-0 px-5">
+                <div class="mb-3 text-danger bg-danger bg-opacity-10 p-3 rounded-circle d-inline-flex">
+                    <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                </div>
+                <h4 class="fw-bold">¿Eliminar dirección?</h4>
+                <p class="text-muted small">Esta acción no se puede deshacer.</p>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="button" class="btn btn-light flex-grow-1 py-2 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="post" action="{% url 'delete_address' object.id %}" class="flex-grow-1">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold">Sí, eliminar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const inputLat = document.getElementById('id_latitude');
+        const inputLng = document.getElementById('id_longitude');
+        
+        let defaultLat = -34.6037; 
+        let defaultLng = -58.3816;
+        let zoomLevel = 15;
+
+        // Limpiar valores previos para evitar errores de parseo (ej. si vienen vacíos)
+        let rawLat = inputLat.value.trim().replace(',', '.');
+        let rawLng = inputLng.value.trim().replace(',', '.');
+
+        // Si tenemos coordenadas guardadas (modo edición), usarlas
+        if (rawLat !== "" && rawLng !== "" && rawLat !== "nan") {
+            const savedLat = parseFloat(rawLat);
+            const savedLng = parseFloat(rawLng);
+            if (!isNaN(savedLat) && !isNaN(savedLng)) {
+                defaultLat = savedLat;
+                defaultLng = savedLng;
+                zoomLevel = 17;
+            }
+        } else {
+            // Si es nueva dirección, setear los inputs ocultos con el default
+            // para que no se envíen vacíos
+            inputLat.value = defaultLat;
+            inputLng.value = defaultLng;
+        }
+
+        const map = L.map('map-picker').setView([defaultLat, defaultLng], zoomLevel);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        const marker = L.marker([defaultLat, defaultLng], {
+            draggable: true,
+            autoPan: true
+        }).addTo(map);
+
+        function updateInputs(lat, lng) {
+            // Guardar con 6 decimales y asegurar punto decimal
+            inputLat.value = lat.toFixed(6);
+            inputLng.value = lng.toFixed(6);
+        }
+
+        marker.on('dragend', function(e) {
+            const position = marker.getLatLng();
+            updateInputs(position.lat, position.lng);
+            map.panTo(position);
+        });
+
+        map.on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            updateInputs(e.latlng.lat, e.latlng.lng);
+            map.panTo(e.latlng);
+        });
+
+        window.locateUser = function() {
+            if (!navigator.geolocation) {
+                alert("Navegador no soporta geolocalización.");
+                return;
+            }
+            const btn = document.querySelector('.btn-locate-me');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner-border spinner-border-sm text-success" role="status"></div>';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 17);
+                    marker.setLatLng([lat, lng]);
+                    updateInputs(lat, lng);
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Listo';
+                    setTimeout(() => btn.innerHTML = originalText, 2000);
+                },
+                () => {
+                    alert("Error al obtener ubicación.");
+                    btn.innerHTML = originalText;
+                }
+            );
+        };
+    });
+</script>
 {% endblock %}

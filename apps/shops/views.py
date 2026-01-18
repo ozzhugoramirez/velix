@@ -29,48 +29,82 @@ from uuid import uuid4
 from django.conf import settings 
 from django.http import HttpResponse
 
+from django.shortcuts import render
+from django.views import View
+from django.core.paginator import Paginator
+from django.utils import timezone # Importante para manejar fechas correctamente
+from django.db.models import Q
+from .models import Product, Category # Asegúrate de importar tus modelos
+
 class HomeShopView(View):
     def get(self, request):
-        category_id = request.GET.get('category')
+        # 1. Obtener parámetros de la URL
+        category_param = request.GET.get('category')
+        sort_param = request.GET.get('sort')
         
-        # Filtrar productos con stock mayor a 0
+        # 2. Filtrado base: Productos con stock
         products = Product.objects.filter(stock__gt=0)
+        
+        # 3. Lógica de Filtrado por Categoría u Ofertas
+        now = timezone.now()
 
-        # Si hay una categoría seleccionada, filtrar también por categoría
-        if category_id:
-            products = products.filter(category_id=category_id)
+        if category_param == 'ofertas':
+            # Filtro especial para Ofertas Flash
+            products = products.filter(
+                is_daily_offer=True,
+                offer_start_date__lte=now,
+                offer_end_date__gte=now
+            )
+        elif category_param and category_param != 'all':
+            # Intenta filtrar por nombre de categoría (ya que tu HTML envía texto como 'tecnologia')
+            # Si tus links enviaran ID, usarías category_id=category_param
+            products = products.filter(category__name__iexact=category_param)
 
-        # Ordenar aleatoriamente
-        products = products.order_by('?')  # Cambiar el orden cada vez que se carga la página
+        # 4. Lógica de Ordenamiento (Sorting)
+        if sort_param == 'price_asc':
+            products = products.order_by('price')
+        elif sort_param == 'price_desc':
+            products = products.order_by('-price')
+        elif sort_param == 'newest':
+            products = products.order_by('-created_at')
+        else:
+            # Orden aleatorio por defecto si no se elige nada
+            products = products.order_by('?')
 
-        # Paginación
-        paginator = Paginator(products, 5)  # Mostrar 5 productos por página
-        page_number = request.GET.get('page')  # Obtiene el número de la página actual
+        # 5. Paginación
+        paginator = Paginator(products, 5) # 5 productos por página
+        page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
 
         categories = Category.objects.all()
 
-        # Obtener la fecha y hora actual como naive
-        now = datetime.now()
-
-        # Determinar el estado de cada producto
-        products_with_status = [
-            {
+        # 6. Determinar estado (Promoción, Oferta, Normal) para el frontend
+        # Nota: Usamos la fecha 'now' que definimos arriba
+        products_with_status = []
+        for product in page_obj:
+            status = "Normal"
+            
+            # Chequeo de Promoción
+            if product.is_currently_promotional:
+                status = "Promoción"
+            # Chequeo de Oferta Diaria
+            elif (product.is_daily_offer and 
+                  product.offer_start_date and 
+                  product.offer_end_date and 
+                  product.offer_start_date <= now <= product.offer_end_date):
+                status = "Oferta"
+            
+            products_with_status.append({
                 "product": product,
-                "status": (
-                    "Promoción" if product.is_currently_promotional else
-                    "Oferta" if product.is_daily_offer and product.offer_start_date and product.offer_end_date and product.offer_start_date.replace(tzinfo=None) <= now <= product.offer_end_date.replace(tzinfo=None) else
-                    "Normal"
-                )
-            }
-            for product in page_obj
-        ]
+                "status": status
+            })
 
         context = {
             'products': products_with_status,
             'categories': categories,
-            'selected_category': category_id,
-            'page_obj': page_obj,  # Agregar page_obj para la navegación
+            'selected_category': category_param, # Para mantener el botón activo en el HTML
+            'selected_sort': sort_param,         # Para saber qué orden está activo (opcional)
+            'page_obj': page_obj,
         }
         return render(request, "pages/web/shop.html", context)
 
@@ -576,23 +610,59 @@ class OrderDetailView(LoginRequiredMixin, View):
         return render(request, 'pages/web/order_detail.html', context)
 
 
-
-class AddAddressView(LoginRequiredMixin, View):
-    def get(self, request):
-        form = AddressForm()
-        return render(request, 'pages/web/add_address.html', {'form': form})
-
-    def post(self, request):
-        form = AddressForm(request.POST)
-        if form.is_valid():
-            address = form.save(commit=False)
-            address.user = request.user
-            address.save()
-            return redirect('checkout')  # Redirigir a la página de checkout
-        return render(request, 'pages/web/add_address.html', {'form': form})
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, UpdateView
 
 
+# Vista CREAR
+class AddAddressView(LoginRequiredMixin, CreateView):
+    model = Address
+    form_class = AddressForm
+    template_name = 'pages/web/add_address.html'
+    success_url = reverse_lazy('checkout')
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        messages.success(self.request, "Dirección creada correctamente.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['mode'] = 'create'
+        return context
+
+# Vista EDITAR
+class EditAddressView(LoginRequiredMixin, UpdateView):
+    model = Address
+    form_class = AddressForm
+    template_name = 'pages/web/add_address.html'
+    success_url = reverse_lazy('checkout')
+
+    def get_queryset(self):
+        # Solo permite editar direcciones del propio usuario
+        return Address.objects.filter(user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['mode'] = 'edit'
+        return context
+    
+    def form_valid(self, form):
+        messages.success(self.request, "Dirección actualizada correctamente.")
+        return super().form_valid(form)
+    
+    # Esto ayuda a depurar: si falla, imprime errores en la consola del servidor
+    def form_invalid(self, form):
+        print("Errores del formulario:", form.errors)
+        return super().form_invalid(form)
+
+# Vista ELIMINAR
+def delete_address(request, pk):
+    address = get_object_or_404(Address, pk=pk, user=request.user)
+    if request.method == 'POST':
+        address.delete()
+        messages.success(request, "Dirección eliminada.")
+    return redirect('checkout')
 
 
 

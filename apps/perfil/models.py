@@ -202,26 +202,40 @@ class CartItem(models.Model):
 
 
 
+
+
 class Address(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='address')
-    localidad = models.CharField(max_length=255)  # Campo que falta en la base de datos
+    
+    # Ubicación Geográfica (Para el mapa)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    # Dirección Física
+    localidad = models.CharField(max_length=255)
     postal_code = models.CharField(max_length=20, null=True, blank=True)
     barrio = models.CharField(max_length=100, null=True, blank=True)
+    
+    main_street = models.CharField("Calle principal", max_length=255, null=True, blank=True)
+    secondary_street = models.CharField("Calle secundaria", max_length=255, null=True, blank=True) # Intersección
+    house_number = models.CharField("Número de casa", max_length=10, null=True, blank=True)
+    
+    # Nuevos campos útiles
+    floor = models.CharField("Piso", max_length=10, null=True, blank=True)
+    apartment = models.CharField("Departamento/Puerta", max_length=10, null=True, blank=True)
+
+    description = models.TextField("Instrucciones de entrega", null=True, blank=True)
+    
+    # Contacto
     whatsapp_number = models.CharField("Número de WhatsApp", max_length=15, null=True, blank=True)
     email = models.EmailField("Correo electrónico", null=True, blank=True)
-    main_street = models.CharField("Calle principal", max_length=255, null=True, blank=True)
-    secondary_street = models.CharField("Calle secundaria", max_length=255, null=True, blank=True)
-    house_number = models.CharField("Número de casa", max_length=10, null=True, blank=True)
-    description = models.TextField("Descripción adicional", null=True, blank=True)
+    
     is_default = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.localidad}, {self.main_street}, {self.house_number}"
-
-
+        return f"{self.main_street} {self.house_number}, {self.localidad}"
 
     def save(self, *args, **kwargs):
-        """Permitir solo una dirección predeterminada por usuario."""
         if self.is_default:
             Address.objects.filter(user=self.user, is_default=True).update(is_default=False)
         super().save(*args, **kwargs)

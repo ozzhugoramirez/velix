@@ -6,6 +6,8 @@
 {% endblock navbar %}
 
 {% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
 <style>
     :root {
         --emerald: rgb(25,90,89);
@@ -38,6 +40,45 @@
         font-size: 0.9rem;
     }
 
+    /* --- SELECTOR DE TIPO DE ENVÍO --- */
+    .shipping-toggle {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .shipping-option-label {
+        flex: 1;
+        cursor: pointer;
+    }
+    .shipping-option-card {
+        background: white;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: 0.2s;
+    }
+    .shipping-option-input:checked + .shipping-option-card {
+        border-color: var(--emerald);
+        background-color: #f0fdf4;
+        color: var(--emerald);
+    }
+    .shipping-option-input:checked + .shipping-option-card .badge-cost {
+        background-color: var(--emerald);
+        color: white;
+    }
+    .badge-cost {
+        background: #e2e8f0;
+        color: #475569;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        transition: 0.2s;
+    }
+
     /* --- TARJETAS DE SELECCIÓN (Dirección) --- */
     .address-card {
         background: var(--card-bg);
@@ -50,7 +91,6 @@
     }
     .address-card:hover { border-color: #cbd5e1; }
     
-    /* Input oculto + Estilo Activo */
     .hidden-radio:checked + .address-card {
         border-color: var(--emerald);
         background-color: #f0fdf4;
@@ -61,9 +101,50 @@
         color: var(--emerald); display: none;
     }
     .hidden-radio:checked + .address-card .check-mark { display: block; }
+    
+    /* Botón editar dirección */
+    .btn-edit-addr {
+        width: 35px; height: 35px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #64748b;
+        transition: 0.2s;
+        z-index: 5; /* Por encima del click del radio */
+        position: relative;
+    }
+    .btn-edit-addr:hover {
+        background: var(--emerald);
+        color: white;
+    }
 
 
-    /* --- TARJETAS DE PAGO (Grandes) --- */
+    /* --- MAPA Y PUNTOS DE RETIRO --- */
+    #map-container {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid var(--border-color);
+        height: 300px;
+        width: 100%;
+        margin-bottom: 1rem;
+        z-index: 1; 
+    }
+    .pickup-point-item {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        background: white;
+        transition: 0.2s;
+    }
+    .pickup-point-item:hover { background-color: #f8fafc; }
+    .pickup-radio:checked + .pickup-point-item {
+        border-color: var(--emerald);
+        background-color: #f0fdf4;
+    }
+
+    /* --- TARJETAS DE PAGO --- */
     .payment-option {
         background: white;
         border: 2px solid var(--border-color);
@@ -80,14 +161,10 @@
         position: relative;
         opacity: 1;
     }
-    
-    /* Efecto Hover */
     .payment-option:hover {
         transform: translateY(-3px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.05);
     }
-
-    /* Selección Activa */
     .hidden-radio:checked + .payment-option {
         border-color: var(--emerald);
         background-color: #ffffff;
@@ -97,8 +174,6 @@
         color: var(--emerald);
         transform: scale(1.1);
     }
-
-    /* Íconos de pago */
     .pay-icon {
         font-size: 2.5rem;
         margin-bottom: 0.5rem;
@@ -106,7 +181,7 @@
         transition: 0.3s;
     }
 
-    /* --- RESUMEN FLOTANTE --- */
+    /* --- RESUMEN --- */
     .summary-card {
         background: white;
         border-radius: 16px;
@@ -115,8 +190,6 @@
         position: sticky;
         top: 100px;
     }
-
-    /* Botón Confirmar */
     .btn-checkout {
         background: var(--emerald);
         color: white;
@@ -134,8 +207,6 @@
         box-shadow: 0 8px 20px rgba(25,90,89,0.3);
         color: white;
     }
-
-    /* Deshabilitar sección visualmente */
     .disabled-section {
         opacity: 0.5;
         pointer-events: none;
@@ -158,52 +229,136 @@
 
     <form method="post" action="{% url 'checkout' %}" id="checkout-form">
         {% csrf_token %}
+        <input type="hidden" name="shipping_method_type" id="shipping_method_type" value="home">
         
         <div class="row g-5">
             <div class="col-lg-8">
                 
                 <div class="mb-5">
                     <div class="step-title">
-                        <span class="step-number">1</span> Selección de Envío
+                        <span class="step-number">1</span> Método de Entrega
                     </div>
 
-                    <div class="d-flex flex-column gap-3">
+                    <div class="shipping-toggle">
+                        <label class="shipping-option-label">
+                            <input type="radio" name="shipping_selector" value="home" class="shipping-option-input hidden-radio" checked onchange="toggleShippingView('home')">
+                            <div class="shipping-option-card">
+                                <div><i class="bi bi-truck me-2"></i> Envío a Domicilio</div>
+                                <span class="badge-cost">Gratis</span>
+                            </div>
+                        </label>
+                        <label class="shipping-option-label">
+                            <input type="radio" name="shipping_selector" value="pickup" class="shipping-option-input hidden-radio" onchange="toggleShippingView('pickup')">
+                            <div class="shipping-option-card">
+                                <div><i class="bi bi-shop me-2"></i> Retiro en Punto</div>
+                                <span class="badge-cost">Gratis</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div id="view-home-delivery" class="d-flex flex-column gap-3 animate__animated animate__fadeIn">
+                        
                         {% if default_address %}
-                            <label class="w-100">
+                            <label class="w-100 position-relative">
                                 <input type="radio" name="address" value="{{ default_address.id }}" class="hidden-radio address-radio" checked>
                                 <div class="address-card">
                                     <i class="bi bi-check-circle-fill check-mark fs-5"></i>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="bg-light p-3 rounded-circle text-muted"><i class="bi bi-house-door-fill fs-4"></i></div>
-                                        <div>
-                                            <h6 class="fw-bold mb-0 text-dark">{{ default_address }}</h6>
-                                            <small class="text-success fw-bold">Dirección Predeterminada</small>
+                                        <div class="flex-grow-1">
+                                            <div class="badge bg-success bg-opacity-10 text-success mb-1">
+                                                <i class="bi bi-star-fill me-1" style="font-size: 0.7em;"></i> Predeterminada
+                                            </div>
+                                            <h6 class="fw-bold mb-0 text-dark">
+                                                {% if default_address.main_street %}
+                                                    {{ default_address.main_street }} {{ default_address.house_number }}
+                                                {% else %}
+                                                    {{ default_address.localidad }} {% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ default_address.localidad }}{% if default_address.floor %}, Piso {{ default_address.floor }}{% endif %}
+                                            </small>
                                         </div>
+                                        
+                                        <a href="{% url 'edit_address' default_address.id %}" class="btn-edit-addr" onclick="event.stopPropagation()" title="Editar dirección">
+                                            <i class="bi bi-pencil-fill small"></i>
+                                        </a>
                                     </div>
                                 </div>
                             </label>
                         {% endif %}
 
                         {% for address in other_addresses %}
-                            <label class="w-100">
+                            <label class="w-100 position-relative">
                                 <input type="radio" name="address" value="{{ address.id }}" class="hidden-radio address-radio">
                                 <div class="address-card">
                                     <i class="bi bi-check-circle-fill check-mark fs-5"></i>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="bg-light p-3 rounded-circle text-muted"><i class="bi bi-geo-alt-fill fs-4"></i></div>
-                                        <div>
-                                            <h6 class="fw-bold mb-0 text-dark">{{ address }}</h6>
-                                            <small class="text-muted">Dirección guardada</small>
+                                        <div class="flex-grow-1">
+                                            <h6 class="fw-bold mb-0 text-dark">
+                                                {% if address.main_street %}
+                                                    {{ address.main_street }} {{ address.house_number }}
+                                                {% else %}
+                                                    {{ address.localidad }}
+                                                {% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                {{ address.localidad }}{% if address.floor %}, Piso {{ address.floor }}{% endif %}
+                                            </small>
                                         </div>
+
+                                        <a href="{% url 'edit_address' address.id %}" class="btn-edit-addr" onclick="event.stopPropagation()" title="Editar dirección">
+                                            <i class="bi bi-pencil-fill small"></i>
+                                        </a>
                                     </div>
                                 </div>
                             </label>
                         {% endfor %}
 
                         <a href="{% url 'add_address' %}" class="btn btn-outline-dark border-dashed w-100 py-2 mt-2" style="border-style: dashed;">
-                            + Agregar nueva dirección
+                            <i class="bi bi-plus-lg me-1"></i> Agregar nueva dirección
                         </a>
                     </div>
+
+                    <div id="view-pickup-point" class="d-none animate__animated animate__fadeIn">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar código postal, barrio o ciudad..." id="location-search">
+                            <button class="btn btn-outline-secondary" type="button">Buscar</button>
+                        </div>
+
+                        <div id="map-container">
+                            <div id="map" style="width: 100%; height: 100%;"></div>
+                        </div>
+
+                        <h6 class="text-muted mb-3 small fw-bold text-uppercase">Puntos de retiro cercanos</h6>
+                        
+                        <div id="pickup-list">
+                            <label class="w-100">
+                                <input type="radio" name="pickup_point_id" value="point_1" class="hidden-radio pickup-radio">
+                                <div class="pickup-point-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">Sucursal Central - Correo</h6>
+                                        <small class="text-muted">Av. Siempreviva 123, Centro (0.5 km)</small>
+                                    </div>
+                                    <span class="badge bg-success bg-opacity-10 text-success">Gratis</span>
+                                </div>
+                            </label>
+
+                            <label class="w-100">
+                                <input type="radio" name="pickup_point_id" value="point_2" class="hidden-radio pickup-radio">
+                                <div class="pickup-point-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="fw-bold mb-0">Librería "El Lector"</h6>
+                                        <small class="text-muted">Calle Falsa 456, Norte (1.2 km)</small>
+                                    </div>
+                                    <span class="badge bg-success bg-opacity-10 text-success">Gratis</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div id="payment-section" class="disabled-section">
@@ -212,7 +367,6 @@
                     </div>
 
                     <div class="row g-3">
-                        
                         <div class="col-md-4 d-none d-lg-block">
                             <label class="w-100 h-100">
                                 <input type="radio" name="payment_method" value="qr_modal" class="hidden-radio payment-radio" data-type="qr">
@@ -245,7 +399,6 @@
                                 </div>
                             </label>
                         </div>
-
                     </div>
                     
                     <div class="d-lg-none mt-3 alert alert-light text-center small text-muted">
@@ -265,7 +418,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2 text-muted">
                         <span>Envío</span>
-                        <span class="text-success fw-bold">Gratis</span>
+                        <span class="text-success fw-bold" id="shipping-cost-display">Gratis</span>
                     </div>
                     {% if cart.coupon %}
                     <div class="d-flex justify-content-between mb-2 text-success">
@@ -304,20 +457,15 @@
             <div class="modal-body text-center pb-5 pt-0 px-5">
                 <h3 class="fw-bold mb-3">Escanea para pagar</h3>
                 <p class="text-muted mb-4">Abre tu app de Mercado Pago o banco y escanea este código.</p>
-                
                 <div class="bg-white p-3 rounded-3 shadow-sm d-inline-block border mb-4">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" 
-                         alt="QR Code" style="width: 200px; height: 200px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QR Code" style="width: 200px; height: 200px;">
                 </div>
-                
                 <h4 class="fw-bold text-dark mb-1">${{ total_price|floatformat:2 }}</h4>
                 <p class="small text-muted">Total a pagar</p>
-
                 <div class="alert alert-success mt-3 mb-0 d-flex align-items-center justify-content-center gap-2">
                     <div class="spinner-border spinner-border-sm" role="status"></div>
                     Esperando confirmación de pago...
                 </div>
-                
                 <button class="btn btn-outline-secondary btn-sm mt-3 w-100 rounded-pill" onclick="document.getElementById('checkout-form').submit()">
                     Simular Pago Confirmado
                 </button>
@@ -326,73 +474,131 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const addressRadios = document.querySelectorAll('.address-radio');
-    const paymentRadios = document.querySelectorAll('.payment-radio');
-    const paymentSection = document.getElementById('payment-section');
-    const form = document.getElementById('checkout-form');
-    
-    // Modal de Bootstrap
-    const qrModal = new bootstrap.Modal(document.getElementById('qrPaymentModal'));
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    // 1. Habilitar sección de pagos si hay dirección
-    function togglePaymentSection() {
-        const hasAddress = Array.from(addressRadios).some(r => r.checked);
-        if (hasAddress) {
+<script>
+    let map = null;
+    let mapInitialized = false;
+
+    function toggleShippingView(type) {
+        const homeView = document.getElementById('view-home-delivery');
+        const pickupView = document.getElementById('view-pickup-point');
+        const hiddenInput = document.getElementById('shipping_method_type');
+        const addressRadios = document.querySelectorAll('.address-radio');
+        const pickupRadios = document.querySelectorAll('.pickup-radio');
+
+        hiddenInput.value = type;
+
+        if (type === 'home') {
+            homeView.classList.remove('d-none');
+            pickupView.classList.add('d-none');
+            addressRadios.forEach(r => r.disabled = false);
+            pickupRadios.forEach(r => {
+                r.disabled = true;
+                r.checked = false;
+            });
+        } else {
+            homeView.classList.add('d-none');
+            pickupView.classList.remove('d-none');
+            addressRadios.forEach(r => {
+                r.disabled = true;
+                r.checked = false;
+            });
+            pickupRadios.forEach(r => r.disabled = false);
+            if (!mapInitialized) {
+                setTimeout(initMap, 200);
+            }
+        }
+        checkPaymentSectionStatus();
+    }
+
+    function initMap() {
+        if(mapInitialized) return;
+        const lat = -34.6037;
+        const lng = -58.3816;
+        map = L.map('map').setView([lat, lng], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+        const storeIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
+            iconSize: [38, 38],
+            iconAnchor: [19, 38],
+            popupAnchor: [0, -30]
+        });
+        L.marker([-34.6037, -58.3816], {icon: storeIcon}).addTo(map).bindPopup('<b>Sucursal Central</b><br>Envío Gratis');
+        L.marker([-34.5950, -58.3900], {icon: storeIcon}).addTo(map).bindPopup('<b>Librería El Lector</b><br>Envío Gratis');
+        mapInitialized = true;
+    }
+
+    function checkPaymentSectionStatus() {
+        const paymentSection = document.getElementById('payment-section');
+        const paymentRadios = document.querySelectorAll('.payment-radio');
+        const shippingType = document.getElementById('shipping_method_type').value;
+        let isValid = false;
+
+        if (shippingType === 'home') {
+            isValid = Array.from(document.querySelectorAll('.address-radio')).some(r => r.checked);
+        } else {
+            isValid = Array.from(document.querySelectorAll('.pickup-radio')).some(r => r.checked);
+        }
+
+        if (isValid) {
             paymentSection.classList.remove('disabled-section');
             paymentRadios.forEach(r => r.disabled = false);
         } else {
             paymentSection.classList.add('disabled-section');
             paymentRadios.forEach(r => r.disabled = true);
+            paymentRadios.forEach(r => r.checked = false);
         }
     }
 
-    addressRadios.forEach(r => r.addEventListener('change', togglePaymentSection));
-    togglePaymentSection(); // Chequeo inicial
-
-    // 2. Interceptar el envío del formulario
-    form.addEventListener('submit', function(e) {
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('checkout-form');
+        const qrModal = new bootstrap.Modal(document.getElementById('qrPaymentModal'));
         
-        // Validar dirección
-        const hasAddress = Array.from(addressRadios).some(r => r.checked);
-        if(!hasAddress) {
-            e.preventDefault();
-            alert("Selecciona una dirección primero.");
-            window.scrollTo({top: 0, behavior: 'smooth'});
-            return;
-        }
+        const allShippingRadios = document.querySelectorAll('.address-radio, .pickup-radio');
+        allShippingRadios.forEach(r => {
+            r.addEventListener('change', checkPaymentSectionStatus);
+        });
+        checkPaymentSectionStatus();
 
-        // Obtener método de pago seleccionado
-        let selectedPayment = null;
-        paymentRadios.forEach(r => { if(r.checked) selectedPayment = r.value; });
+        form.addEventListener('submit', function(e) {
+            const shippingType = document.getElementById('shipping_method_type').value;
+            let hasShipping = false;
+            if (shippingType === 'home') {
+                hasShipping = Array.from(document.querySelectorAll('.address-radio')).some(r => r.checked);
+                if(!hasShipping) {
+                    e.preventDefault();
+                    alert("Selecciona una dirección de envío.");
+                    return;
+                }
+            } else {
+                hasShipping = Array.from(document.querySelectorAll('.pickup-radio')).some(r => r.checked);
+                if(!hasShipping) {
+                    e.preventDefault();
+                    alert("Selecciona un punto de retiro en el mapa/lista.");
+                    return;
+                }
+            }
 
-        if (!selectedPayment) {
-            e.preventDefault();
-            alert("Selecciona un método de pago.");
-            return;
-        }
+            let selectedPayment = null;
+            document.querySelectorAll('.payment-radio').forEach(r => { if(r.checked) selectedPayment = r.value; });
+            if (!selectedPayment) {
+                e.preventDefault();
+                alert("Selecciona un método de pago.");
+                return;
+            }
 
-        // 3. Lógica según método de pago
-        if (selectedPayment === 'qr_modal') {
-            // SI ES QR: Detenemos el envío y abrimos el modal
-            e.preventDefault();
-            qrModal.show();
-            // Nota: El formulario no se envía aquí. 
-            // Se enviará cuando el usuario pague o haga click en "Simular Pago" dentro del modal.
-        } else {
-            // SI ES TARJETA MANUAL O LINK MP:
-            // Dejamos que el formulario se envíe normalmente al backend.
-            // El backend leerá 'payment_method' y hará el redirect correspondiente:
-            // - card_manual -> redirect('ingreso_tarjeta')
-            // - mp_redirect -> redirect(preference.init_point)
-            
-            // Opcional: Mostrar spinner en el botón
-            const btn = document.getElementById('btn-submit-main');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
-            btn.disabled = true;
-        }
+            if (selectedPayment === 'qr_modal') {
+                e.preventDefault();
+                qrModal.show();
+            } else {
+                const btn = document.getElementById('btn-submit-main');
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
+                btn.disabled = true;
+            }
+        });
     });
-});
 </script>
 {% endblock content %}

@@ -8,323 +8,398 @@
 {% block content %}
 <style>
     :root {
-        --emerald: rgb(25,90,89);
-        --emerald-dark: rgb(15, 60, 60);
-        --gold: rgb(200,160,90);
-        --bg-body: #fdfdfd;
-        --text-main: #111;
+        --emerald: rgb(25, 90, 89);
+        --emerald-hover: rgb(20, 75, 75);
+        --gold: rgb(200, 160, 90);
+        --bg-body: #f8fafc;
+        --card-bg: #ffffff;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-light: #e2e8f0;
     }
 
     body {
         background-color: var(--bg-body);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        font-family: 'Inter', system-ui, sans-serif;
     }
 
-    /* --- ESTILO DE LISTA DE PRODUCTOS (Izquierda) --- */
-    .cart-header {
-        border-bottom: 2px solid #eee;
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
+    /* --- LAYOUT --- */
+    .cart-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-bottom: 4rem;
     }
 
-    .cart-row {
+    .page-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-main);
+        margin-bottom: 0.5rem;
+    }
+
+    /* --- ITEM DE CARRITO (Izquierda) --- */
+    .cart-items-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .cart-item {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1.25rem;
         display: flex;
         align-items: center;
-        padding: 1.5rem 0;
-        border-bottom: 1px solid #f3f3f3;
-        transition: background 0.2s;
-    }
-    .cart-row:hover {
-        background: #fafafa;
+        gap: 1.5rem;
+        transition: all 0.2s ease;
+        position: relative;
     }
 
-    .product-thumb {
-        width: 90px;
-        height: 110px;
-        object-fit: cover;
-        border-radius: 8px;
-        background: #f0f0f0;
+    .cart-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        transform: translateY(-1px);
     }
 
-    /* Stepper de cantidad minimalista */
-    .stepper {
-        display: inline-flex;
-        border: 1px solid #ddd;
-        border-radius: 8px;
+    .product-img-box {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
+        border-radius: 12px;
+        background: #f1f5f9;
         overflow: hidden;
+        border: 1px solid var(--border-light);
+        display: flex; align-items: center; justify-content: center;
     }
-    .stepper button {
-        background: white;
+    .product-img {
+        width: 100%; height: 100%; object-fit: cover;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-category {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    .item-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 4px;
+        text-decoration: none;
+        display: block;
+    }
+    .item-title:hover { color: var(--emerald); }
+
+    .item-price-unit {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    /* Controles de Cantidad */
+    .qty-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    
+    .qty-selector {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f8fafc;
+    }
+    .qty-btn {
+        background: transparent;
         border: none;
-        width: 30px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
-        color: #555;
+        color: var(--text-main);
         transition: 0.2s;
     }
-    .stepper button:hover { background: #eee; }
-    .stepper span {
-        width: 34px;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 600;
+    .qty-btn:hover { background: #e2e8f0; }
+    .qty-val {
+        width: 30px;
+        text-align: center;
         font-size: 0.9rem;
-        border-left: 1px solid #ddd;
-        border-right: 1px solid #ddd;
+        font-weight: 600;
     }
 
-    /* --- PANEL DE RESUMEN (Derecha) --- */
-    .summary-panel {
-        background: #f8f9fa; /* Fondo gris muy suave */
-        border-radius: 20px;
-        padding: 2.5rem;
+    .item-total-price {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--text-main);
+        text-align: right;
+        min-width: 80px;
+    }
+
+    .btn-remove {
+        color: #94a3b8;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 8px;
+        transition: 0.2s;
+        margin-left: 10px;
+    }
+    .btn-remove:hover {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    /* --- RESUMEN (Derecha) --- */
+    .summary-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.06);
+        border: 1px solid var(--border-light);
         position: sticky;
         top: 100px;
     }
 
-    /* Input de Cupón VISIBLE y ESTILIZADO */
-    .coupon-container {
-        background: white;
-        border: 2px dashed #e0e0e0;
+    .summary-title {
+        font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem;
+    }
+
+    /* Cupón estilo Ticket */
+    .coupon-ticket {
+        border: 2px dashed #cbd5e1;
+        background: #f8fafc;
         border-radius: 12px;
         padding: 1rem;
         margin-bottom: 1.5rem;
-        transition: all 0.2s;
+        transition: 0.2s;
     }
-    .coupon-container:focus-within {
+    .coupon-ticket:focus-within {
         border-color: var(--emerald);
         background: #f0fdf4;
     }
-    
-    .coupon-input-group {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-    }
     .coupon-input {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 0.6rem 1rem;
-        width: 100%;
-        outline: none;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        width: 100%; border: none; background: transparent;
+        font-family: 'Courier New', monospace; font-weight: 700;
+        text-transform: uppercase; outline: none; margin-bottom: 0.5rem;
+        font-size: 1rem; color: var(--text-main);
     }
-    .coupon-btn {
-        background: #111;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0 1.2rem;
-        font-weight: 600;
-        transition: 0.2s;
+    .coupon-input::placeholder { color: #94a3b8; font-family: 'Inter', sans-serif; font-weight: 400;}
+    
+    .apply-btn {
+        width: 100%; background: var(--text-main); color: white;
+        border: none; padding: 8px; border-radius: 8px; font-weight: 600; font-size: 0.85rem;
+        cursor: pointer; transition: 0.2s;
     }
-    .coupon-btn:hover { background: var(--emerald); }
-
-    /* Totales */
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-        color: #555;
-    }
-    .summary-total {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #ddd;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: var(--emerald);
-    }
-
-    /* Botón Finalizar */
-    .btn-checkout-primary {
-        background: var(--emerald);
-        color: white;
-        width: 100%;
-        padding: 1.2rem;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        font-weight: 700;
-        border: none;
-        margin-top: 1.5rem;
-        box-shadow: 0 10px 20px rgba(25,90,89,0.2);
-        transition: all 0.3s;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: block;
-        text-align: center;
-        text-decoration: none;
-    }
-    .btn-checkout-primary:hover {
-        background: var(--emerald-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 15px 30px rgba(25,90,89,0.3);
-        color: white;
-    }
+    .apply-btn:hover { background: var(--emerald); }
 
     /* Switch Coins */
-    .coins-box {
-        background: #fff8e1; /* Fondo dorado suave */
-        border: 1px solid #ffe082;
-        border-radius: 12px;
-        padding: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.5rem;
+    .coins-toggle {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 1rem; background: #fffbeb; border: 1px solid #fcd34d;
+        border-radius: 12px; margin-bottom: 1.5rem;
     }
+
+    /* Filas de totales */
+    .sum-row {
+        display: flex; justify-content: space-between; margin-bottom: 0.8rem;
+        color: var(--text-muted); font-size: 0.95rem;
+    }
+    .sum-row.total {
+        margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);
+        color: var(--text-main); font-weight: 800; font-size: 1.5rem; align-items: flex-end;
+    }
+
+    .checkout-btn {
+        background: var(--emerald); color: white;
+        width: 100%; padding: 1.2rem; border-radius: 12px;
+        font-weight: 700; font-size: 1.1rem; border: none;
+        margin-top: 1.5rem; box-shadow: 0 10px 20px rgba(25, 90, 89, 0.2);
+        transition: all 0.3s; display: block; text-align: center; text-decoration: none;
+    }
+    .checkout-btn:hover {
+        background: var(--emerald-hover); transform: translateY(-2px); color: white;
+        box-shadow: 0 15px 30px rgba(25, 90, 89, 0.3);
+    }
+
+    /* Estado Vacío */
+    .empty-cart-container {
+        text-align: center; padding: 5rem 1rem;
+    }
+    .empty-icon {
+        width: 100px; height: 100px; background: #f1f5f9; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        margin-bottom: 1.5rem; color: #94a3b8; font-size: 2.5rem;
+    }
+
 </style>
 
-<div class="container py-5" style="min-height: 80vh;">
+<div class="container py-5 cart-container animate__animated animate__fadeIn">
     
     {% if items %}
     <div class="row g-5">
         
-        <div class="col-lg-7">
-            <div class="cart-header d-flex justify-content-between align-items-end">
-                <h2 class="fw-bold mb-0">Bolsa de Compras</h2>
-                <span class="text-muted">{{ items|length }} artículos</span>
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h1 class="page-title">Tu Carrito</h1>
+                    <span class="text-muted">Tienes <strong>{{ items|length }}</strong> artículos seleccionados</span>
+                </div>
+                <a href="{% url 'shop' %}" class="text-decoration-none fw-bold small text-muted hover-emerald">
+                    <i class="bi bi-plus-lg"></i> Agregar más
+                </a>
             </div>
 
-            <div class="cart-list">
+            <div class="cart-items-wrapper">
                 {% for item in items %}
-                <div class="cart-row">
-                    <a href="{% url 'product_detail' item.product.id %}" class="me-4">
-                        <img src="{% if item.product.image %}{{ item.product.image.url }}{% else %}/static/images/default-product.png{% endif %}" 
-                             class="product-thumb shadow-sm" alt="{{ item.product.title }}">
+                <div class="cart-item">
+                    
+                    <a href="{% url 'product_detail' item.product.id %}" class="product-img-box">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" class="product-img" alt="{{ item.product.title }}">
+                        {% else %}
+                            <i class="bi bi-image text-muted fs-3"></i>
+                        {% endif %}
                     </a>
 
-                    <div class="flex-grow-1">
-                        <div class="text-muted small text-uppercase fw-bold mb-1" style="font-size: 0.7rem;">{{ item.product.category.name|default:"General" }}</div>
-                        <h5 class="fw-bold mb-1">
-                            <a href="{% url 'product_detail' item.product.id %}" class="text-dark text-decoration-none">
-                                {{ item.product.title }}
-                            </a>
-                        </h5>
-                        <p class="text-muted small mb-3">{{ item.product.description|truncatewords:8 }}</p>
-                        
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="stepper">
-                                <form action="{% url 'decrease_quantity' item.product.id %}" method="post" class="d-flex m-0">
-                                    {% csrf_token %}
-                                    <button type="submit">-</button>
-                                </form>
-                                <span>{{ item.quantity }}</span>
-                                <form action="{% url 'add_to_cart' item.product.id %}" method="post" class="d-flex m-0">
-                                    {% csrf_token %}
-                                    <button type="submit">+</button>
-                                </form>
-                            </div>
-                            
-                            <form action="{% url 'remove_from_cart' item.product.id %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button class="btn btn-link text-muted p-0 text-decoration-none small">
-                                    <i class="bi bi-trash"></i> Eliminar
-                                </button>
-                            </form>
-                        </div>
+                    <div class="item-details">
+                        <div class="item-category">{{ item.product.category.name|default:"Producto" }}</div>
+                        <a href="{% url 'product_detail' item.product.id %}" class="item-title">
+                            {{ item.product.title }}
+                        </a>
+                        <div class="item-price-unit">${{ item.product.price }} / unidad</div>
                     </div>
 
-                    <div class="text-end ps-3">
-                        <div class="fw-bold fs-5">${{ item.total_price }}</div>
-                        <div class="small text-muted">${{ item.product.price }} c/u</div>
+                    <div class="qty-wrapper">
+                        <div class="qty-selector">
+                            <form action="{% url 'decrease_quantity' item.product.id %}" method="post" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="qty-btn" title="Disminuir"><i class="bi bi-dash"></i></button>
+                            </form>
+                            <span class="qty-val">{{ item.quantity }}</span>
+                            <form action="{% url 'add_to_cart' item.product.id %}" method="post" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="qty-btn" title="Aumentar"><i class="bi bi-plus"></i></button>
+                            </form>
+                        </div>
+
+                        <div class="item-total-price">
+                            ${{ item.total_price }}
+                        </div>
+
+                        <form action="{% url 'remove_from_cart' item.product.id %}" method="post" class="m-0">
+                            {% csrf_token %}
+                            <button class="btn-remove" title="Eliminar del carrito">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </form>
                     </div>
+
                 </div>
                 {% endfor %}
             </div>
-            
-            <div class="mt-4">
-                <a href="{% url 'shop' %}" class="text-decoration-none fw-bold" style="color: var(--emerald);">
-                    <i class="bi bi-arrow-left"></i> Seguir viendo productos
-                </a>
-            </div>
         </div>
 
-        <div class="col-lg-5">
-            <div class="summary-panel">
-                <h4 class="fw-bold mb-4">Resumen</h4>
+        <div class="col-lg-4">
+            <div class="summary-card">
+                <h3 class="summary-title">Resumen de Orden</h3>
 
-                <div class="coupon-container">
-                    <label class="small fw-bold text-muted mb-1 d-block"><i class="bi bi-ticket-perforated-fill"></i> CÓDIGO DE DESCUENTO</label>
-                    <form method="post" class="coupon-input-group">
+                <div class="coupon-ticket">
+                    <form method="post">
                         {% csrf_token %}
-                        <input type="text" name="code" class="coupon-input" placeholder="EJE: VERANO2025" required>
-                        <button type="submit" class="coupon-btn">APLICAR</button>
+                        <div class="d-flex flex-column">
+                            <label class="small fw-bold text-muted mb-2">
+                                <i class="bi bi-tag-fill me-1 text-warning"></i> CÓDIGO PROMOCIONAL
+                            </label>
+                            <div class="d-flex gap-2">
+                                <input type="text" name="code" class="coupon-input" placeholder="ABC-123" required>
+                            </div>
+                            <button type="submit" class="apply-btn">Aplicar Descuento</button>
+                        </div>
                     </form>
                     {% if cart.coupon %}
-                        <div class="mt-2 text-success small fw-bold">
-                            <i class="bi bi-check-circle"></i> Cupón "{{ cart.coupon.code }}" aplicado
+                        <div class="mt-2 text-success small fw-bold text-center bg-white border border-success rounded py-1">
+                            <i class="bi bi-check-circle-fill"></i> "{{ cart.coupon.code }}" aplicado
                         </div>
                     {% endif %}
                 </div>
 
-                <div class="coins-box">
+                <div class="coins-toggle">
                     <div>
-                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
-                            <i class="bi bi-coin text-warning"></i> Usar mis Coins
+                        <div class="fw-bold d-flex align-items-center gap-1" style="color: #854d0e;">
+                            <i class="bi bi-coin"></i> Velix Coins
                         </div>
-                        <div class="small text-muted">Saldo: <strong>{{ user.perfil.coins|default:0 }}</strong></div>
+                        <div class="small text-muted">Saldo: {{ user.perfil.coins|default:0 }}</div>
                     </div>
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="coinsSwitch" style="width: 3em; height: 1.5em; cursor: pointer;">
+                        <input class="form-check-input" type="checkbox" role="switch" id="coinsSwitch" style="width: 3em; height: 1.5em;">
                     </div>
                 </div>
 
-                <div class="summary-row">
+                <div class="sum-row">
                     <span>Subtotal</span>
-                    <span class="fw-bold">${{ subtotal_original }}</span>
+                    <span class="fw-bold text-dark">${{ subtotal_original }}</span>
                 </div>
                 
                 {% if cart.coupon %}
-                <div class="summary-row text-success">
+                <div class="sum-row text-success">
                     <span>Descuento</span>
                     <span>- ${{ cart.coupon.discount_value }}</span>
                 </div>
                 {% endif %}
 
-                <div class="summary-row">
-                    <span>Envío estimado</span>
-                    <span class="text-muted">Gratis</span> </div>
+                <div class="sum-row">
+                    <span>Envío</span>
+                    <span class="text-success">Gratis</span>
+                </div>
 
-                <div class="summary-total">
-                    <span>TOTAL</span>
+                <div class="sum-row total">
+                    <span>Total</span>
                     <span>${{ total_price|floatformat:2 }}</span>
                 </div>
 
-                <a href="{% url 'checkout' %}" class="btn-checkout-primary">
-                    Proceder al Pago <i class="bi bi-lock-fill ms-2"></i>
+                <a href="{% url 'checkout' %}" class="checkout-btn">
+                    Pagar Ahora <i class="bi bi-arrow-right-short fs-4 align-middle"></i>
                 </a>
-                
-                <div class="text-center mt-3 text-muted small">
-                    <i class="bi bi-shield-check"></i> Checkout encriptado y seguro
+
+                <div class="mt-4 text-center">
+                    <p class="text-muted small mb-2"><i class="bi bi-lock"></i> Transacción 256-bit SSL Segura</p>
+                    <div class="opacity-50 grayscale">
+                        <i class="bi bi-credit-card-2-front fs-4 mx-1"></i>
+                        <i class="bi bi-paypal fs-4 mx-1"></i>
+                        <i class="bi bi-wallet2 fs-4 mx-1"></i>
+                    </div>
                 </div>
 
-                <div class="mt-4 pt-4 border-top text-center opacity-50">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" height="20" class="mx-1">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" height="20" class="mx-1">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" height="20" class="mx-1">
-                </div>
             </div>
         </div>
 
     </div>
     {% else %}
-    <div class="text-center py-5 my-5">
-        <div class="mb-4">
-            <span class="bg-light p-4 rounded-circle d-inline-block">
-                <i class="bi bi-basket3 display-4 text-muted opacity-50"></i>
-            </span>
+    
+    <div class="empty-cart-container">
+        <div class="empty-icon">
+            <i class="bi bi-bag-x"></i>
         </div>
-        <h3 class="fw-bold">Tu bolsa está vacía</h3>
-        <p class="text-muted col-md-6 mx-auto mb-4">No has añadido productos todavía. Explora nuestra colección y encuentra algo único.</p>
-        <a href="{% url 'shop' %}" class="btn btn-dark rounded-pill px-5 py-3 fw-bold">
-            Ir a la Tienda
+        <h2 class="fw-bold text-dark mb-3">Tu carrito está vacío</h2>
+        <p class="text-muted mb-4 col-md-6 mx-auto">
+            Parece que aún no has añadido nada. Explora nuestras categorías y encuentra los mejores productos tecnológicos.
+        </p>
+        <a href="{% url 'shop' %}" class="btn btn-dark rounded-pill px-5 py-3 fw-bold shadow-sm">
+            Empezar a Comprar
         </a>
     </div>
+
     {% endif %}
 
 </div>

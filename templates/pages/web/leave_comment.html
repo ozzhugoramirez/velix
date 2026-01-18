@@ -1,59 +1,297 @@
 {% extends "pages/web/base.html" %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-  <h1 class="text-center mb-4 text-primary fw-bold">
-    Deja tu comentario para <strong class="text-dark">{{ product.title }}</strong>
-  </h1>
+<style>
+    :root {
+        --emerald: rgb(25,90,89);
+        --gold: #fbbf24;
+        --gray-light: #f3f4f6;
+        --card-bg: #ffffff;
+        --text-primary: #1f2937;
+    }
 
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      {% if already_commented %}
-      <div class="alert alert-warning text-center shadow-sm" role="alert">
-        <h5 class="mb-3"><i class="bi bi-info-circle-fill"></i> Ya has comentado este producto.</h5>
-        <p>Gracias por tu opinión. Si deseas gestionar tus comentarios, puedes hacerlo en tu perfil.</p>
-        <a href="{% url 'profile' %}" class="btn btn-outline-primary mt-2">Ir a mi perfil</a>
-      </div>
-      {% else %}
-      <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-          <!-- Detalles del producto -->
-          <div class="d-flex align-items-center mb-4">
-            <img src="{{ product.image.url }}" alt="{{ product.name }}" 
-                 class="rounded-circle shadow-sm border" 
-                 style="width: 70px; height: 70px; object-fit: cover;" />
-            <h5 class="ms-3 text-dark fw-bold">{{ product.name }}</h5>
-          </div>
-          <div class="text-muted mb-3">
-            <p><strong>Descripción:</strong> {{ product.description }}</p>
-            <p><strong>Precio:</strong> ${{ product.price }}</p>
-          </div>
+    body {
+        background-color: #f8fafc;
+        font-family: 'Inter', system-ui, sans-serif;
+    }
 
-          {% if messages %}
-          <div>
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} text-center shadow-sm" role="alert">
-              {{ message }}
+    /* --- TARJETA PRINCIPAL --- */
+    .review-container {
+        max-width: 700px;
+        margin: 3rem auto;
+        background: var(--card-bg);
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+
+    /* --- CABECERA DE PRODUCTO --- */
+    .product-header {
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .product-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        margin-bottom: 1rem;
+        border: 4px solid white;
+    }
+    .product-title {
+        font-weight: 800;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .product-price {
+        color: var(--emerald);
+        font-weight: 700;
+        font-size: 1.1rem;
+        background: #ecfdf5;
+        padding: 4px 12px;
+        border-radius: 20px;
+        display: inline-block;
+    }
+
+    /* --- SISTEMA DE ESTRELLAS (Rating) --- */
+    .rating-wrapper {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 2rem 0 1rem;
+        direction: row; /* Importante para el JS */
+    }
+    .star-label {
+        font-size: 2.5rem;
+        color: #e5e7eb; /* Gris por defecto */
+        cursor: pointer;
+        transition: transform 0.2s, color 0.2s;
+    }
+    .star-label:hover {
+        transform: scale(1.2);
+    }
+    /* Clase que pondremos con JS cuando esté activa */
+    .star-active {
+        color: var(--gold);
+    }
+
+    .rating-text {
+        text-align: center;
+        font-weight: 600;
+        color: var(--emerald);
+        min-height: 24px;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* --- INPUTS --- */
+    .custom-textarea {
+        background-color: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 1.2rem;
+        width: 100%;
+        font-size: 1rem;
+        transition: all 0.2s;
+        resize: none;
+        outline: none;
+    }
+    .custom-textarea:focus {
+        background-color: white;
+        border-color: var(--emerald);
+        box-shadow: 0 0 0 4px rgba(25,90,89,0.1);
+    }
+
+    /* --- BOTÓN --- */
+    .btn-submit-review {
+        background: var(--emerald);
+        color: white;
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: none;
+        margin-top: 1.5rem;
+        transition: 0.3s;
+        box-shadow: 0 10px 20px -5px rgba(25,90,89,0.3);
+    }
+    .btn-submit-review:hover {
+        background: rgb(20, 75, 75);
+        transform: translateY(-2px);
+    }
+
+    /* --- ESTADO YA COMENTADO --- */
+    .completed-state {
+        text-align: center;
+        padding: 3rem 2rem;
+    }
+    .success-icon {
+        font-size: 4rem;
+        color: var(--emerald);
+        margin-bottom: 1rem;
+        display: block;
+    }
+</style>
+
+<div class="container">
+    
+    <div class="review-container animate__animated animate__fadeInUp">
+        
+        {% if already_commented %}
+        <div class="completed-state">
+            <i class="bi bi-check-circle-fill success-icon animate__animated animate__bounceIn"></i>
+            <h2 class="fw-bold mb-3">¡Gracias por tu opinión!</h2>
+            <p class="text-muted mb-4">
+                Ya has valorado <strong>{{ product.name }}</strong>. Tu comentario ayuda a otros usuarios a tomar mejores decisiones.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">Volver a la tienda</a>
+                <a href="{% url 'profile' %}" class="btn btn-dark rounded-pill px-4 fw-bold">Ver mi perfil</a>
             </div>
-            {% endfor %}
-          </div>
-          {% endif %}
-
-          <form method="post" class="needs-validation" novalidate>
-            {% csrf_token %}
-            
-            <div class="mb-3">
-              {{ form.as_p }}
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100 shadow-sm">
-              <i class="bi bi-send-fill"></i> Enviar Comentario
-            </button>
-          </form>
         </div>
-      </div>
-      {% endif %}
+
+        {% else %}
+            
+            <div class="product-header">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-img">
+                {% else %}
+                    <div class="product-img d-flex align-items-center justify-content-center bg-light fs-1 text-muted">
+                        <i class="bi bi-box-seam"></i>
+                    </div>
+                {% endif %}
+                <h1 class="product-title">{{ product.name }}</h1>
+                <span class="product-price">${{ product.price }}</span>
+            </div>
+
+            <div class="p-4 p-md-5">
+                
+                <h5 class="text-center text-muted mb-0 fw-normal">¿Qué te pareció este producto?</h5>
+
+                <form method="post" id="reviewForm">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger border-0 shadow-sm text-center small mb-4">
+                            Corrige los errores abajo para enviar.
+                        </div>
+                    {% endif %}
+
+                    <div class="rating-wrapper">
+                        <i class="bi bi-star-fill star-label" data-value="1"></i>
+                        <i class="bi bi-star-fill star-label" data-value="2"></i>
+                        <i class="bi bi-star-fill star-label" data-value="3"></i>
+                        <i class="bi bi-star-fill star-label" data-value="4"></i>
+                        <i class="bi bi-star-fill star-label" data-value="5"></i>
+                    </div>
+                    
+                    <div class="rating-text" id="rating-text-display">Selecciona una calificación</div>
+
+                    <div style="display: none;">
+                        {{ form.rating }} </div>
+
+                    <div class="mb-3">
+                        <label class="fw-bold text-muted small mb-2 ms-2 text-uppercase">Tu experiencia escrita</label>
+                        <textarea name="{{ form.comment.name }}" 
+                                  class="custom-textarea" 
+                                  rows="4" 
+                                  placeholder="Cuéntanos qué te gustó y qué no. ¿Lo recomendarías?"
+                                  required></textarea>
+                         </div>
+
+                    <button type="submit" class="btn-submit-review">
+                        Publicar Reseña
+                    </button>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{% url 'profile' %}" class="text-muted small text-decoration-none">Cancelar</a>
+                    </div>
+
+                </form>
+            </div>
+        {% endif %}
     </div>
-  </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stars = document.querySelectorAll('.star-label');
+        const ratingText = document.getElementById('rating-text-display');
+        
+        // BUSCAMOS EL INPUT REAL DE DJANGO. 
+        // Intentamos buscar por name="rating" o el primer input type number/select hidden
+        // Ajusta este selector si tu campo de modelo tiene otro nombre
+        let hiddenInput = document.querySelector('select[name="rating"], input[name="rating"]'); 
+        
+        // Si no lo encuentra por nombre standard, intenta buscar el primer elemento del form oculto
+        if (!hiddenInput) {
+            console.warn("No se encontró input[name='rating']. Ajusta el script.");
+        }
+
+        const texts = {
+            1: "Malo 😡",
+            2: "Regular 😒",
+            3: "Bueno 😐",
+            4: "Muy Bueno 🙂",
+            5: "¡Excelente! 🤩"
+        };
+
+        stars.forEach(star => {
+            // Hover: Iluminar temporalmente
+            star.addEventListener('mouseover', function() {
+                const value = parseInt(this.getAttribute('data-value'));
+                highlightStars(value);
+            });
+
+            // Mouseout: Volver al valor seleccionado real
+            star.addEventListener('mouseout', function() {
+                const currentVal = hiddenInput ? parseInt(hiddenInput.value) : 0;
+                highlightStars(currentVal);
+            });
+
+            // Click: Fijar valor
+            star.addEventListener('click', function() {
+                const value = parseInt(this.getAttribute('data-value'));
+                
+                // Actualizar input oculto de Django
+                if(hiddenInput) {
+                    hiddenInput.value = value;
+                }
+
+                // Animación de click
+                this.style.transform = "scale(1.4)";
+                setTimeout(() => this.style.transform = "scale(1.2)", 200);
+
+                highlightStars(value);
+                
+                // Feedback de texto
+                ratingText.textContent = texts[value];
+                ratingText.style.opacity = 0;
+                setTimeout(() => {
+                    ratingText.style.opacity = 1;
+                }, 100);
+            });
+        });
+
+        function highlightStars(count) {
+            stars.forEach(s => {
+                const starVal = parseInt(s.getAttribute('data-value'));
+                if (starVal <= count) {
+                    s.classList.add('star-active');
+                    s.classList.remove('bi-star');
+                    s.classList.add('bi-star-fill');
+                } else {
+                    s.classList.remove('star-active');
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

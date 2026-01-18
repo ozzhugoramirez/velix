@@ -1,0 +1,122 @@
+{% extends "pages/web/base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --emerald: rgb(25,90,89);
+        --bg-page: #f8fafc;
+    }
+
+    body {
+        background-color: var(--bg-page);
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .login-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+        padding: 3rem;
+        max-width: 450px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+
+    .icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background-color: #f0fdf4; /* Verde muy claro */
+        color: var(--emerald);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 2.5rem;
+    }
+
+    .btn-google {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: white;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem;
+        width: 100%;
+        font-weight: 600;
+        font-size: 1.05rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        margin-top: 2rem;
+    }
+
+    .btn-google:hover {
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        color: #111827;
+    }
+
+    .divider {
+        margin: 2rem 0;
+        position: relative;
+        text-align: center;
+    }
+    .divider::before {
+        content: '';
+        position: absolute;
+        top: 50%; left: 0; right: 0;
+        height: 1px;
+        background: #e5e7eb;
+    }
+    .divider span {
+        background: white;
+        padding: 0 1rem;
+        position: relative;
+        color: #9ca3af;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card animate__animated animate__fadeInUp">
+        
+        <div class="icon-wrapper">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+
+        <h1 class="h3 fw-bold mb-2">Iniciar Sesión</h1>
+        <p class="text-muted mb-4">
+            Para ver esta página o gestionar tus pedidos, necesitas identificarte.
+        </p>
+
+        <a href="{% provider_login_url 'google' process='login' next=request.GET.next %}" class="btn-google">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style="width: 24px; height: 24px;">
+            Continuar con Google
+        </a>
+
+        <div class="mt-4 pt-3 border-top">
+            <a href="{% url 'home' %}" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left me-1"></i> Volver al inicio
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
