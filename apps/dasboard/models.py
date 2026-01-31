@@ -192,3 +192,6 @@ class ClienteConsulta(models.Model):
     def __str__(self):
         return f"{self.titulo_producto} ({self.estado}) - {self.empleado}"
 
+
+
+

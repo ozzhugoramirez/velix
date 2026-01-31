@@ -7,6 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <title>{% block title %}{% endblock title %}</title>
 
 
@@ -16,9 +20,283 @@
 
     {% block content %}{% endblock content %}
 
+
+    <button class="copilot-trigger" onclick="toggleAICopilot()">
+    <div class="trigger-icon">
+        <i class="bi bi-sparkles"></i>
+    </div>
+    <span class="trigger-text">Silo Copilot</span>
+    <span class="trigger-status"></span> </button>
+
+<div id="aiSidebar" class="ai-sidebar">
+    
+    <div class="ai-header">
+        <div class="header-top">
+            <div class="ai-branding">
+                <i class="bi bi-robot" style="color: #818cf8;"></i>
+                <span class="brand-name">Silo Intelligence</span>
+            </div>
+            <div class="window-controls">
+                <button class="control-btn" onclick="toggleExpand()" title="Expandir/Contraer">
+                    <i class="bi bi-arrows-angle-expand" id="expandIcon"></i>
+                </button>
+                <button class="control-btn close-btn" onclick="toggleAICopilot()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item active">
+                <i class="bi bi-hdd-network"></i> Conectado
+            </div>
+            <div class="status-separator">/</div>
+            <div class="status-item" id="contextStatus">
+                Vista General </div>
+            <div class="status-separator">/</div>
+            <div class="status-time">
+                <span class="live-dot"></span> Live
+            </div>
+        </div>
+    </div>
+
+    <div class="ai-messages" id="chatContainer">
+        
+        <div class="welcome-screen">
+            <div class="welcome-icon"><i class="bi bi-stars"></i></div>
+            <h3>¿En qué te ayudo hoy?</h3>
+            <p>Selecciona una tarea rápida o escribe abajo.</p>
+            
+            <div class="suggestion-grid">
+                <button class="suggestion-card" onclick="setInput('Analizar ventas del último mes')">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Predecir Ventas</span>
+                </button>
+                <button class="suggestion-card" onclick="setInput('Auditar stock bajo')">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Auditar Stock</span>
+                </button>
+                <button class="suggestion-card" onclick="setInput('Resumir reporte PDF')">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Resumir PDF</span>
+                </button>
+                <button class="suggestion-card" onclick="setInput('Ver perfil de cliente riesgo')">
+                    <i class="bi bi-person-exclamation"></i>
+                    <span>Riesgo Cliente</span>
+                </button>
+            </div>
+        </div>
+
+        </div>
+
+    <div class="ai-footer">
+        <div class="input-container">
+            <button class="attach-btn"><i class="bi bi-paperclip"></i></button>
+            <input type="text" id="userPrompt" class="clean-input" placeholder="Escribe tu consulta...">
+            <button class="send-btn"><i class="bi bi-arrow-right-short"></i></button>
+        </div>
+        <div class="footer-legal">Silo AI access level: Admin • Model v2.4</div>
+    </div>
+</div>
+
+<style>
+    /* --- VARIABLES ESTÉTICAS --- */
+    :root {
+        --glass-bg: rgba(10, 10, 12, 0.85); /* Fondo oscuro translúcido */
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --accent: #6366f1; /* Indigo */
+        --text-main: #f4f4f5;
+        --text-muted: #a1a1aa;
+    }
+
+    /* --- 1. BOTÓN FLOTANTE (CÁPSULA) --- */
+    .copilot-trigger {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #000000;
+        border: 1px solid #27272a;
+        padding: 8px 16px 8px 8px; /* Padding asimétrico para el icono */
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.8);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        z-index: 9999;
+    }
+
+    .copilot-trigger:hover {
+        transform: translateY(-2px);
+        border-color: #52525b;
+        box-shadow: 0 15px 50px -10px rgba(99, 102, 241, 0.3); /* Resplandor Indigo */
+    }
+
+    .trigger-icon {
+        width: 32px; height: 32px;
+        background: linear-gradient(135deg, #4f46e5, #818cf8);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px;
+    }
+
+    .trigger-text { font-weight: 500; font-size: 14px; font-family: 'Inter', sans-serif; letter-spacing: 0.3px; }
+
+    .trigger-status {
+        width: 6px; height: 6px; background: #22c55e; border-radius: 50%;
+        box-shadow: 0 0 8px #22c55e;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }
+
+    /* --- 2. SIDEBAR --- */
+    .ai-sidebar {
+        position: fixed;
+        top: 10px; right: 10px; bottom: 10px; /* Flotante, no pegado a los bordes */
+        width: 420px;
+        border-radius: 20px; /* Bordes redondeados en la ventana */
+        background: #09090b; /* Zinc 950 */
+        border: 1px solid #27272a;
+        transform: translateX(120%); /* Oculto */
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.4s ease;
+        z-index: 10000;
+        display: flex; flex-direction: column;
+        box-shadow: -20px 20px 50px rgba(0,0,0,0.5);
+        overflow: hidden; /* Para el border radius */
+    }
+
+    .ai-sidebar.active { transform: translateX(0); }
+    .ai-sidebar.expanded { width: 55vw; }
+
+    /* --- HEADER --- */
+    .ai-header {
+        background: #09090b;
+        border-bottom: 1px solid #27272a;
+        padding: 16px 20px;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    
+    .ai-branding { display: flex; align-items: center; gap: 8px; font-weight: 600; color: white; font-size: 14px; }
+    
+    .window-controls { display: flex; gap: 6px; }
+    .control-btn {
+        width: 28px; height: 28px; background: transparent; border: none; color: #71717a;
+        border-radius: 6px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+    }
+    .control-btn:hover { background: #27272a; color: white; }
+    .close-btn:hover { background: #ef4444; color: white; }
+
+    /* STATUS BAR (La información que pediste) */
+    .status-bar {
+        display: flex; align-items: center; gap: 8px; font-size: 11px;
+        font-family: 'JetBrains Mono', monospace; /* Fuente técnica */
+        color: #71717a;
+        background: #18181b;
+        padding: 4px 10px;
+        border-radius: 6px;
+        width: fit-content;
+    }
+    .status-item.active { color: #a1a1aa; display: flex; gap: 5px; align-items: center; }
+    .status-separator { color: #3f3f46; }
+    .status-time { color: #22c55e; margin-left: auto; display: flex; align-items: center; gap: 4px;}
+    .live-dot { width: 4px; height: 4px; background: #22c55e; border-radius: 50%; }
+
+    /* --- CHAT AREA --- */
+    .ai-messages { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
+
+    /* PANTALLA DE BIENVENIDA (SUGERENCIAS) */
+    .welcome-screen {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        text-align: center; width: 100%; padding: 20px;
+    }
+    .welcome-icon { font-size: 40px; color: #3f3f46; margin-bottom: 10px; }
+    .welcome-screen h3 { color: white; font-size: 18px; margin: 0 0 5px 0; font-weight: 600; }
+    .welcome-screen p { color: #a1a1aa; font-size: 13px; margin: 0 0 20px 0; }
+
+    .suggestion-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+
+    .suggestion-card {
+        background: #18181b; border: 1px solid #27272a; padding: 12px;
+        border-radius: 12px; text-align: left; cursor: pointer;
+        display: flex; flex-direction: column; gap: 8px; transition: 0.2s;
+    }
+    .suggestion-card i { color: var(--accent); font-size: 16px; }
+    .suggestion-card span { color: #d4d4d8; font-size: 12px; font-weight: 500; }
+    
+    .suggestion-card:hover {
+        background: #27272a; border-color: #3f3f46; transform: translateY(-2px);
+    }
+
+    /* --- FOOTER (INPUT) --- */
+    .ai-footer { padding: 16px 20px; border-top: 1px solid #27272a; background: #09090b; }
+    
+    .input-container {
+        display: flex; align-items: center; gap: 8px;
+        background: #18181b; border: 1px solid #3f3f46;
+        padding: 6px; border-radius: 12px;
+        transition: 0.2s;
+    }
+    .input-container:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+
+    .clean-input {
+        flex: 1; background: transparent; border: none; color: white; font-size: 14px; padding: 8px; outline: none;
+    }
+    .attach-btn { background: none; border: none; color: #71717a; cursor: pointer; padding: 8px; border-radius: 6px; }
+    .attach-btn:hover { background: #27272a; color: white; }
+    
+    .send-btn {
+        width: 32px; height: 32px; background: white; color: black; border: none;
+        border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+    }
+    .send-btn:hover { background: #e4e4e7; }
+
+    .footer-legal { text-align: center; font-size: 10px; color: #3f3f46; margin-top: 10px; }
+
+</style>
+
+<script>
+    function toggleAICopilot() {
+        document.getElementById('aiSidebar').classList.toggle('active');
+    }
+
+    function toggleExpand() {
+        const sidebar = document.getElementById('aiSidebar');
+        const icon = document.getElementById('expandIcon');
+        sidebar.classList.toggle('expanded');
+        
+        if (sidebar.classList.contains('expanded')) {
+            icon.classList.replace('bi-arrows-angle-expand', 'bi-arrows-angle-contract');
+        } else {
+            icon.classList.replace('bi-arrows-angle-contract', 'bi-arrows-angle-expand');
+        }
+    }
+
+    function setInput(text) {
+        // Pone el texto en el input y oculta la pantalla de bienvenida (simulado)
+        document.getElementById('userPrompt').value = text;
+        document.querySelector('.welcome-screen').style.display = 'none';
+        // Aquí podrías disparar el envío automáticamente si quieres
+    }
+    
+    // Simulación: Si el usuario escribe, ocultar bienvenida
+    document.getElementById('userPrompt').addEventListener('input', function() {
+        if(this.value.length > 0) {
+            document.querySelector('.welcome-screen').style.opacity = '0.5';
+        }
+    });
+</script>
+    
+
     {% block footer %}{% endblock footer %}
 
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    
 
 </body>
 </html>

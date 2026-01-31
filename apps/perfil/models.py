@@ -256,6 +256,11 @@ class Order(models.Model):
         ('cash', 'Efectivo'),
         ('transfer', 'Transferencia'),
         ('card', 'Tarjeta'),
+        # --- AGREGAR ESTAS DOS ---
+        ('qr', 'Código QR'), 
+        ('qr_modal', 'Código QR (Modal)'),
+        ('mercadopago', 'Mercado Pago (Link)'),
+        ('mp_redirect', 'Mercado Pago (Checkout Pro)'),
     ])
     created_at = models.DateTimeField(auto_now_add=True)
     STATUS_CHOICES = [
@@ -415,3 +420,29 @@ class NotificationReadStatus(models.Model):
 
     class Meta:
         unique_together = ('user', 'notification')  # Evitar duplicados
+
+
+
+# models.py
+
+# ... tus importaciones existentes ...
+
+class TransaccionMercadoPago(models.Model):
+    orden = models.ForeignKey(Order, on_delete=models.PROTECT, related_name='transacciones_mp')
+    
+    # IDs de MP
+    preference_id = models.CharField(max_length=100, blank=True, null=True, help_text="ID de la preferencia de pago")
+    payment_id = models.CharField(max_length=100, blank=True, null=True, unique=True, help_text="ID único del cobro en MP")
+    
+    # Estado reportado por MP
+    status = models.CharField(max_length=50, default='pending', help_text="Estado: approved, pending, rejected, etc.")
+    status_detail = models.CharField(max_length=100, blank=True, null=True, help_text="Detalle: accredited, insufficient_amount, etc.")
+    
+    # GUARDAR TODO: Aquí guardamos el JSON completo que manda MP
+    raw_response = models.JSONField(default=dict, blank=True, help_text="Respuesta completa de MP para auditoría")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"MP Transacción {self.payment_id or 'Pendiente'} - Orden {self.orden.id}"

@@ -8,32 +8,13 @@ class UserEditForm(forms.ModelForm):
     class Meta:
         model = UserAccount
         fields = [
-            'username', 'first_name', 'last_name', 'email', 'whatsapp_number', 
-            'is_active', 'is_verified', 'role', 'total_visitas',
-            'verification_code', 'verification_code_expires_at', 'is_staff', 
-            'is_superuser', 'groups', 'user_permissions'
+            'first_name', 'last_name', 'email', 
+            'is_active', 'role',
+            'is_staff', 
+           
         ]
-        widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'whatsapp_number': forms.TextInput(attrs={'class': 'form-control'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_verified': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'role': forms.Select(attrs={'class': 'form-select'}),
-            'total_visitas': forms.NumberInput(attrs={'class': 'form-control'}),
+      
         
-            'verification_code': forms.TextInput(attrs={'class': 'form-control'}),
-            'verification_code_expires_at': forms.DateTimeInput(attrs={
-                'class': 'form-control',
-                'type': 'datetime-local'
-            }),
-            'is_staff': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'groups': forms.SelectMultiple(attrs={'class': 'form-select'}),
-            'user_permissions': forms.SelectMultiple(attrs={'class': 'form-select'}),
-        }
 
 
 

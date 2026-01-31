@@ -19,7 +19,6 @@ urlpatterns = [
      path('cart/remove/<uuid:product_id>/', RemoveFromCartView.as_view(), name='remove_from_cart'),
      path('cart/decrease/<uuid:product_id>/', DecreaseQuantityView.as_view(), name='decrease_quantity'),
     
-     path('order/<int:order_id>/', OrderDetailView.as_view(), name='order_detail'),
     path('address/add/', views.AddAddressView.as_view(), name='add_address'),
     path('address/edit/<int:pk>/', views.EditAddressView.as_view(), name='edit_address'),
     path('address/delete/<int:pk>/', views.delete_address, name='delete_address'),
@@ -27,6 +26,11 @@ urlpatterns = [
      path('payment/card/', PaymentCardView.as_view(), name='payment_card'),
      path('payment/transfer-cash/', PaymentTransferCashView.as_view(), name='payment_transfer_cash'),
      path('order/<int:order_id>/', OrderDetailView.as_view(), name='order_detail'),
+
+
+    path('payment/mercadopago/', PaymentMercadoPagoView.as_view(), name='payment_mercadopago'),
+    path('order/check-status/<int:order_id>/', check_order_status, name='check_order_status'),
+    path('webhooks/mercadopago/', MercadoPagoWebhookView.as_view(), name='mp_webhook'),
 
      path("ofertas", ShopOfertasView.as_view(), name="shop_oferta"),
 

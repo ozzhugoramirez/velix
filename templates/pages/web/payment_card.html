@@ -2,286 +2,179 @@
 {% load static %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<div class="container py-5" style="min-height: 85vh;">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            
+            <div class="mb-4">
+                <a href="{% url 'checkout' %}" class="text-decoration-none text-muted mb-3 d-inline-block">
+                    <i class="bi bi-arrow-left"></i> Volver al Checkout
+                </a>
+                <h3 class="fw-bold">Pago con Tarjeta</h3>
+                <p class="text-muted">Ingresa los datos de tu tarjeta de forma segura.</p>
+            </div>
 
-<style>
-    :root {
-        --card-bg: linear-gradient(135deg, #195A59, #0f172a);
-        --input-focus: #195A59;
-    }
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <div id="paymentBrick_container"></div>
+                </div>
+            </div>
 
-    /* --- ESTILO DE LA TARJETA VIRTUAL --- */
-    .virtual-card {
-        background: var(--card-bg);
-        border-radius: 20px;
-        padding: 25px;
-        color: white;
-        height: 240px;
-        width: 100%;
-        max-width: 400px;
-        position: relative;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        margin: 0 auto 30px;
-        transition: transform 0.3s;
-        font-family: 'Share Tech Mono', monospace;
-    }
+            <div id="loading-overlay" class="d-none text-center mt-4">
+                <div class="spinner-border text-success" role="status"></div>
+                <p class="mt-2 text-muted fw-bold">Procesando pago con el banco...</p>
+            </div>
 
-    .virtual-card:hover { transform: translateY(-5px); }
-    
-    .card-top { display: flex; justify-content: space-between; align-items: start; }
-    .chip {
-        width: 50px; height: 35px;
-        background: linear-gradient(135deg, #d4af37, #fceeb5);
-        border-radius: 6px;
-        position: relative;
-        overflow: hidden;
-    }
-    .chip::after {
-        content: ''; position: absolute; top:0; left:0; right:0; bottom:0;
-        border: 1px solid rgba(0,0,0,0.2); border-radius: 6px;
-    }
-    
-    .card-logo i { font-size: 2.5rem; opacity: 0.9; }
-
-    .card-number-display {
-        font-size: 1.6rem;
-        letter-spacing: 2px;
-        text-shadow: 0 2px 2px rgba(0,0,0,0.3);
-    }
-
-    .card-details { display: flex; justify-content: space-between; text-transform: uppercase; font-size: 0.8rem; }
-    .card-details label { font-size: 0.6rem; opacity: 0.7; display: block; margin-bottom: 2px; }
-    
-    /* --- FORMULARIO --- */
-    .payment-form-label {
-        font-weight: 600; font-size: 0.85rem; color: #555; margin-bottom: 8px;
-    }
-    .input-group-text { background: #f8f9fa; border-right: none; color: #888; }
-    .form-control-lg {
-        border-left: none;
-        background: #f8f9fa;
-        font-size: 0.95rem;
-        border-color: #ddd;
-    }
-    .form-control-lg:focus {
-        background: white;
-        box-shadow: none;
-        border-color: var(--input-focus);
-    }
-    .input-group:focus-within .input-group-text {
-        background: white;
-        border-color: var(--input-focus);
-        color: var(--input-focus);
-    }
-
-    .btn-pay {
-        background: var(--input-focus);
-        color: white;
-        padding: 15px;
-        border-radius: 12px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        transition: 0.3s;
-        border: none;
-    }
-    .btn-pay:hover {
-        background: #0f172a;
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        color: white;
-    }
-
-    @media (max-width: 992px) {
-        .virtual-card { margin-bottom: 40px; }
-    }
-</style>
-
-<div class="container py-5">
-    <div class="row align-items-center justify-content-center">
+        </div>
         
-        <div class="col-lg-5 order-lg-2 mb-4 mb-lg-0">
-            <div class="virtual-card">
-                <div class="card-top">
-                    <div class="chip"></div>
-                    <div class="card-logo" id="brandLogo">
-                        <i class="fab fa-cc-visa"></i> </div>
+        <div class="col-lg-4 mt-5 mt-lg-0">
+            <div class="card border-0 bg-light rounded-4 p-4">
+                <h5 class="fw-bold mb-3">Resumen</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total a pagar:</span>
+                    <span class="fw-bold">${{ cart.total_price|floatformat:2 }}</span>
                 </div>
-                
-                <div class="card-number-display" id="displayNumber">#### #### #### ####</div>
-                
-                <div class="card-details">
-                    <div>
-                        <label>Titular</label>
-                        <span id="displayName">NOMBRE APELLIDO</span>
-                    </div>
-                    <div>
-                        <label>Expira</label>
-                        <span id="displayDate">MM/AA</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center mt-4 d-none d-lg-block">
-                <p class="small text-muted mb-2"><i class="bi bi-shield-lock-fill text-success"></i> Pagos encriptados de extremo a extremo</p>
-                <div class="opacity-50 grayscale">
-                    <img src="https://img.icons8.com/color/48/visa.png" width="30">
-                    <img src="https://img.icons8.com/color/48/mastercard.png" width="30">
-                    <img src="https://img.icons8.com/color/48/amex.png" width="30">
+                <hr>
+                <div class="small text-muted">
+                    <i class="bi bi-shield-lock-fill text-success me-1"></i>
+                    Tus datos están protegidos por Mercado Pago.
                 </div>
             </div>
         </div>
-
-        <div class="col-lg-6 order-lg-1">
-            <div class="bg-white p-4 p-md-5 rounded-4 shadow-sm border">
-                <h3 class="fw-bold mb-1">Detalles de Pago</h3>
-                <p class="text-muted mb-4">Finaliza tu compra de forma segura.</p>
-
-                <form method="post" action="{% url 'payment_card' %}" id="paymentForm">
-                    {% csrf_token %}
-
-                    <div class="mb-4">
-                        <label class="payment-form-label">Nombre del Titular</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" id="cardholder_name" name="cardholder_name" class="form-control form-control-lg" placeholder="Como aparece en la tarjeta" required>
-                        </div>
-                        <div class="invalid-feedback">Solo letras permitidas.</div>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="payment-form-label">Número de Tarjeta</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-credit-card"></i></span>
-                            <input type="text" id="card_number" name="card_number" class="form-control form-control-lg" placeholder="0000 0000 0000 0000" maxlength="19" required>
-                        </div>
-                        <div class="invalid-feedback">Número inválido.</div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-6 mb-4">
-                            <label class="payment-form-label">Expiración</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-calendar"></i></span>
-                                <input type="text" id="expiration_date" name="expiration_date" class="form-control form-control-lg" placeholder="MM/AA" maxlength="5" required>
-                            </div>
-                        </div>
-                        <div class="col-6 mb-4">
-                            <label class="payment-form-label">CVV / CVC</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                <input type="password" id="cvv" name="cvv" class="form-control form-control-lg" placeholder="123" maxlength="4" required>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-light border d-flex align-items-center gap-3 mb-4" role="alert">
-                        <i class="bi bi-info-circle-fill text-primary fs-4"></i>
-                        <div class="small text-muted lh-sm">
-                            No guardaremos los datos de tu tarjeta. La transacción se procesa de forma segura mediante tokenización.
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-pay w-100 btn-lg shadow" id="payButton">
-                        <i class="bi bi-bag-check-fill me-2"></i> Pagar ${{ cart.total_price|default:"Total" }}
-                    </button>
-                    
-                    <div class="text-center mt-3">
-                        <a href="{% url 'checkout' %}" class="text-decoration-none text-muted small">
-                            <i class="bi bi-arrow-left"></i> Volver al Checkout
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-
     </div>
 </div>
 
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Inputs
-        const nameInput = document.getElementById("cardholder_name");
-        const numberInput = document.getElementById("card_number");
-        const dateInput = document.getElementById("expiration_date");
-        const cvvInput = document.getElementById("cvv");
-        const form = document.getElementById("paymentForm");
-        
-        // Elementos Visuales
-        const dispNumber = document.getElementById("displayNumber");
-        const dispName = document.getElementById("displayName");
-        const dispDate = document.getElementById("displayDate");
-        const brandLogo = document.getElementById("brandLogo");
-
-        // --- 1. FORMATO NÚMERO Y DETECCIÓN LOGO ---
-        numberInput.addEventListener("input", function (e) {
-            // Permitir solo números
-            let value = e.target.value.replace(/\D/g, "");
-            
-            // Detectar marca (Visa 4, Master 5)
-            if(value.startsWith("4")) {
-                brandLogo.innerHTML = '<i class="fab fa-cc-visa"></i>';
-            } else if (value.startsWith("5")) {
-                brandLogo.innerHTML = '<i class="fab fa-cc-mastercard"></i>';
-            } else if (value.startsWith("3")) {
-                brandLogo.innerHTML = '<i class="fab fa-cc-amex"></i>';
-            } else {
-                brandLogo.innerHTML = '<i class="bi bi-credit-card-2-front"></i>';
-            }
-
-            // Agrupar de 4 en 4
-            let formatted = value.match(/.{1,4}/g)?.join(" ") || "";
-            e.target.value = formatted;
-            
-            // Actualizar Tarjeta Visual
-            dispNumber.textContent = formatted || "#### #### #### ####";
-        });
-
-        // --- 2. FORMATO NOMBRE ---
-        nameInput.addEventListener("input", function (e) {
-            let val = e.target.value.toUpperCase();
-            // Solo letras y espacios
-            e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-            dispName.textContent = val || "NOMBRE APELLIDO";
-        });
-
-        // --- 3. FORMATO FECHA (MM/AA) ---
-        dateInput.addEventListener("input", function (e) {
-            let value = e.target.value.replace(/\D/g, "");
-            
-            if (value.length >= 2) {
-                value = value.substring(0,2) + "/" + value.substring(2,4);
-            }
-            e.target.value = value;
-            dispDate.textContent = value || "MM/AA";
-        });
-
-        // --- 4. VALIDACIÓN AL ENVIAR ---
-        form.addEventListener("submit", function (e) {
-            let isValid = true;
-            
-            // Validar Número (Simple longitud)
-            if(numberInput.value.length < 16) {
-                numberInput.classList.add("is-invalid");
-                isValid = false;
-            } else {
-                numberInput.classList.remove("is-invalid");
-            }
-
-            // Validar CVV
-            if(cvvInput.value.length < 3) {
-                cvvInput.classList.add("is-invalid");
-                isValid = false;
-            } else {
-                cvvInput.classList.remove("is-invalid");
-            }
-
-            if(!isValid) e.preventDefault();
-        });
+    const mp = new MercadoPago("{{ mp_public_key }}", {
+        locale: 'es-AR'
     });
-</script>
 
-{% endblock %}
+    const bricksBuilder = mp.bricks();
+
+    // --- TRADUCTOR DE ERRORES DE MERCADO PAGO ---
+    function traducirError(statusDetail) {
+        const errores = {
+            "cc_rejected_bad_filled_card_number": "Revisa el número de tarjeta.",
+            "cc_rejected_bad_filled_date": "Revisa la fecha de vencimiento.",
+            "cc_rejected_bad_filled_other": "Revisa los datos.",
+            "cc_rejected_bad_filled_security_code": "Revisa el código de seguridad (CVV).",
+            "cc_rejected_blacklist": "No pudimos procesar tu pago.",
+            "cc_rejected_call_for_authorize": "Debes autorizar el pago con tu banco.",
+            "cc_rejected_card_disabled": "Llama a tu banco para activar tu tarjeta.",
+            "cc_rejected_card_error": "No pudimos procesar tu pago.",
+            "cc_rejected_duplicated_payment": "Ya hiciste un pago por ese valor.",
+            "cc_rejected_high_risk": "El pago fue rechazado por seguridad.",
+            "cc_rejected_insufficient_amount": "Tu tarjeta no tiene fondos suficientes.",
+            "cc_rejected_max_attempts": "Llegaste al límite de intentos permitidos.",
+            "pending_contingency": "Estamos procesando tu pago. No vuelvas a intentar todavía.",
+            "pending_review_manual": "Estamos revisando tu pago, te avisaremos pronto."
+        };
+        return errores[statusDetail] || "El pago fue rechazado por el banco. Intenta con otra tarjeta.";
+    }
+
+    const renderPaymentBrick = async (bricksBuilder) => {
+        let montoString = "{{ cart.total_price|stringformat:'.2f' }}".replace(',', '.');
+        let monto = parseFloat(montoString);
+
+        const settings = {
+            initialization: {
+                amount: monto,
+                payer: { email: "{{ request.user.email }}" },
+            },
+            customization: {
+                paymentMethods: {
+                    maxInstallments: 12,
+                    ticket: "all",
+                    bankTransfer: "all",
+                    creditCard: "all",
+                    debitCard: "all",
+                    mercadoPago: "all",
+                },
+                visual: {
+                    style: { theme: "default" }
+                },
+            },
+            callbacks: {
+                onReady: () => { console.log("Brick listo."); },
+                onSubmit: ({ selectedPaymentMethod, formData }) => {
+                    // Mostrar Spinner
+                    document.getElementById('loading-overlay').classList.remove('d-none');
+                    // Deshabilitar interacción con el brick para evitar doble click
+                    document.getElementById('paymentBrick_container').style.pointerEvents = 'none';
+                    document.getElementById('paymentBrick_container').style.opacity = '0.5';
+
+                    return new Promise((resolve, reject) => {
+                        fetch("{% url 'payment_card' %}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": "{{ csrf_token }}",
+                            },
+                            body: JSON.stringify(formData)
+                        })
+                        .then((response) => response.json())
+                        .then((response) => {
+                            // Ocultar Spinner
+                            document.getElementById('loading-overlay').classList.add('d-none');
+                            document.getElementById('paymentBrick_container').style.pointerEvents = 'auto';
+                            document.getElementById('paymentBrick_container').style.opacity = '1';
+
+                            if (response.status === 'approved') {
+                                // ÉXITO: Alerta bonita y Redirección
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '¡Pago Aprobado!',
+                                    text: 'Tu orden se ha generado correctamente.',
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                }).then(() => {
+                                    window.location.href = response.redirect_url;
+                                });
+                                resolve();
+                            } else {
+                                // ERROR: Alerta bonita con mensaje traducido
+                                let mensajeError = traducirError(response.status_detail);
+                                
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Pago Rechazado',
+                                    text: mensajeError,
+                                    confirmButtonColor: '#d33',
+                                    confirmButtonText: 'Intentar de nuevo'
+                                });
+                                reject();
+                            }
+                        })
+                        .catch((error) => {
+                            document.getElementById('loading-overlay').classList.add('d-none');
+                            document.getElementById('paymentBrick_container').style.pointerEvents = 'auto';
+                            document.getElementById('paymentBrick_container').style.opacity = '1';
+                            
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error de conexión',
+                                text: 'Verifica tu conexión a internet e inténtalo nuevamente.'
+                            });
+                            reject();
+                        });
+                    });
+                },
+                onError: (error) => { console.error("Error Brick:", error); },
+            },
+        };
+
+        window.paymentBrickController = await bricksBuilder.create(
+            "payment",
+            "paymentBrick_container",
+            settings
+        );
+    };
+
+    renderPaymentBrick(bricksBuilder);
+</script>
+{% endblock content %}

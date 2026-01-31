@@ -11,15 +11,24 @@ ENVIROMENT =env
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+MERCADOPAGO_PUBLIC_KEY = os.environ.get('MERCADOPAGO_PUBLIC_KEY')
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN')
+
+DEBUG = False
+
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://dcollet-katelynn-trinal.ngrok-free.dev', 
+]
 
 # settings.py
 SITE_URL = "http://127.0.0.1:8000"
 
 
 #ALLOWED_HOSTS = ['192.168.0.231']
-ALLOWED_HOSTS = []
+# settings.py
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 SITE_ID = 1
@@ -38,7 +47,8 @@ PROJECT_APPS = [
     'apps.shops',
     'apps.user',
     'apps.api',
-    'apps.OLO', 
+    'apps.OLO',
+    'apps.coins',   
 
     
 ]
@@ -93,10 +103,12 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.shops.cart_context.cart_item_count',
+               
                 'apps.perfil.context_processors.perfiles_pendientes_count',
                 'apps.perfil.context_processors.ordenes_pendientes_count',
                 'apps.dasboard.context_processors.reclamos_pendientes_count',
                 "apps.perfil.context_processors.unread_notifications",
+                
             ],
         },
     },
@@ -237,9 +249,13 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'hugor8819@gmail.com'
 EMAIL_HOST_PASSWORD = 'ioqompxdqsikhwcm'
 
-DEFAULT_FROM_EMAIL = 'Velix <hugor8819@gmail.com>'  # nombre visible
+DEFAULT_FROM_EMAIL = 'Silo <hugor8819@gmail.com>'  # nombre visible
 SERVER_EMAIL = DEFAULT_FROM_EMAIL  
 
 
-SITE_NAME = "Velix"                # o el nombre de tu producto
+SITE_NAME = "Silo"                # o el nombre de tu producto
 SUPPORT_EMAIL = "soporte@tu-dominio.com"
+
+
+# settings.py
+

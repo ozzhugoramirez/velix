@@ -1,78 +1,278 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url "home" %}">( Mi sitio )</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <!-- Inicio -->
-                <li class="nav-item">
-                    <a class="nav-link active" href="{% url "dasboard" %}">Inicio</a>
-                </li>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-                <li class="nav-item">
-                    <a class="nav-link active" href="{% url "admin_notification_dashboard" %}">notificaciones</a>
-                </li>
+<style>
+    /* --- ESTILOS BASE (Mismos que ya tenías) --- */
+    body { background-color: #e3e5e8; font-family: 'Inter', sans-serif; margin: 0; }
+    
+    .lumify-navbar {
+        background-color: #0f0f10;
+        width: 100%;
+        height: 72px;
+        padding: 0 24px;
+        display: flex; align-items: center; justify-content: space-between;
+        color: #9ca3af;
+        border-bottom: 1px solid #27272a;
+        box-sizing: border-box;
+        position: sticky; top: 0; z-index: 1000;
+    }
 
+    /* --- ESTILOS NUEVOS PARA LOS MENÚS DESPLEGABLES --- */
+    
+    /* Contenedor relativo para posicionar el menú */
+    .dropdown-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'perfiles_pendientes' %}">
-                        Revisión Perfil 
-                        {% if perfiles_pendientes_count > 0 %}
-                        <span class="badge bg-danger">{{ perfiles_pendientes_count }}</span>
-                        {% endif %}
-                    </a>
-                </li>
-             
+    /* Menú Flotante Estilo Lumify */
+    .custom-dropdown-menu {
+        position: absolute;
+        top: 100%; /* Justo debajo */
+        right: 0; /* Alineado a la derecha por defecto */
+        margin-top: 12px;
+        background-color: #18181b; /* Zinc 900 */
+        border: 1px solid #27272a;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+        min-width: 220px;
+        padding: 6px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 2000;
+    }
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'Reclamos_admin' %}">
-                        Reclamos 
-                        {% if reclamos_pendientes_count > 0 %}
-                        <span class="badge bg-danger">{{ reclamos_pendientes_count }}</span>
-                        {% endif %}
-                    </a>
-                </li>
-                
+    /* Clase para mostrar el menú */
+    .custom-dropdown-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    /* Alineación específica para el menú izquierdo */
+    .menu-left { left: 0; right: auto; }
+
+    /* Items del menú */
+    .dropdown-item-custom {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        color: #a1a1aa;
+        text-decoration: none;
+        font-size: 13px;
+        border-radius: 8px;
+        transition: 0.1s;
+        cursor: pointer;
+    }
+    .dropdown-item-custom:hover {
+        background-color: #27272a;
+        color: #e4e4e7;
+    }
+    
+    /* Item Rojo (Logout) */
+    .dropdown-item-custom.danger:hover {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    /* Cabecera del usuario dentro del menú */
+    .user-menu-header {
+        padding: 12px;
+        border-bottom: 1px solid #27272a;
+        margin-bottom: 4px;
+    }
+    .user-name-display { color: white; font-weight: 600; font-size: 14px; display: block; }
+    .user-role-display { color: #71717a; font-size: 11px; margin-top: 2px; display: block;}
+
+    /* Separador */
+    .menu-divider { height: 1px; background-color: #27272a; margin: 4px 0; }
+
+    /* --- TUS ESTILOS ORIGINALES (Mantenidos) --- */
+    .nav-left { display: flex; align-items: center; gap: 12px; font-size: 15px; color: #e5e7eb; font-weight: 500; }
+    .brand-logo { color: #22d3ee; font-weight: 700; font-size: 19px; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .brand-divider { color: #4b5563; }
+    
+    /* Badge Creator Mejorado para parecer clicable */
+    .badge-creator {
+        background-color: #27272a; padding: 4px 12px; border-radius: 20px; font-size: 12px;
+        color: #9ca3af; display: flex; align-items: center; gap: 6px; cursor: pointer;
+        transition: 0.2s; border: 1px solid transparent; user-select: none;
+    }
+    .badge-creator:hover, .badge-creator.active { background-color: #3f3f46; color: white; border-color: #52525b; }
+
+    .nav-center { display: flex; align-items: center; background-color: #000000; padding: 4px; border-radius: 10px; border: 1px solid #27272a; gap: 4px; }
+    .nav-link-custom { text-decoration: none; color: #9ca3af; padding: 6px 14px; border-radius: 6px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; }
+    .nav-link-custom i { font-size: 15px; }
+    .nav-link-custom:hover { color: #e5e7eb; background-color: #27272a; }
+    .nav-link-custom.active { background-color: #27272a; color: #ffffff; }
+    .nav-link-custom.special-ai { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #e0e7ff; border: 1px solid #4338ca; box-shadow: 0 0 12px rgba(67, 56, 202, 0.2); margin-left: 4px; }
+    .nav-link-custom.special-ai:hover { filter: brightness(1.15); }
+
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .btn-create { background: linear-gradient(to bottom, #f9fafb, #d1d5db); color: #111827; border: 1px solid #9ca3af; padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; transition: 0.1s; }
+    .btn-create:hover { background: #e5e7eb; }
+    .icon-btn { background: transparent; border: none; color: #9ca3af; font-size: 18px; cursor: pointer; padding: 6px; border-radius: 50%; transition: 0.2s; display: flex; align-items: center; justify-content: center; position: relative; }
+    .icon-btn:hover { background-color: #27272a; color: white; }
+
+    /* Avatar Interactivo */
+    .user-avatar-btn {
+        background: none; border: none; padding: 0; cursor: pointer;
+        border-radius: 8px; transition: 0.2s;
+        border: 1px solid transparent;
+    }
+    .user-avatar-btn:hover, .user-avatar-btn.active { border-color: #52525b; transform: scale(1.05); }
+    
+    .user-avatar { width: 34px; height: 34px; border-radius: 8px; object-fit: cover; border: 1px solid #374151; display: block; }
+    
+    @media (max-width: 992px) {
+        .nav-text { display: none; }
+        .lumify-navbar { padding: 0 12px; }
+        .badge-creator { display: none; }
+        .btn-create span { display: none; }
+    }
+</style>
+
+<nav class="lumify-navbar">
+    
+    <div class="nav-left">
+        <a href="{% url 'home' %}" class="brand-logo">
+            <i class="bi bi-asterisk"></i> Silo
+        </a>
+        <span class="brand-divider">/</span>
+        
+        <div class="dropdown-wrapper">
+            <div class="badge-creator" onclick="toggleDropdown('siteDropdown', this)">
+                <i class="bi bi-shop-window" style="font-size: 11px;"></i>
+                <span>Tienda Online</span>
+                <i class="bi bi-chevron-down" style="font-size: 10px; margin-left: 2px;"></i>
+            </div>
             
-                <!-- Clientes -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url "clintes_admin" %}">Clientes</a>
-                </li>
-                <!-- Productos -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url "ProductoAdminView" %}">Productos</a>
-                </li>
+            <div id="siteDropdown" class="custom-dropdown-menu menu-left">
+                <div class="user-menu-header" style="padding: 8px 12px;">
+                    <span class="user-role-display">ESTADO DEL SISTEMA</span>
+                </div>
+                <a href="/" target="_blank" class="dropdown-item-custom">
+                    <i class="bi bi-box-arrow-up-right"></i> Ver Sitio Web
+                </a>
+                <div class="dropdown-item-custom" style="cursor: default;">
+                    <i class="bi bi-shield-lock"></i> 
+                    <span>Rol: 
+                        {% if request.user.is_superuser %} <strong style="color: #22d3ee;">Super Admin</strong>
+                        {% elif request.user.is_staff %} <strong style="color: #a5b4fc;">Staff</strong>
+                        {% else %} Usuario {% endif %}
+                    </span>
+                </div>
+                <div class="menu-divider"></div>
+                <a href="#" class="dropdown-item-custom">
+                    <i class="bi bi-book"></i> Documentación
+                </a>
+            </div>
+        </div>
+    </div>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'coupon_list' %}">Cupones</a>
-                </li>
-                <!-- Proveedores -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url "search_queries" %}">busquedas</a>
-                </li>
-                <!-- Despacho -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'visitas_combinadas' %}">Metricas</a>
-                </li>
-                <!-- Pedidos -->
-              
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'order_list' %}">
-                        Órdenes 
-                        {% if ordenes_pendientes_count > 0 %}
-                        <span class="badge bg-danger">{{ ordenes_pendientes_count }}</span>
-                        {% endif %}
-                    </a>
-                </li>
+    <div class="nav-center">
+        <a href="{% url 'dasboard' %}" class="nav-link-custom">
+            <i class="bi bi-grid-fill"></i> <span class="nav-text">Overview</span>
+        </a>
+        <a href="{% url 'visitas_combinadas' %}" class="nav-link-custom active">
+            <i class="bi bi-bar-chart-fill"></i> <span class="nav-text">Analysis</span>
+        </a>
+        <a href="{% url 'clintes_admin' %}" class="nav-link-custom">
+            <i class="bi bi-folder-fill"></i> <span class="nav-text">Affiliates</span>
+        </a>
+        <a href="{% url 'ProductoAdminView' %}" class="nav-link-custom">
+            <i class="bi bi-people-fill"></i> <span class="nav-text">Clients</span>
+        </a>
+        <a href="{% url 'search_queries' %}" class="nav-link-custom special-ai">
+            <i class="bi bi-stars"></i> <span class="nav-text">AI strategy</span>
+        </a>
+    </div>
+
+    <div class="nav-right">
+        <a href="{% url 'order_list' %}" class="btn-create">
+            <i class="bi bi-plus-lg"></i>
+            <span>Create grant</span>
+        </a>
+
+        <button class="icon-btn" onclick="window.location.href='{% url 'admin_notification_dashboard' %}'">
+            <i class="bi bi-chat-left-text"></i>
+            {% if ordenes_pendientes_count > 0 %}
+            <span style="position: absolute; top: 20px; margin-left: 10px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; border: 1px solid #0f0f10;"></span>
+            {% endif %}
+        </button>
+
+        <div class="dropdown-wrapper">
+            <button class="user-avatar-btn" onclick="toggleDropdown('profileDropdown', this)">
+                <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=27272a&color=fff&size=64" alt="User" class="user-avatar">
+            </button>
+
+            <div id="profileDropdown" class="custom-dropdown-menu">
+                <div class="user-menu-header">
+                    <span class="user-name-display">{{ request.user.username|title }}</span>
+                    <span class="user-role-display">{{ request.user.email }}</span>
+                </div>
                 
+                <a href="#" class="dropdown-item-custom">
+                    <i class="bi bi-gear"></i> Settings
+                </a>
+                <a href="#" class="dropdown-item-custom">
+                    <i class="bi bi-person-badge"></i> Panel Colaborador
+                </a>
                 
-                <!-- Cerrar sesión -->
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'logout' %}">Cerrar sesión</a>
-                </li>
-            </ul>
+                <div class="menu-divider"></div>
+                
+                <a href="{% url 'logout' %}" class="dropdown-item-custom danger">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                </a>
+            </div>
         </div>
     </div>
 </nav>
+
+<script>
+    // Manejo de la clase 'active' en el navbar central
+    document.addEventListener("DOMContentLoaded", function() {
+        const currentPath = window.location.pathname;
+        const links = document.querySelectorAll('.nav-link-custom');
+        links.forEach(link => {
+            if (link.getAttribute('href') === currentPath) {
+                document.querySelector('.nav-link-custom.active')?.classList.remove('active');
+                link.classList.add('active');
+            }
+        });
+    });
+
+    // Función para abrir/cerrar menús
+    function toggleDropdown(menuId, triggerElement) {
+        // 1. Cerrar todos los demás menús abiertos
+        const allMenus = document.querySelectorAll('.custom-dropdown-menu');
+        allMenus.forEach(menu => {
+            if (menu.id !== menuId) {
+                menu.classList.remove('show');
+            }
+        });
+        
+        // 2. Toggle del menú seleccionado
+        const menu = document.getElementById(menuId);
+        menu.classList.toggle('show');
+
+        // Efecto visual en el botón
+        triggerElement.classList.toggle('active');
+    }
+
+    // Cerrar menús al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        const isClickInsideDropdown = event.target.closest('.dropdown-wrapper');
+        
+        if (!isClickInsideDropdown) {
+            const allMenus = document.querySelectorAll('.custom-dropdown-menu');
+            allMenus.forEach(menu => menu.classList.remove('show'));
+            
+            // Quitar estado activo de los botones
+            document.querySelectorAll('.badge-creator, .user-avatar-btn').forEach(el => el.classList.remove('active'));
+        }
+    });
+</script>

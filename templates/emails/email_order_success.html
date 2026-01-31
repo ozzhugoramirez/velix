@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* RESET Y BASE */
+        body { margin: 0; padding: 0; background-color: #f3f4f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1f2937; -webkit-font-smoothing: antialiased; }
+        table { border-collapse: collapse; width: 100%; }
+        a { text-decoration: none; }
+        
+        /* CONTENEDOR PRINCIPAL (Tarjeta) */
+        .wrapper { max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 0; margin-top: 20px; margin-bottom: 20px; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* HEADER */
+        .header { background-color: #195a59; padding: 40px 20px; text-align: center; color: white; }
+        .logo { font-size: 32px; font-weight: 800; letter-spacing: -1px; color: #ffffff; }
+        .subtitle { opacity: 0.9; margin-top: 5px; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; }
+        
+        /* CONTENIDO */
+        .content { padding: 40px 30px; }
+        .h1-title { font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 10px 0; text-align: center; }
+        .intro-text { text-align: center; color: #6b7280; margin-bottom: 30px; font-size: 16px; }
+
+        /* CAJA MENSAJE PERSONALIZADO (Lo nuevo) */
+        .special-message { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px 20px; margin-bottom: 30px; border-radius: 4px; color: #92400e; font-size: 15px; }
+        
+        /* DETALLE ORDEN */
+        .order-box { background-color: #f9fafb; border-radius: 8px; padding: 20px; margin-bottom: 30px; border: 1px solid #e5e7eb; }
+        .item-row { padding: 15px 0; border-bottom: 1px solid #e5e7eb; }
+        .item-row:last-child { border-bottom: none; }
+        .item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; background: #fff; border: 1px solid #eee; }
+        .item-title { font-weight: 600; font-size: 15px; color: #374151; }
+        .item-meta { font-size: 13px; color: #9ca3af; margin-top: 2px; }
+        .item-price { font-weight: 700; color: #111827; text-align: right; }
+
+        /* TOTALES */
+        .total-section { text-align: right; margin-top: 10px; padding-top: 10px; border-top: 2px solid #e5e7eb; }
+        .total-label { color: #6b7280; font-size: 14px; }
+        .total-amount { font-size: 22px; font-weight: 800; color: #195a59; }
+
+        /* GUIA DE PASOS (Tracking) */
+        .steps-container { margin: 30px 0; border-top: 1px solid #eee; padding-top: 30px; }
+        .steps-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #9ca3af; margin-bottom: 15px; text-align: center; }
+        .step { font-size: 14px; color: #4b5563; margin-bottom: 10px; display: block; text-align: center; }
+        .step-icon { background: #e0f2f1; color: #195a59; width: 24px; height: 24px; display: inline-block; border-radius: 50%; text-align: center; line-height: 24px; font-weight: bold; margin-right: 8px; font-size: 12px; }
+
+        /* BOTON */
+        .btn-wrapper { text-align: center; margin: 30px 0; }
+        .btn { background-color: #195a59; color: #ffffff; padding: 16px 32px; border-radius: 50px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(25, 90, 89, 0.4); display: inline-block; transition: background 0.3s; }
+        
+        /* POLITICA DEVOLUCION */
+        .return-policy { background-color: #f3f4f6; padding: 15px; border-radius: 6px; font-size: 13px; color: #6b7280; text-align: center; margin-top: 30px; }
+
+        /* FOOTER */
+        .footer { background-color: #111827; padding: 30px; text-align: center; color: #9ca3af; font-size: 12px; }
+        .socials { margin-bottom: 20px; }
+        .social-link { display: inline-block; margin: 0 5px; color: white; font-weight: bold; text-decoration: none; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="header">
+        <div class="logo">SILO.</div>
+        <div class="subtitle">Orden Confirmada</div>
+    </div>
+
+    <div class="content">
+        <h1 class="h1-title">¡Gracias, {{ user.first_name }}!</h1>
+        <p class="intro-text">Hemos recibido tu pedido #{{ order.id }} correctamente.</p>
+
+        {% if custom_message %}
+        <div class="special-message">
+            <strong>✨ Mensaje especial para ti:</strong><br>
+            {{ custom_message }}
+        </div>
+        {% endif %}
+
+        <div class="order-box">
+            <table width="100%">
+                {% for item in order_items %}
+                <tr>
+                    <td width="70" class="item-row">
+                        {% if item.image %}
+                            <img src="{{ item.image }}" class="item-img">
+                        {% else %}
+                            <div class="item-img" style="background:#eee;"></div>
+                        {% endif %}
+                    </td>
+                    <td class="item-row">
+                        <div class="item-title">{{ item.title }}</div>
+                        <div class="item-meta">Cantidad: {{ item.quantity }}</div>
+                    </td>
+                    <td class="item-row item-price">
+                        ${{ item.price|floatformat:0 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <div class="total-section">
+                <span class="total-label">Total Pagado:</span>
+                <div class="total-amount">${{ order.monto_total|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <div class="steps-container">
+            <div class="steps-title">¿Qué sigue ahora?</div>
+            <div class="step">
+                <span class="step-icon">1</span> Toca el botón de abajo "Ver mi Pedido".
+            </div>
+            <div class="step">
+                <span class="step-icon">2</span> En el detalle, verás la tarjeta de estado.
+            </div>
+            <div class="step">
+                <span class="step-icon">3</span> Te notificaremos cuando salga a envío.
+            </div>
+        </div>
+
+        <div class="btn-wrapper">
+            <a href="{{ order_url }}" class="btn">Rastrear mi Pedido</a>
+        </div>
+
+        <div class="return-policy">
+            <strong>🔄 Política de Satisfacción Silo:</strong><br>
+            ¿No es lo que esperabas? Tienes 30 días desde que recibes el producto para solicitar un cambio o devolución gratuita directamente desde tu perfil.
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="socials">
+            <a href="#" class="social-link">Instagram</a> • 
+            <a href="#" class="social-link">TikTok</a> • 
+            <a href="#" class="social-link">Twitter</a>
+        </div>
+        <p>
+            Enviado con ❤️ por el equipo de Silo.<br>
+            Si tienes dudas, responde a este correo.
+        </p>
+        <p style="margin-top: 10px; font-size: 11px; opacity: 0.5;">
+            &copy; {{ year }} Silo Inc. Todos los derechos reservados.
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,35 +1,172 @@
 {% extends "pages/web/perfil.html" %}
+{% load static %}
 
 {% block profile_inner %}
-<div class="text-center py-5">
-    <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle mb-4" style="width: 80px; height: 80px;">
-        <i class="bi bi-share-fill text-primary h2 mb-0"></i>
-    </div>
-    <h3 class="fw-bold">Invita y Gana</h3>
-    <p class="text-muted col-md-6 mx-auto">Comparte tu enlace único con tus amigos. Cuando ellos se registren y hagan su primera compra, ambos recibirán <strong class="text-warning">500 Coins</strong>.</p>
+
+<style>
+    /* Estilos Input Copiar */
+    .copy-input-group {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 4px; display: flex; align-items: center;
+    }
+    .copy-input { border: none; background: transparent; font-size: 0.85rem; color: #64748b; width: 100%; padding-left: 10px; outline: none; }
+    .btn-copy { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 5px 12px; font-size: 0.8rem; font-weight: 600; color: #334155; transition: all 0.2s; }
+    .btn-copy:hover { background: var(--emerald, #10b981); color: white; border-color: var(--emerald, #10b981); }
+
+    /* Tarjeta Avanzada */
+    .share-card {
+        background: white; border: 1px solid #f1f5f9; border-radius: 16px; padding: 1.5rem; transition: transform 0.2s; position: relative; overflow: hidden;
+    }
+    .share-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: var(--emerald, #10b981); }
     
-    <div class="card mx-auto mt-4 p-2 shadow-sm" style="max-width: 500px;">
-        <div class="input-group">
-            <span class="input-group-text bg-white border-end-0"><i class="bi bi-link-45deg"></i></span>
-            <input type="text" class="form-control border-start-0 border-end-0 bg-white" 
-                   value="{{ referral_link|default:request.build_absolute_uri }}" readonly id="shareLinkInput">
-            <button class="btn btn-primary px-4" onclick="copyShareLink()">Copiar</button>
+    .product-thumb { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; background: #f1f5f9; }
+
+    /* Barra de Progreso */
+    .progress-track {
+        height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-top: 10px;
+    }
+    .progress-fill {
+        height: 100%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 10px; transition: width 0.5s ease;
+    }
+    
+    /* Badge de Estado */
+    .status-badge {
+        font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 20px;
+    }
+    .status-active { background: #e0f2fe; color: #0284c7; } /* Azul */
+    .status-completed { background: #dcfce7; color: #166534; } /* Verde */
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">Mis Enlaces</h4>
+    {% if compartidos %}
+    <a href="{% url 'shop' %}" class="btn btn-dark rounded-pill px-4 btn-sm">
+        <i class="bi bi-plus-lg me-1"></i> Crear Nuevo
+    </a>
+    {% endif %}
+</div>
+
+{% if compartidos %}
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <div class="p-3 bg-light rounded-4 border">
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Enlaces Activos</small>
+            <div class="h3 fw-bold mb-0 mt-1">{{ total_links }}</div>
+        </div>
+    </div>
+    <div class="col-6">
+        <div class="p-3 bg-light rounded-4 border">
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total Visitas</small>
+            <div class="h3 fw-bold mb-0 mt-1 text-primary">{{ total_vistas }}</div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="d-flex flex-column gap-3">
+    {% for item in compartidos %}
+    <div class="share-card">
+        
+        {% if item.reward_claimed %}
+            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                <i class="bi bi-trophy-fill text-warning display-1"></i>
+            </div>
+        {% endif %}
+
+        <div class="row align-items-center g-3 position-relative z-1">
+            
+            <div class="col-md-5">
+                <div class="d-flex align-items-center gap-3">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" class="product-thumb" alt="Img">
+                    {% else %}
+                        <div class="product-thumb d-flex align-items-center justify-content-center text-muted"><i class="bi bi-image"></i></div>
+                    {% endif %}
+                    <div>
+                        <h6 class="fw-bold mb-1 text-truncate" style="max-width: 200px;">{{ item.product.title }}</h6>
+                        <small class="text-muted">{{ item.created_at|date:"d M Y" }}</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+    <div class="d-flex justify-content-between align-items-end mb-1">
+        <small class="fw-bold text-uppercase text-muted" style="font-size: 0.7rem;">Meta de Vistas</small>
+        {% if item.reward_claimed %}
+            <span class="status-badge status-completed" style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem;">
+                <i class="bi bi-patch-check-fill me-1"></i>Completado
+            </span>
+        {% else %}
+            <span class="status-badge status-active" style="background: #e0f2fe; color: #0284c7; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem;">
+                En progreso
+            </span>
+        {% endif %}
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <div class="flex-grow-1">
+            <div class="progress-track" style="height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
+                <div class="progress-fill" style="width: {{ item.progreso_porcentaje }}%; height: 100%; background: {% if item.reward_claimed %}#10b981{% else %}#3b82f6{% endif %};"></div>
+            </div>
+        </div>
+        <div class="small fw-bold text-dark" style="min-width: 50px; text-align: right;">
+            {{ item.views_count }}/{{ item.META_VISTAS }}
         </div>
     </div>
     
-    <div class="mt-4 d-flex justify-content-center gap-3">
-        <button class="btn btn-outline-success"><i class="bi bi-whatsapp"></i> WhatsApp</button>
-        <button class="btn btn-outline-primary"><i class="bi bi-facebook"></i> Facebook</button>
-        <button class="btn btn-outline-info"><i class="bi bi-twitter"></i> Twitter</button>
+    <small class="text-muted" style="font-size: 0.75rem;">
+        {% if item.reward_claimed %}
+            <span class="text-success fw-bold">¡Has ganado {{ item.PREMIO_COINS|floatformat:0 }} Coins!</span>
+        {% else %}
+            Faltan <span class="fw-bold text-dark">{{ item.vistas_restantes }}</span> vistas para ganar <span class="text-warning fw-bold">{{ item.PREMIO_COINS|floatformat:0 }} Coins</span>.
+        {% endif %}
+    </small>
+</div>
+
+            <div class="col-md-3">
+                <div class="copy-input-group">
+                    <input type="text" class="copy-input" value="{{ item.share_link }}" readonly id="lnk-{{ item.id }}">
+                    <button class="btn-copy" onclick="copiarLink('lnk-{{ item.id }}')"><i class="bi bi-clipboard"></i></button>
+                </div>
+            </div>
+        </div>
     </div>
+    {% empty %}
+    
+    <div class="text-center py-5 bg-light rounded-4 border border-dashed mt-2">
+        <div class="mb-3 d-inline-flex bg-white p-3 rounded-circle shadow-sm">
+            <i class="bi bi-rocket-takeoff-fill text-primary fs-1"></i>
+        </div>
+        <h5 class="fw-bold">Impulsa tus ganancias</h5>
+        <p class="text-muted small col-md-8 mx-auto mb-4">
+            Comparte productos increíbles. Por cada visita única que consigas, estarás más cerca de ganar premios en Coins.
+        </p>
+        <a href="{% url 'shop' %}" class="btn btn-primary rounded-pill px-4">Ir a la Tienda</a>
+    </div>
+
+    {% endfor %}
 </div>
 
 <script>
-    function copyShareLink() {
-        var copyText = document.getElementById("shareLinkInput");
-        copyText.select();
-        navigator.clipboard.writeText(copyText.value);
-        alert("Enlace copiado al portapapeles");
-    }
+function copiarLink(id) {
+    var copyText = document.getElementById(id);
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); 
+    navigator.clipboard.writeText(copyText.value).then(() => {
+        const btn = copyText.nextElementSibling;
+        const icon = btn.querySelector('i');
+        
+        // Feedback visual
+        btn.classList.add('bg-success', 'text-white', 'border-success');
+        icon.classList.remove('bi-clipboard');
+        icon.classList.add('bi-check-lg');
+        
+        setTimeout(() => {
+            btn.classList.remove('bg-success', 'text-white', 'border-success');
+            icon.classList.add('bi-clipboard');
+            icon.classList.remove('bi-check-lg');
+        }, 2000);
+    });
+}
 </script>
+
 {% endblock profile_inner %}

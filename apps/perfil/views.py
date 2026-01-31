@@ -19,26 +19,45 @@ class HomeProfileView(LoginRequiredMixin, View):
             "perfil": perfil,
             "perfil_parcial": perfil_parcial,
             'ordenes': ordenes,
+            "coins_balance": perfil.coins,
             'productos_favoritos': productos_favoritos,
         }
 
         return render(request, "components/web/perfil/inicioperfil.html", context)
 
 #compartidos
+from django.shortcuts import render
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Sum
+
+from .models import Perfil, Order 
+from apps.shops.models import ProductShare # <--- Importa tu modelo aquí
+
 class compartidosProfileView(LoginRequiredMixin, View):
     def get(self, request):
         perfil, created = Perfil.objects.get_or_create(usuario=request.user)
-
         perfil_parcial = perfil.es_parcialmente_completo()
         ordenes = Order.objects.filter(user=request.user).order_by('-created_at')
-
         productos_favoritos = request.user.liked_products.all()
+
+        # --- LÓGICA NUEVA ---
+        # 1. Obtener todos los enlaces que este usuario ha generado
+        mis_compartidos = ProductShare.objects.filter(user=request.user).order_by('-created_at')
+        
+        # 2. Calcular total de vistas (opcional, para estadística)
+        total_vistas = mis_compartidos.aggregate(total=Sum('views_count'))['total'] or 0
 
         context = {
             "perfil": perfil,
             "perfil_parcial": perfil_parcial,
             'ordenes': ordenes,
             'productos_favoritos': productos_favoritos,
+            
+            # Pasamos los datos a la plantilla
+            "compartidos": mis_compartidos,
+            "total_links": mis_compartidos.count(),
+            "total_vistas": total_vistas,
         }
 
         return render(request, "components/web/perfil/compartidos.html", context)
@@ -63,26 +82,50 @@ class miscomprasProfileView(LoginRequiredMixin, View):
 
         return render(request, "components/web/perfil/miscompras.html", context)
 
-#coins
+
+from django.shortcuts import render
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+# --- CORRECCIÓN DE IMPORTS ---
+# Como 'Order' está en tu archivo apps/perfil/models.py, lo importamos desde .models
+from .models import Perfil, Order 
+
+# Importamos el modelo de historial de la app 'coins'
+from apps.coins.models import CoinTransaction 
+
 class coinsProfileView(LoginRequiredMixin, View):
     def get(self, request):
+        # 1. Obtener Perfil
         perfil, created = Perfil.objects.get_or_create(usuario=request.user)
 
+        # 2. Datos existentes
         perfil_parcial = perfil.es_parcialmente_completo()
+        
+        # 3. Órdenes (Ahora funcionará porque Order viene de .models)
         ordenes = Order.objects.filter(user=request.user).order_by('-created_at')
-
+        
+        # 4. Favoritos
         productos_favoritos = request.user.liked_products.all()
+
+        # 5. Historial de Coins (Usando el modelo de la app 'coins')
+        historial = CoinTransaction.objects.filter(user=request.user).order_by('-created_at')
 
         context = {
             "perfil": perfil,
             "perfil_parcial": perfil_parcial,
             'ordenes': ordenes,
             'productos_favoritos': productos_favoritos,
+            
+            # Datos para la Billetera
+            "coins_balance": perfil.coins, 
+            "historial": historial,
         }
 
         return render(request, "components/web/perfil/coins.html", context)
-
 #favoritos
+
+
 class favoritosProfileView(LoginRequiredMixin, View):
     def get(self, request):
         perfil, created = Perfil.objects.get_or_create(usuario=request.user)

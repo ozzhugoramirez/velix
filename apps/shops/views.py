@@ -1,40 +1,115 @@
 from datetime import datetime
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseForbidden
-from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
-from django.utils.html import strip_tags
-from django.template.loader import render_to_string
-
-
-
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
-from django.views import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
-from django.urls import reverse
-from apps.perfil.forms import AddressForm, CouponForm
-from apps.shops.forms import CommentForm
 from django.views.generic.edit import CreateView
-from .models import *
-from django.utils.timezone import now  # Importa timezone
-from apps.perfil.models import *
-from django.core.paginator import Paginator
+from django.utils.timezone import now 
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
 from django.utils.http import urlencode
 from uuid import uuid4
 from django.conf import settings 
-from django.http import HttpResponse
-
-from django.shortcuts import render
 from django.views import View
 from django.core.paginator import Paginator
-from django.utils import timezone # Importante para manejar fechas correctamente
 from django.db.models import Q
-from .models import Product, Category # Asegúrate de importar tus modelos
+import mercadopago
+import json
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.urls import reverse
+from apps.coins.utils import gestion_coins 
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, UpdateView
+from apps.perfil.models import *
+from apps.perfil.forms import *
+from apps.shops.forms import *
+from .models import *
+
+
+#Crea una notificación interna para el usuario apuntando a 'detalle_compra'.
+def create_order_notification(order):
+ 
+    try:
+        
+        target_link = reverse('detalle_compra', args=[order.id])
+        
+        Notification.objects.create(
+            recipient=order.user,
+            title=f"¡Pago Aprobado! Orden #{order.id}",
+            message=f"Tu compra de ${order.monto_total} fue confirmada exitosamente. Toca aquí para ver el detalle en tu historial.",
+            link=target_link,
+            notification_type='general' # O el tipo que prefieras de tu lista
+        )
+        
+        
+    except Exception as e:
+        print(f"❌ Error creando notificación interna: {e}")
+
+
+#   enviar correo de confirmación de orden con mensaje personalizado
+def send_order_confirmation_email(order, request):
+    try:
+        subject = f'📦 Orden #{order.id} Confirmada - Silo'
+        domain = "https://dcollet-katelynn-trinal.ngrok-free.dev" # <--- TU NGROK
+        
+        order_url = f"{domain}{reverse('order_detail', args=[order.id])}"
+        
+       
+        custom_message = None
+        
+        # EJEMPLO 1: Si es un usuario específico (Tú)
+        if order.user.email == "tu_email@ejemplo.com":
+            custom_message = "¡Hola Admin! Gracias por probar el sistema. Todo funciona de 10."
+            
+        # EJEMPLO 2: Si gastó mucho dinero (Estrategia de Fidelización)
+        elif order.monto_total > 50000:
+            custom_message = "🎁 ¡Eres un cliente VIP! Por esta compra ganaste un Cupón de 10% OFF para la próxima: SILO-VIP-10"
+            
+        # EJEMPLO 3: Mensaje estándar aleatorio o vacío
+        # else:
+        #    custom_message = "Esperamos que disfrutes tu compra."
+
+        # Preparar ítems
+        order_items = []
+        for item in order.orderitem_set.all():
+            img_url = ""
+            if item.product.image:
+                img_url = f"{domain}{item.product.image.url}"
+            
+            order_items.append({
+                'title': item.product.title,
+                'quantity': item.quantity,
+                'price': item.price,
+                'image': img_url
+            })
+
+        html_message = render_to_string('emails/email_order_success.html', {
+            'order': order,
+            'user': order.user,
+            'order_items': order_items,
+            'order_url': order_url,
+            'domain': domain,
+            'year': timezone.now().year,
+            'custom_message': custom_message # <--- Pasamos el mensaje a la vista
+        })
+        
+        plain_message = strip_tags(html_message)
+        from_email = 'Silo Tienda <ventas@silo.com>'
+        to_email = order.user.email
+
+        send_mail(subject, plain_message, from_email, [to_email], html_message=html_message)
+        print(f"📧 Email enviado a {to_email}")
+        
+    except Exception as e:
+        print(f"❌ Error enviando email: {e}")
+
+
 
 class HomeShopView(View):
     def get(self, request):
@@ -107,8 +182,6 @@ class HomeShopView(View):
             'page_obj': page_obj,
         }
         return render(request, "pages/web/shop.html", context)
-
-
 
 
 class HomeShoptCategoriaView(View):
@@ -211,9 +284,7 @@ class DetalleShotView(View):
         }
         return render(request, 'pages/web/shops_detalle.html', context)
 
-
-
-    
+  
 class GenerateShareLinkView(View):
     def get(self, request, *args, **kwargs):
         product_id = kwargs.get('product_id')
@@ -246,45 +317,76 @@ class GenerateShareLinkView(View):
 
 
 
-
 class ShareProductView(View):
     def get(self, request, *args, **kwargs):
         product_id = kwargs.get('product_id')
-        product = get_object_or_404(Product, id=product_id)
-
-        # Obtenemos el share_id de la URL
         share_id = request.GET.get('share_id')
-        user = request.user if request.user.is_authenticated else None
-
-        # Si el share_id está presente, encontrar el objeto ProductShare
-        product_share = ProductShare.objects.filter(share_link__contains=share_id, product=product).first()
         
-        if product_share:
-            # Crear un registro de la visita
-            ShareVisit.objects.create(
-                share=product_share,
-                product=product,
-                user=user,
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
+        product = get_object_or_404(Product, id=product_id)
+        # Traemos al usuario dueño del link
+        product_share = ProductShare.objects.select_related('user').filter(
+            share_link__contains=share_id, 
+            product=product
+        ).first()
+        
+        if not product_share:
+            return redirect('product_detail', product_id=product.id)
 
-            # Incrementar el contador de vistas solo si no existe un registro previo para esta IP o usuario
-            if not ShareVisit.objects.filter(
-                share=product_share,
-                product=product,
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user=user
-            ).exists():
-                product.views_count += 1
-                product.save()
+        # 1. Identificar al visitante
+        ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR'))
+        if ip_address and ',' in ip_address:
+            ip_address = ip_address.split(',')[0]
+            
+        visitor_user = request.user if request.user.is_authenticated else None
+        
+        # 2. Verificar si es una visita nueva
+        es_dueno = (visitor_user == product_share.user)
+        ya_visitado = ShareVisit.objects.filter(share=product_share, ip_address=ip_address).exists()
+        if visitor_user and not ya_visitado:
+            ya_visitado = ShareVisit.objects.filter(share=product_share, user=visitor_user).exists()
 
-            # Incrementar el contador de vistas del enlace compartido
-            product_share.views_count += 1
-            product_share.save()
+        # 3. Procesar contador solo si es visita válida (No dueño, No repetida)
+        if not ya_visitado and not es_dueno:
+            try:
+                with transaction.atomic():
+                    ShareVisit.objects.create(
+                        share=product_share,
+                        product=product,
+                        user=visitor_user,
+                        ip_address=ip_address
+                    )
+                    product_share.views_count += 1
+                    product_share.save()
+                    
+                    product.views_count += 1
+                    product.save()
+            except Exception as e:
+                print(f"Error al registrar visita: {e}")
 
-        # Redirigir a la página de detalles del producto
+        # 4. VERIFICACIÓN DE PAGO (Fuera del IF de visita para que sea redundante)
+        # Si las vistas llegaron a la meta y NO ha cobrado el premio
+        if product_share.views_count >= product_share.META_VISTAS and not product_share.reward_claimed:
+            try:
+                with transaction.atomic():
+                    # Bloqueamos la fila para evitar pagos dobles en milisegundos
+                    ps_to_pay = ProductShare.objects.select_for_update().get(pk=product_share.pk)
+                    
+                    if not ps_to_pay.reward_claimed:
+                        exito, nuevo_saldo = gestion_coins(
+                            user=ps_to_pay.user,
+                            amount=ps_to_pay.PREMIO_COINS,
+                            tipo='BONUS', 
+                            descripcion=f"Meta {ps_to_pay.META_VISTAS} vistas: {product.title}"
+                        )
+                        
+                        if exito:
+                            ps_to_pay.reward_claimed = True
+                            ps_to_pay.save()
+                            print(f"✅ Pago realizado a {ps_to_pay.user.username}")
+            except Exception as e:
+                print(f"Error en proceso de pago: {e}")
+
         return redirect('product_detail', product_id=product.id)
-
 
 
 #vista para añadir producto que le gusta al usuarios
@@ -301,7 +403,6 @@ class LikeProductView(LoginRequiredMixin, View):
 
         # Redirigir a la página anterior (donde se hizo la acción)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
-
 
 
 class CarritoView(LoginRequiredMixin, View):
@@ -344,8 +445,6 @@ class CarritoView(LoginRequiredMixin, View):
         return redirect('cart')
 
 
-
-
 class AddToCartView(LoginRequiredMixin, View):
     def post(self, request, product_id):
         product = get_object_or_404(Product, id=product_id)
@@ -376,23 +475,17 @@ class DecreaseQuantityView(LoginRequiredMixin, View):
         return redirect('cart')
 
 
-
-
 class CheckoutView(LoginRequiredMixin, View):
     def get(self, request):
         cart = get_object_or_404(Cart, user=request.user)
 
-        # Verifica si el perfil del usuario existe
         try:
             perfil = request.user.perfil
         except Perfil.DoesNotExist:
             messages.error(request, "No tienes un perfil configurado.")
             return redirect('data_profile')
 
-        # Direcciones adicionales siempre visibles
         other_addresses = request.user.address.filter(is_default=False)
-
-        # Dirección predeterminada solo visible si el perfil está aprobado
         default_address = None
         if perfil.estado_verificacion == 'aprobado':
             default_address = request.user.address.filter(is_default=True).first()
@@ -404,8 +497,6 @@ class CheckoutView(LoginRequiredMixin, View):
             'perfil': perfil,
         }
         return render(request, 'pages/web/checkout.html', context)
-
-
 
     def post(self, request):
         cart = get_object_or_404(Cart, user=request.user)
@@ -419,200 +510,467 @@ class CheckoutView(LoginRequiredMixin, View):
         perfil = request.user.perfil
         default_address = request.user.address.filter(is_default=True).first()
 
+        # 1. Efectivo / Transferencia
         if perfil.estado_verificacion == 'aprobado' and payment_method in ['cash', 'transfer']:
             if str(address_id) != str(default_address.id):
-                messages.error(request, "Solo puedes usar tu dirección predeterminada para pagar con efectivo o transferencia.")
+                messages.error(request, "Solo puedes usar tu dirección predeterminada para pagar con efectivo.")
                 return redirect('checkout')
 
-            # Crear Order
             order = Order.objects.create(
-                user=request.user,
-                cart=cart,
-                address_id=address_id,
-                payment_method=payment_method,
-                confirm_token=uuid.uuid4(),
-                estado_pago='pending',
-                status='pending',
-                is_paid=False
+                user=request.user, cart=cart, address_id=address_id,
+                payment_method=payment_method, confirm_token=uuid.uuid4(),
+                estado_pago='pending', status='pending', is_paid=False, monto_total=cart.total_price()
             )
-
-            # Copiar ítems del carrito al pedido
             for item in cart.items.all():
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    quantity=item.quantity,
-                    price=item.product.price
-                )
+                OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity, price=item.product.price)
+            cart.items.all().delete()
+            cart.clear_coupon()
+            return redirect('payment_transfer_cash')
 
-            # Mostrar el link en consola (simula envío por correo)
-            link = request.build_absolute_uri(
-                reverse('confirmar_pedido') + f'?token={order.confirm_token}'
-            )
+        # 2. Tarjeta (Brick API Interno)
+        if payment_method == 'card_manual':
+            request.session['address_id'] = address_id
+            return redirect('payment_card')
+
+        # 3. Mercado Pago Link (Redirección Externa)
+        elif payment_method == 'mp_redirect':
+            request.session['address_id'] = address_id
+            return redirect('payment_mercadopago')
+
+        # 4. QR MODAL (Server Side Render con Auto-Open)
+        elif payment_method == 'qr_modal':
+            # A. Crear la Orden
+            try:
+                with transaction.atomic():
+                    order = Order.objects.create(
+                        user=request.user, cart=cart, address_id=address_id, coupon=cart.coupon,
+                        payment_method='qr', status='pending', estado_pago='pending',
+                        monto_total=cart.total_price(), fecha_entrega_estimada=timezone.now() + timedelta(days=5)
+                    )
+                    for item in cart.items.all():
+                        OrderItem.objects.create(order=order, product=item.product, quantity=item.quantity, price=item.product.price)
+            except Exception as e:
+                messages.error(request, f"Error al generar orden: {e}")
+                return redirect('checkout')
+
+            # B. Generar Preferencia MP
+            sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
             
-            # Enviar correo al usuario
-            html_message = render_to_string("emails/confirmar_pedido.html", {
-                "user": request.user,
-                "link": link
-            })
+            # --- ACTUALIZA TU NGROK AQUÍ ---
+            domain = "https://dcollet-katelynn-trinal.ngrok-free.dev" 
+            
+            items_mp = [{"title": i.product.title, "quantity": i.quantity, "currency_id": "ARS", "unit_price": float(i.price)} for i in order.orderitem_set.all()]
 
-            send_mail(
-                subject='Confirma tu pedido',
-                message=strip_tags(html_message),
-                from_email='OA Ecommerce <hugor8819@gmail.com>',
-                recipient_list=[request.user.email],
-                html_message=html_message,
-                fail_silently=False,
-            )
+            # --- CORRECCIÓN DE RUTAS CON REVERSE ---
+            # Esto genera '/shops/webhooks/mercadopago/' automáticamente
+            webhook_path = reverse('mp_webhook') 
+            success_path = reverse('order_detail', args=[order.id])
+            failure_path = reverse('checkout')
 
-            return redirect('payment_transfer_cash')  # Vista que dice "revisa tu correo"
+            expiration_minutes = 15
+            expiration_date = (timezone.now() + timedelta(minutes=expiration_minutes)).isoformat()
 
-        # Para tarjeta, lógica normal
-        request.session['address_id'] = address_id
-        request.session['payment_method'] = payment_method
-        return redirect('payment_card')
+            preference_data = {
+                "items": items_mp,
+                "payer": { "email": request.user.email },
+                "back_urls": {
+                    "success": f"{domain}{success_path}",
+                    "failure": f"{domain}{failure_path}",
+                    "pending": f"{domain}{failure_path}"
+                },
+                "auto_return": "approved",
+                "external_reference": str(order.id),
+                "notification_url": f"{domain}{webhook_path}", # <--- URL CORRECTA
+                "binary_mode": True,
+                "expires": True, 
+                "date_of_expiration": expiration_date
+            }
+            
+            pref = sdk.preference().create(preference_data)["response"]
+            
+            TransaccionMercadoPago.objects.create(orden=order, preference_id=pref["id"], status='qr_generated', raw_response=pref)
 
+            # C. Datos para el Modal (Incluimos la URL del checker)
+            # reverse genera: '/shops/order/check-status/44/'
+            check_url_relative = reverse('check_order_status', args=[order.id])
 
+            qr_data = {
+                'url': pref["init_point"],
+                'order_id': order.id,
+                'total': float(cart.total_price()),
+                'minutes': expiration_minutes,
+                'check_url': check_url_relative # <--- URL CORRECTA PARA JS
+            }
 
+            # D. Renderizamos la misma página pero con el modal activo
+            context = {
+                'cart': cart,
+                'default_address': default_address,
+              
+                'perfil': perfil,
+                'qr_data_active': True,  # Bandera para abrir modal
+                'qr_data': json.dumps(qr_data)
+            }
+            return render(request, 'pages/web/checkout.html', context)
 
+        messages.error(request, "Método de pago no válido.")
+        return redirect('checkout')
 
 class PaymentCardView(LoginRequiredMixin, View):
     def get(self, request):
-        # 1. Seguridad: Verificar si hay items en el carrito
         cart = Cart.objects.filter(user=request.user).first()
         if not cart or not cart.items.exists():
-            messages.warning(request, "Tu carrito está vacío.")
-            return redirect('shop') # O 'home'
+            return redirect('shop')
 
-        # 2. Verificar dirección
         address_id = request.session.get('address_id')
         if not address_id:
-            messages.error(request, "Por favor selecciona una dirección de envío.")
             return redirect('checkout')
 
         address = get_object_or_404(Address, id=address_id, user=request.user)
         
         context = {
             'address': address,
-            'cart': cart # Pasamos el carrito para mostrar el total en el botón
+            'cart': cart,
+            'mp_public_key': settings.MERCADOPAGO_PUBLIC_KEY 
         }
         return render(request, 'pages/web/payment_card.html', context)
 
     def post(self, request):
-        # 1. Obtener datos
-        card_number = request.POST.get('card_number', '').replace(' ', '') # Quitamos espacios
-        expiration_date = request.POST.get('expiration_date')
-        cvv = request.POST.get('cvv')
-        holder_name = request.POST.get('cardholder_name')
+        try:
+            payment_data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Datos inválidos'}, status=400)
 
-        # 2. Validación básica Backend
-        if not all([card_number, expiration_date, cvv, holder_name]):
-            messages.error(request, "Todos los campos son obligatorios.")
-            return redirect('payment_card')
-
-        if len(card_number) < 13: # Validación simple de longitud
-            messages.error(request, "Número de tarjeta inválido.")
-            return redirect('payment_card')
-
-        # 3. Procesar Orden
+        cart = Cart.objects.filter(user=request.user).first()
         address_id = request.session.get('address_id')
-        cart = get_object_or_404(Cart, user=request.user)
         
-        # Validar stock o carrito vacío de nuevo por seguridad
-        if not cart.items.exists():
-            return redirect('shop')
-
+        # 1. CREAMOS LA ORDEN PRIMERO (Estado: Pendiente)
+        # Esto nos permite guardar el registro del intento fallido si ocurre.
         try:
             with transaction.atomic():
-                # A. Crear Orden
-                # Nota: NO guardamos datos sensibles de tarjeta en BD por seguridad (PCI Compliance)
-                # Solo guardamos que fue pagado con tarjeta
                 order = Order.objects.create(
                     user=request.user,
                     cart=cart,
-                    address_id=address_id, # Usamos el ID directamente
+                    address_id=address_id,
                     coupon=cart.coupon,
-                    estado_pago='confirmed',
+                    estado_pago='pending', # Empieza pendiente
+                    status='pending',
                     payment_method='card',
+                    is_paid=False,
                     monto_total=cart.total_price(),
-                    fecha_entrega_estimada=timezone.now() + timedelta(days=5) # 5 días estándar
+                    fecha_entrega_estimada=timezone.now() + timedelta(days=5)
                 )
-                
-                # B. Mover items de Carrito a OrderItems
-                cart_items = cart.items.all()
-                for item in cart_items:
+
+                # Guardamos los items inmediatamente para que la orden tenga contenido
+                for item in cart.items.all():
                     OrderItem.objects.create(
                         order=order,
                         product=item.product,
                         quantity=item.quantity,
-                        price=item.product.price * item.quantity # Precio congelado al momento de compra
+                        price=item.product.price
                     )
-                    
-                    # Generar URL para comentar (Tu lógica)
-                    product = item.product
-                    # Asegúrate que 'leave_comment' existe en tus urls.py
-                    try:
-                        relative_url = reverse('leave_comment', args=[product.id])
-                        full_url = f"{settings.SITE_URL}{relative_url}"
-                        
-                        CommentURL.objects.create(
-                            order=order,
-                            product=product,
-                            user=request.user,
-                            url=full_url
-                        )
-                    except Exception as e:
-                        print(f"Error generando URL comentario: {e}")
-
-                # C. Código de entrega divertido
-                words = ["TIENDA", "RAPIDO", "AZUL", "CIELO", "EXITO", "NEXTGEN", "FUTURO", "SOL", "ESTRELLA"]
-                order.delivery_code = f"{random.choice(words)}-{random.randint(100,999)}"
-                order.save()
-
-                # D. Limpiar Carrito
-                cart.items.all().delete()
-                cart.clear_coupon()
-                
-                messages.success(request, f"¡Pago exitoso! Orden #{order.id} creada.")
-                return redirect('order_detail', order_id=order.id)
-
         except Exception as e:
-            print(f"Error en transacción: {e}")
-            messages.error(request, "Hubo un error procesando el pago. Intenta nuevamente.")
-            return redirect('payment_card')
+            return JsonResponse({'status': 'error', 'message': 'Error creando orden inicial'}, status=500)
+
+        # 2. PROCESAR PAGO CON MERCADO PAGO
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+
+        payment_request = {
+            "transaction_amount": float(cart.total_price()),
+            "token": payment_data.get('token'),
+            "description": f"Pedido #{order.numero_orden} - {request.user.username}",
+            "installments": int(payment_data.get('installments', 1)),
+            "payment_method_id": payment_data.get('payment_method_id'),
+            "payer": {
+                "email": payment_data.get('payer').get('email'),
+                "identification": {
+                    "type": payment_data.get('payer').get('identification').get('type'),
+                    "number": payment_data.get('payer').get('identification').get('number')
+                }
+            },
+            # Vinculamos el pago a la orden que acabamos de crear
+            "external_reference": str(order.id) 
+        }
+
+        payment_response = sdk.payment().create(payment_request)
+        payment = payment_response.get("response", {})
+        status = payment.get("status")
+        status_detail = payment.get("status_detail")
+
+        # 3. GUARDAR EL LOG (Sea éxito o fracaso, ahora SÍ se guarda)
+        TransaccionMercadoPago.objects.create(
+            orden=order,
+            payment_id=str(payment.get("id")),
+            status=status,
+            status_detail=status_detail,
+            raw_response=payment
+        )
+
+        # 4. DECIDIR QUÉ HACER SEGÚN EL RESULTADO
+        if status == 'approved':
+            # Actualizamos la orden a Pagada
+            order.is_paid = True
+            order.estado_pago = 'confirmed'
+            order.status = 'approved'
+            order.save()
+
+            # Vaciamos el carrito
+            cart.items.all().delete()
+            cart.clear_coupon()
+            send_order_confirmation_email(order, request)
+            create_order_notification(order)
+
+            return JsonResponse({
+                'status': 'approved', 
+                'order_id': order.id,
+                'redirect_url': reverse('order_detail', args=[order.id])
+            })
+        
+        else:
+            # Si falló, marcamos la orden como fallida (opcional, o la dejamos pendiente)
+            order.status = 'failed' 
+            order.estado_pago = 'failed'
+            order.save()
+            
+            # Devolvemos el error al frontend para mostrar la alerta bonita
+            return JsonResponse({
+                'status': 'rejected', 
+                'status_detail': status_detail, # Ej: cc_rejected_insufficient_amount
+                'message': 'El pago no pudo ser procesado.'
+            })
+
+class PaymentMercadoPagoView(LoginRequiredMixin, View):
+    def get(self, request):
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart or not cart.items.exists():
+            messages.warning(request, "Tu carrito está vacío.")
+            return redirect('shop')
+
+        address_id = request.session.get('address_id')
+        if not address_id:
+            messages.error(request, "Falta dirección de envío.")
+            return redirect('checkout')
+        
+        shipping_address = get_object_or_404(Address, id=address_id, user=request.user)
+
+        # 1. Crear Orden
+        try:
+            with transaction.atomic():
+                order = Order.objects.create(
+                    user=request.user,
+                    cart=cart,
+                    address_id=address_id,
+                    coupon=cart.coupon,
+                    payment_method='mercadopago', # Link / Checkout Pro
+                    status='pending',
+                    estado_pago='pending',
+                    monto_total=cart.total_price(),
+                    fecha_entrega_estimada=timezone.now() + timedelta(days=5)
+                )
+                for item in cart.items.all():
+                    OrderItem.objects.create(
+                        order=order, product=item.product, quantity=item.quantity, price=item.product.price
+                    )
+        except Exception as e:
+            messages.error(request, f"Error iniciando pago: {e}")
+            return redirect('checkout')
+
+        # 2. Configurar SDK
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+
+        items_mp = []
+        for item in order.orderitem_set.all():
+            img_url = request.build_absolute_uri(item.product.image.url) if item.product.image else ""
+            items_mp.append({
+                "id": str(item.product.id),
+                "title": item.product.title,
+                "description": item.product.description[:200] if item.product.description else "Producto de la tienda",
+                "picture_url": img_url,
+                "quantity": item.quantity,
+                "currency_id": "ARS",
+                "unit_price": float(item.price)
+            })
+
+        # --- URL NGROK ---
+        domain = "https://dcollet-katelynn-trinal.ngrok-free.dev" # <--- ¡VERIFICA QUE SEA LA ACTUAL!
+        
+        # --- CORRECCIÓN CLAVE AQUÍ ---
+        # Usamos reverse para que Django ponga el prefijo correcto (/shops/...)
+        webhook_path = reverse('mp_webhook') 
+        success_path = reverse('order_detail', args=[order.id])
+        failure_path = reverse('checkout')
+
+        payer_info = { 
+            "name": request.user.first_name or "Usuario",
+            "surname": request.user.last_name or "Prueba",
+            "email": request.user.email,
+        }
+
+        if hasattr(request.user, 'perfil') and request.user.perfil.numero_telefono:
+            payer_info["phone"] = {
+                "area_code": "",
+                "number": request.user.perfil.numero_telefono
+            }
+
+        preference_data = {
+            "items": items_mp,
+            "payer": payer_info,
+            "back_urls": {
+                "success": f"{domain}{success_path}",
+                "failure": f"{domain}{failure_path}",
+                "pending": f"{domain}{failure_path}"
+            },
+            "auto_return": "approved", 
+            "external_reference": str(order.id),
+            
+            # AQUÍ ESTABA EL ERROR: Ahora usamos la ruta generada dinámicamente
+            "notification_url": f"{domain}{webhook_path}",
+            
+            "binary_mode": True,
+            "statement_descriptor": "MI ECOMMERCE",
+            "expires": True,
+            "date_of_expiration": (timezone.now() + timedelta(hours=24)).isoformat()
+        }
+
+        preference_response = sdk.preference().create(preference_data)
+        preference = preference_response["response"]
+
+        TransaccionMercadoPago.objects.create(
+            orden=order,
+            preference_id=preference["id"],
+            status='preference_created',
+            raw_response=preference
+        )
+
+        url_pago = preference["sandbox_init_point"] if settings.DEBUG else preference["init_point"]
+        return redirect(url_pago)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class MercadoPagoWebhookView(View):
+    def post(self, request):
+        topic = request.GET.get('topic') or request.GET.get('type')
+        p_id = request.GET.get('id') or request.GET.get('data.id')
+
+        print(f"🔔 WEBHOOK: Topic={topic} | ID={p_id}")
+
+        if not p_id:
+            return HttpResponse(status=400)
+
+        sdk = mercadopago.SDK(settings.MERCADOPAGO_ACCESS_TOKEN)
+        
+        # Variables para guardar lo que encontremos
+        payment_status = None
+        external_reference = None
+        payment_data = {}
+
+        # ESTRATEGIA 1: Buscar como PAGO (Payment)
+        if topic == 'payment':
+            payment_info = sdk.payment().get(p_id)
+            if payment_info["status"] == 200:
+                payment_data = payment_info["response"]
+                payment_status = payment_data.get('status')
+                external_reference = payment_data.get('external_reference')
+                print(f"✅ PAGO ENCONTRADO: Status={payment_status} | Ref={external_reference}")
+            else:
+                print(f"⚠️ Error buscando pago: {payment_info}")
+
+        # ESTRATEGIA 2: Buscar como ORDEN COMERCIAL (Merchant Order)
+        # Los pagos QR a veces llegan primero como merchant_order
+        elif topic == 'merchant_order':
+            mo_info = sdk.merchant_order().get(p_id)
+            if mo_info["status"] == 200:
+                mo_data = mo_info["response"]
+                # Buscamos si hay pagos dentro de la orden comercial
+                payments = mo_data.get('payments', [])
+                if payments:
+                    last_payment = payments[-1] # Tomamos el último
+                    payment_status = last_payment.get('status')
+                    external_reference = mo_data.get('external_reference')
+                    payment_data = last_payment
+                    print(f"✅ MERCHANT ORDER: Status={payment_status} | Ref={external_reference}")
+
+        # --- PROCESAMIENTO ---
+        if external_reference and payment_status:
+            try:
+                order = Order.objects.get(id=external_reference)
+                
+                # Guardar Log (Evitamos duplicados si ya existe el mismo payment_id)
+                if not TransaccionMercadoPago.objects.filter(payment_id=str(p_id)).exists():
+                    TransaccionMercadoPago.objects.create(
+                        orden=order,
+                        payment_id=str(p_id),
+                        status=payment_status,
+                        status_detail=payment_data.get('status_detail', 'via_webhook'),
+                        raw_response=payment_data
+                    )
+
+                # APROBAR ORDEN
+                if payment_status == 'approved':
+                    if not order.is_paid:
+                        order.is_paid = True
+                        order.estado_pago = 'confirmed'
+                        order.status = 'approved'
+                        order.save()
+                        
+                        # Limpiar carrito
+                        order.cart.items.all().delete()
+                        order.cart.clear_coupon()
+                        print(f"🎉 ORDEN {order.id} APROBADA CORRECTAMENTE")
+                        send_order_confirmation_email(order, request)
+                        create_order_notification(order)
+                    else:
+                        print(f"ℹ️ La orden {order.id} ya estaba pagada.")
+            
+            except Order.DoesNotExist:
+                print(f"❌ Error: La orden ID {external_reference} no existe en la base de datos.")
+            except Exception as e:
+                print(f"❌ Error procesando orden: {e}")
+
+        return HttpResponse(status=200)
 
 
 
-
+def check_order_status(request, order_id):
+    """
+    Esta vista es consultada por Javascript cada 3 segundos.
+    Verifica si el Webhook ya marcó la orden como pagada.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'status': 'error'}, status=403)
+        
+    try:
+        order = Order.objects.get(id=order_id, user=request.user)
+        
+        if order.is_paid or order.status == 'approved':
+             # Si ya se pagó, le damos la URL de éxito
+             return JsonResponse({
+                 'status': 'approved', 
+                 'redirect_url': reverse('order_detail', args=[order.id])
+             })
+        
+        return JsonResponse({'status': 'pending'})
     
+    except Order.DoesNotExist:
+        return JsonResponse({'status': 'error'}, status=404)
+
+
+  
 class PaymentTransferCashView(LoginRequiredMixin, View):
     def get(self, request):
     
         return render(request, 'pages/web/payment_transfer_cash.html')
     
-
-
-
-
-
-        
-
-
-
 class OrderDetailView(LoginRequiredMixin, View):
     def get(self, request, order_id):
         order = get_object_or_404(Order, id=order_id, user=request.user)
-        order_items = order.orderitem_set.all()  # Accede a los productos de la orden
+        order_items = order.orderitem_set.all()
         context = {
             'order': order,
             'order_items': order_items,
         }
         return render(request, 'pages/web/order_detail.html', context)
-
-
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, UpdateView
-
+    
 
 # Vista CREAR
 class AddAddressView(LoginRequiredMixin, CreateView):
@@ -665,8 +1023,6 @@ def delete_address(request, pk):
     return redirect('checkout')
 
 
-
-
 class ShopOfertasView(View):
     def get(self, request):
         hora_actual = now()  # Hora actual para manejar las zonas horarias
@@ -691,10 +1047,6 @@ class ShopOfertasView(View):
         }
 
         return render(request, "pages/web/ofertas.html", context)
-
-
-
-
 
 
 

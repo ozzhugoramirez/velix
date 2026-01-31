@@ -6,212 +6,48 @@
 {% endblock navbar %}
 
 {% block content %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
-    :root {
-        --emerald: rgb(25,90,89);
-        --gold: rgb(200,160,90);
-        --bg-page: #f4f6f8;
-        --card-bg: #ffffff;
-        --border-color: #e2e8f0;
-    }
-
-    body {
-        background-color: var(--bg-page);
-        font-family: 'Inter', system-ui, sans-serif;
-    }
-
-    /* --- TITULOS Y PASOS --- */
-    .step-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .step-number {
-        background: var(--emerald);
-        color: white;
-        width: 28px; height: 28px;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 0.9rem;
-    }
-
-    /* --- SELECTOR DE TIPO DE ENVÍO --- */
-    .shipping-toggle {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    .shipping-option-label {
-        flex: 1;
-        cursor: pointer;
-    }
-    .shipping-option-card {
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: 0.2s;
-    }
-    .shipping-option-input:checked + .shipping-option-card {
-        border-color: var(--emerald);
-        background-color: #f0fdf4;
-        color: var(--emerald);
-    }
-    .shipping-option-input:checked + .shipping-option-card .badge-cost {
-        background-color: var(--emerald);
-        color: white;
-    }
-    .badge-cost {
-        background: #e2e8f0;
-        color: #475569;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        transition: 0.2s;
-    }
-
-    /* --- TARJETAS DE SELECCIÓN (Dirección) --- */
-    .address-card {
-        background: var(--card-bg);
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        padding: 1.2rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        position: relative;
-    }
-    .address-card:hover { border-color: #cbd5e1; }
+    :root { --emerald: rgb(25,90,89); --bg-page: #f4f6f8; --card-bg: #ffffff; --border-color: #e2e8f0; }
+    body { background-color: var(--bg-page); font-family: 'Inter', system-ui, sans-serif; }
     
-    .hidden-radio:checked + .address-card {
-        border-color: var(--emerald);
-        background-color: #f0fdf4;
-        box-shadow: 0 4px 15px rgba(25,90,89,0.1);
-    }
-    .check-mark {
-        position: absolute; top: 10px; right: 10px;
-        color: var(--emerald); display: none;
-    }
+    /* Layout */
+    .step-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    .step-number { background: var(--emerald); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
+    
+    /* Envio */
+    .shipping-toggle { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .shipping-option-label { flex: 1; cursor: pointer; }
+    .shipping-option-card { background: white; border: 2px solid var(--border-color); border-radius: 12px; padding: 1rem; display: flex; align-items: center; justify-content: space-between; transition: 0.2s; }
+    .shipping-option-input:checked + .shipping-option-card { border-color: var(--emerald); background-color: #f0fdf4; color: var(--emerald); }
+    .badge-cost { background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; }
+    
+    /* Direcciones */
+    .address-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 1.2rem; cursor: pointer; position: relative; }
+    .hidden-radio:checked + .address-card { border-color: var(--emerald); background-color: #f0fdf4; }
+    .check-mark { position: absolute; top: 10px; right: 10px; color: var(--emerald); display: none; }
     .hidden-radio:checked + .address-card .check-mark { display: block; }
+    .btn-edit-addr { width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f1f5f9; color: #64748b; position: relative; z-index: 5; }
     
-    /* Botón editar dirección */
-    .btn-edit-addr {
-        width: 35px; height: 35px;
-        display: flex; align-items: center; justify-content: center;
-        border-radius: 50%;
-        background: #f1f5f9;
-        color: #64748b;
-        transition: 0.2s;
-        z-index: 5; /* Por encima del click del radio */
-        position: relative;
-    }
-    .btn-edit-addr:hover {
-        background: var(--emerald);
-        color: white;
-    }
+    /* Pagos */
+    .payment-option { background: white; border: 2px solid var(--border-color); border-radius: 16px; padding: 1.5rem; cursor: pointer; height: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; transition: 0.2s; }
+    .payment-option:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .hidden-radio:checked + .payment-option { border-color: var(--emerald); box-shadow: 0 0 0 4px rgba(25,90,89,0.1); }
+    .hidden-radio:checked + .payment-option i { color: var(--emerald); transform: scale(1.1); }
+    .pay-icon { font-size: 2.5rem; margin-bottom: 0.5rem; color: #64748b; }
+    
+    /* Resumen */
+    .summary-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.06); position: sticky; top: 100px; }
+    .btn-checkout { background: var(--emerald); color: white; width: 100%; padding: 1rem; border-radius: 10px; font-weight: 700; font-size: 1.1rem; border: none; transition: 0.3s; margin-top: 1rem; }
+    .btn-checkout:hover { background: rgb(20, 75, 75); color: white; }
+    .disabled-section { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
 
-
-    /* --- MAPA Y PUNTOS DE RETIRO --- */
-    #map-container {
-        border-radius: 12px;
-        overflow: hidden;
-        border: 2px solid var(--border-color);
-        height: 300px;
-        width: 100%;
-        margin-bottom: 1rem;
-        z-index: 1; 
-    }
-    .pickup-point-item {
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.5rem;
-        cursor: pointer;
-        background: white;
-        transition: 0.2s;
-    }
-    .pickup-point-item:hover { background-color: #f8fafc; }
-    .pickup-radio:checked + .pickup-point-item {
-        border-color: var(--emerald);
-        background-color: #f0fdf4;
-    }
-
-    /* --- TARJETAS DE PAGO --- */
-    .payment-option {
-        background: white;
-        border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 1.5rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        justify-content: center;
-        position: relative;
-        opacity: 1;
-    }
-    .payment-option:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    }
-    .hidden-radio:checked + .payment-option {
-        border-color: var(--emerald);
-        background-color: #ffffff;
-        box-shadow: 0 0 0 4px rgba(25,90,89,0.1);
-    }
-    .hidden-radio:checked + .payment-option i {
-        color: var(--emerald);
-        transform: scale(1.1);
-    }
-    .pay-icon {
-        font-size: 2.5rem;
-        margin-bottom: 0.5rem;
-        color: #64748b;
-        transition: 0.3s;
-    }
-
-    /* --- RESUMEN --- */
-    .summary-card {
-        background: white;
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.06);
-        position: sticky;
-        top: 100px;
-    }
-    .btn-checkout {
-        background: var(--emerald);
-        color: white;
-        width: 100%;
-        padding: 1rem;
-        border-radius: 10px;
-        font-weight: 700;
-        font-size: 1.1rem;
-        border: none;
-        transition: 0.3s;
-        margin-top: 1rem;
-    }
-    .btn-checkout:hover {
-        background: rgb(20, 75, 75);
-        box-shadow: 0 8px 20px rgba(25,90,89,0.3);
-        color: white;
-    }
-    .disabled-section {
-        opacity: 0.5;
-        pointer-events: none;
-        filter: grayscale(1);
-    }
+    /* Modal Timer */
+    .qr-timer-box { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; padding: 8px 15px; border-radius: 50px; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; font-family: monospace; font-size: 1.1rem; margin-top: 15px; }
+    .qr-timer-icon { animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
 
 <div class="container py-5" style="min-height: 85vh;">
@@ -235,10 +71,7 @@
             <div class="col-lg-8">
                 
                 <div class="mb-5">
-                    <div class="step-title">
-                        <span class="step-number">1</span> Método de Entrega
-                    </div>
-
+                    <div class="step-title"><span class="step-number">1</span> Método de Entrega</div>
                     <div class="shipping-toggle">
                         <label class="shipping-option-label">
                             <input type="radio" name="shipping_selector" value="home" class="shipping-option-input hidden-radio" checked onchange="toggleShippingView('home')">
@@ -256,349 +89,285 @@
                         </label>
                     </div>
 
-                    <div id="view-home-delivery" class="d-flex flex-column gap-3 animate__animated animate__fadeIn">
-                        
+                    <div id="view-home-delivery" class="animate__animated animate__fadeIn">
                         {% if default_address %}
-                            <label class="w-100 position-relative">
+                            <label class="w-100 position-relative mb-2">
                                 <input type="radio" name="address" value="{{ default_address.id }}" class="hidden-radio address-radio" checked>
                                 <div class="address-card">
                                     <i class="bi bi-check-circle-fill check-mark fs-5"></i>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="bg-light p-3 rounded-circle text-muted"><i class="bi bi-house-door-fill fs-4"></i></div>
                                         <div class="flex-grow-1">
-                                            <div class="badge bg-success bg-opacity-10 text-success mb-1">
-                                                <i class="bi bi-star-fill me-1" style="font-size: 0.7em;"></i> Predeterminada
-                                            </div>
-                                            <h6 class="fw-bold mb-0 text-dark">
-                                                {% if default_address.main_street %}
-                                                    {{ default_address.main_street }} {{ default_address.house_number }}
-                                                {% else %}
-                                                    {{ default_address.localidad }} {% endif %}
-                                            </h6>
-                                            <small class="text-muted">
-                                                {{ default_address.localidad }}{% if default_address.floor %}, Piso {{ default_address.floor }}{% endif %}
-                                            </small>
+                                            <div class="badge bg-success bg-opacity-10 text-success mb-1">Predeterminada</div>
+                                            <h6 class="fw-bold mb-0 text-dark">{{ default_address.main_street }} {{ default_address.house_number }}</h6>
+                                            <small class="text-muted">{{ default_address.localidad }}</small>
                                         </div>
-                                        
-                                        <a href="{% url 'edit_address' default_address.id %}" class="btn-edit-addr" onclick="event.stopPropagation()" title="Editar dirección">
-                                            <i class="bi bi-pencil-fill small"></i>
-                                        </a>
+                                        <a href="{% url 'edit_address' default_address.id %}" class="btn-edit-addr"><i class="bi bi-pencil-fill small"></i></a>
                                     </div>
                                 </div>
                             </label>
                         {% endif %}
-
                         {% for address in other_addresses %}
-                            <label class="w-100 position-relative">
+                            <label class="w-100 position-relative mb-2">
                                 <input type="radio" name="address" value="{{ address.id }}" class="hidden-radio address-radio">
                                 <div class="address-card">
                                     <i class="bi bi-check-circle-fill check-mark fs-5"></i>
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="bg-light p-3 rounded-circle text-muted"><i class="bi bi-geo-alt-fill fs-4"></i></div>
                                         <div class="flex-grow-1">
-                                            <h6 class="fw-bold mb-0 text-dark">
-                                                {% if address.main_street %}
-                                                    {{ address.main_street }} {{ address.house_number }}
-                                                {% else %}
-                                                    {{ address.localidad }}
-                                                {% endif %}
-                                            </h6>
-                                            <small class="text-muted">
-                                                {{ address.localidad }}{% if address.floor %}, Piso {{ address.floor }}{% endif %}
-                                            </small>
+                                            <h6 class="fw-bold mb-0 text-dark">{{ address.main_street }} {{ address.house_number }}</h6>
+                                            <small class="text-muted">{{ address.localidad }}</small>
                                         </div>
-
-                                        <a href="{% url 'edit_address' address.id %}" class="btn-edit-addr" onclick="event.stopPropagation()" title="Editar dirección">
-                                            <i class="bi bi-pencil-fill small"></i>
-                                        </a>
+                                        <a href="{% url 'edit_address' address.id %}" class="btn-edit-addr"><i class="bi bi-pencil-fill small"></i></a>
                                     </div>
                                 </div>
                             </label>
                         {% endfor %}
-
-                        <a href="{% url 'add_address' %}" class="btn btn-outline-dark border-dashed w-100 py-2 mt-2" style="border-style: dashed;">
-                            <i class="bi bi-plus-lg me-1"></i> Agregar nueva dirección
-                        </a>
+                         <a href="{% url 'add_address' %}" class="btn btn-outline-dark border-dashed w-100 py-2 mt-2" style="border-style: dashed;"><i class="bi bi-plus-lg me-1"></i> Nueva dirección</a>
                     </div>
 
                     <div id="view-pickup-point" class="d-none animate__animated animate__fadeIn">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" placeholder="Buscar código postal, barrio o ciudad..." id="location-search">
-                            <button class="btn btn-outline-secondary" type="button">Buscar</button>
-                        </div>
-
-                        <div id="map-container">
-                            <div id="map" style="width: 100%; height: 100%;"></div>
-                        </div>
-
-                        <h6 class="text-muted mb-3 small fw-bold text-uppercase">Puntos de retiro cercanos</h6>
-                        
+                        <div id="map-container"><div id="map" style="width: 100%; height: 100%;"></div></div>
                         <div id="pickup-list">
-                            <label class="w-100">
+                            <label class="w-100 mb-2">
                                 <input type="radio" name="pickup_point_id" value="point_1" class="hidden-radio pickup-radio">
                                 <div class="pickup-point-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="fw-bold mb-0">Sucursal Central - Correo</h6>
-                                        <small class="text-muted">Av. Siempreviva 123, Centro (0.5 km)</small>
-                                    </div>
-                                    <span class="badge bg-success bg-opacity-10 text-success">Gratis</span>
-                                </div>
-                            </label>
-
-                            <label class="w-100">
-                                <input type="radio" name="pickup_point_id" value="point_2" class="hidden-radio pickup-radio">
-                                <div class="pickup-point-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="fw-bold mb-0">Librería "El Lector"</h6>
-                                        <small class="text-muted">Calle Falsa 456, Norte (1.2 km)</small>
-                                    </div>
-                                    <span class="badge bg-success bg-opacity-10 text-success">Gratis</span>
+                                    <div><h6 class="fw-bold mb-0">Sucursal Central</h6><small class="text-muted">Centro (0.5 km)</small></div>
                                 </div>
                             </label>
                         </div>
                     </div>
-
                 </div>
 
                 <div id="payment-section" class="disabled-section">
-                    <div class="step-title">
-                        <span class="step-number">2</span> Método de Pago
-                    </div>
-
+                    <div class="step-title"><span class="step-number">2</span> Método de Pago</div>
                     <div class="row g-3">
                         <div class="col-md-4 d-none d-lg-block">
                             <label class="w-100 h-100">
-                                <input type="radio" name="payment_method" value="qr_modal" class="hidden-radio payment-radio" data-type="qr">
+                                <input type="radio" name="payment_method" value="qr_modal" class="hidden-radio payment-radio">
                                 <div class="payment-option">
                                     <i class="bi bi-qr-code pay-icon"></i>
                                     <h6 class="fw-bold mb-1">Escanear QR</h6>
-                                    <small class="text-muted lh-sm">Paga rápido con tu celular</small>
+                                    <small class="text-muted lh-sm">Paga con celular</small>
                                 </div>
                             </label>
                         </div>
-
                         <div class="col-md-4 col-6">
                             <label class="w-100 h-100">
-                                <input type="radio" name="payment_method" value="card_manual" class="hidden-radio payment-radio" data-type="manual">
+                                <input type="radio" name="payment_method" value="card_manual" class="hidden-radio payment-radio">
                                 <div class="payment-option">
                                     <i class="bi bi-credit-card-2-front pay-icon"></i>
                                     <h6 class="fw-bold mb-1">Tarjeta</h6>
-                                    <small class="text-muted lh-sm">Ingreso manual de datos</small>
+                                    <small class="text-muted lh-sm">Crédito/Débito</small>
                                 </div>
                             </label>
                         </div>
-
                         <div class="col-md-4 col-6">
                             <label class="w-100 h-100">
-                                <input type="radio" name="payment_method" value="mp_redirect" class="hidden-radio payment-radio" data-type="redirect">
+                                <input type="radio" name="payment_method" value="mp_redirect" class="hidden-radio payment-radio">
                                 <div class="payment-option">
                                     <i class="bi bi-box-arrow-up-right pay-icon" style="color: #009ee3;"></i>
                                     <h6 class="fw-bold mb-1">Mercado Pago</h6>
-                                    <small class="text-muted lh-sm">Web oficial segura</small>
+                                    <small class="text-muted lh-sm">Web Oficial</small>
                                 </div>
                             </label>
                         </div>
                     </div>
-                    
-                    <div class="d-lg-none mt-3 alert alert-light text-center small text-muted">
-                        <i class="bi bi-phone"></i> La opción de pago con QR está disponible solo en computadoras.
-                    </div>
                 </div>
-
             </div>
 
             <div class="col-lg-4">
                 <div class="summary-card">
                     <h5 class="fw-bold mb-4">Resumen de Orden</h5>
-                    
-                    <div class="d-flex justify-content-between mb-2 text-muted">
-                        <span>Subtotal</span>
-                        <span>${{ subtotal_original }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2 text-muted">
-                        <span>Envío</span>
-                        <span class="text-success fw-bold" id="shipping-cost-display">Gratis</span>
-                    </div>
+                    <div class="d-flex justify-content-between mb-2 text-muted"><span>Subtotal</span><span>${{ subtotal_original }}</span></div>
+                    <div class="d-flex justify-content-between mb-2 text-muted"><span>Envío</span><span class="text-success fw-bold">Gratis</span></div>
                     {% if cart.coupon %}
-                    <div class="d-flex justify-content-between mb-2 text-success">
-                        <span>Descuento</span>
-                        <span>- ${{ cart.coupon.discount_value }}</span>
-                    </div>
+                        <div class="d-flex justify-content-between mb-2 text-success"><span>Descuento</span><span>- ${{ cart.coupon.discount_value }}</span></div>
                     {% endif %}
-
                     <hr class="my-4">
-
                     <div class="d-flex justify-content-between align-items-end mb-4">
                         <span class="h5 fw-bold mb-0">Total</span>
                         <span class="h2 fw-bold mb-0 text-dark">${{ total_price|floatformat:2 }}</span>
                     </div>
-
-                    <button type="submit" id="btn-submit-main" class="btn-checkout shadow-sm">
-                        CONFIRMAR Y PAGAR
-                    </button>
-
-                    <div class="mt-4 text-center">
-                        <small class="text-muted d-block mb-2">Pago procesado por</small>
-                        <img src="https://logotipoz.com/wp-content/uploads/2021/10/version-horizontal-large-logo-mercado-pago.webp" alt="Mercado Pago" style="height: 30px; opacity: 0.8;">
-                    </div>
+                    <button type="submit" id="btn-submit-main" class="btn-checkout shadow-sm">CONFIRMAR Y PAGAR</button>
+                    <div class="mt-4 text-center"><small class="text-muted">Procesado por</small><br><img src="https://logotipoz.com/wp-content/uploads/2021/10/version-horizontal-large-logo-mercado-pago.webp" alt="MP" style="height: 25px; opacity: 0.6;"></div>
                 </div>
             </div>
         </div>
     </form>
 </div>
 
-<div class="modal fade" id="qrPaymentModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade" id="qrPaymentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0">
-            <div class="modal-header border-0 pb-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            
+            <div class="modal-header border-0 pb-0 justify-content-center pt-4" style="background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);">
+                 <div class="text-center w-100">
+                     <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 60px; height: 60px;">
+                        <i class="bi bi-qr-code-scan fs-3"></i>
+                     </div>
+                     <h5 class="modal-title fw-bold text-dark">Escanea para Pagar</h5>
+                 </div>
             </div>
-            <div class="modal-body text-center pb-5 pt-0 px-5">
-                <h3 class="fw-bold mb-3">Escanea para pagar</h3>
-                <p class="text-muted mb-4">Abre tu app de Mercado Pago o banco y escanea este código.</p>
-                <div class="bg-white p-3 rounded-3 shadow-sm d-inline-block border mb-4">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QR Code" style="width: 200px; height: 200px;">
+
+            <div class="modal-body text-center p-4 pt-2">
+                <p class="text-muted mb-4 px-3" style="font-size: 0.95rem;">
+                    Usa <strong>Mercado Pago</strong>, <strong>Modo</strong> o tu <strong>App Bancaria</strong> favorita para escanear el código.
+                </p>
+                
+                <div class="d-flex justify-content-center mb-3">
+                    <div id="modal-qrcode" class="p-2 bg-white border rounded shadow-sm"></div>
                 </div>
-                <h4 class="fw-bold text-dark mb-1">${{ total_price|floatformat:2 }}</h4>
-                <p class="small text-muted">Total a pagar</p>
-                <div class="alert alert-success mt-3 mb-0 d-flex align-items-center justify-content-center gap-2">
-                    <div class="spinner-border spinner-border-sm" role="status"></div>
-                    Esperando confirmación de pago...
+
+                <h3 class="fw-bold mb-0" id="modal-total-price">$0.00</h3>
+
+                <div class="qr-timer-box">
+                    <i class="bi bi-stopwatch qr-timer-icon"></i>
+                    <span id="time-display">15:00</span>
                 </div>
-                <button class="btn btn-outline-secondary btn-sm mt-3 w-100 rounded-pill" onclick="document.getElementById('checkout-form').submit()">
-                    Simular Pago Confirmado
-                </button>
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center pb-4 pt-0">
+                 <a href="{% url 'checkout' %}" class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar y volver
+                 </a>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
+    // MAPA
     let map = null;
     let mapInitialized = false;
-
+    function initMap() {
+        if(mapInitialized) return;
+        map = L.map('map').setView([-34.6037, -58.3816], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker([-34.6037, -58.3816]).addTo(map).bindPopup('Sucursal Central');
+        mapInitialized = true;
+    }
     function toggleShippingView(type) {
-        const homeView = document.getElementById('view-home-delivery');
-        const pickupView = document.getElementById('view-pickup-point');
-        const hiddenInput = document.getElementById('shipping_method_type');
-        const addressRadios = document.querySelectorAll('.address-radio');
-        const pickupRadios = document.querySelectorAll('.pickup-radio');
-
-        hiddenInput.value = type;
-
+        document.getElementById('shipping_method_type').value = type;
         if (type === 'home') {
-            homeView.classList.remove('d-none');
-            pickupView.classList.add('d-none');
-            addressRadios.forEach(r => r.disabled = false);
-            pickupRadios.forEach(r => {
-                r.disabled = true;
-                r.checked = false;
-            });
+            document.getElementById('view-home-delivery').classList.remove('d-none');
+            document.getElementById('view-pickup-point').classList.add('d-none');
+            document.querySelectorAll('.address-radio').forEach(r => r.disabled = false);
+            document.querySelectorAll('.pickup-radio').forEach(r => {r.disabled = true; r.checked = false;});
         } else {
-            homeView.classList.add('d-none');
-            pickupView.classList.remove('d-none');
-            addressRadios.forEach(r => {
-                r.disabled = true;
-                r.checked = false;
-            });
-            pickupRadios.forEach(r => r.disabled = false);
-            if (!mapInitialized) {
-                setTimeout(initMap, 200);
-            }
+            document.getElementById('view-home-delivery').classList.add('d-none');
+            document.getElementById('view-pickup-point').classList.remove('d-none');
+            document.querySelectorAll('.address-radio').forEach(r => {r.disabled = true; r.checked = false;});
+            document.querySelectorAll('.pickup-radio').forEach(r => r.disabled = false);
+            if (!mapInitialized) setTimeout(initMap, 200);
         }
         checkPaymentSectionStatus();
     }
-
-    function initMap() {
-        if(mapInitialized) return;
-        const lat = -34.6037;
-        const lng = -58.3816;
-        map = L.map('map').setView([lat, lng], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
-        const storeIcon = L.icon({
-            iconUrl: 'https://cdn-icons-png.flaticon.com/512/447/447031.png',
-            iconSize: [38, 38],
-            iconAnchor: [19, 38],
-            popupAnchor: [0, -30]
-        });
-        L.marker([-34.6037, -58.3816], {icon: storeIcon}).addTo(map).bindPopup('<b>Sucursal Central</b><br>Envío Gratis');
-        L.marker([-34.5950, -58.3900], {icon: storeIcon}).addTo(map).bindPopup('<b>Librería El Lector</b><br>Envío Gratis');
-        mapInitialized = true;
+    function checkPaymentSectionStatus() {
+        const type = document.getElementById('shipping_method_type').value;
+        let isValid = (type === 'home') ? document.querySelector('.address-radio:checked') : document.querySelector('.pickup-radio:checked');
+        const sec = document.getElementById('payment-section');
+        const radios = document.querySelectorAll('.payment-radio');
+        if (isValid) { sec.classList.remove('disabled-section'); radios.forEach(r => r.disabled = false); } 
+        else { sec.classList.add('disabled-section'); radios.forEach(r => {r.disabled = true; r.checked = false;}); }
     }
 
-    function checkPaymentSectionStatus() {
-        const paymentSection = document.getElementById('payment-section');
-        const paymentRadios = document.querySelectorAll('.payment-radio');
-        const shippingType = document.getElementById('shipping_method_type').value;
-        let isValid = false;
+    // TIMER
+    function startTimer(duration, display) {
+        let timer = duration, minutes, seconds;
+        let interval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
 
-        if (shippingType === 'home') {
-            isValid = Array.from(document.querySelectorAll('.address-radio')).some(r => r.checked);
-        } else {
-            isValid = Array.from(document.querySelectorAll('.pickup-radio')).some(r => r.checked);
-        }
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
 
-        if (isValid) {
-            paymentSection.classList.remove('disabled-section');
-            paymentRadios.forEach(r => r.disabled = false);
-        } else {
-            paymentSection.classList.add('disabled-section');
-            paymentRadios.forEach(r => r.disabled = true);
-            paymentRadios.forEach(r => r.checked = false);
-        }
+            display.textContent = minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                clearInterval(interval);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Tiempo expirado',
+                    text: 'El código QR ha vencido. Por favor genera uno nuevo.',
+                    confirmButtonText: 'Entendido'
+                }).then(() => {
+                    window.location.href = "{% url 'checkout' %}";
+                });
+            }
+        }, 1000);
+        return interval;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('checkout-form');
-        const qrModal = new bootstrap.Modal(document.getElementById('qrPaymentModal'));
-        
-        const allShippingRadios = document.querySelectorAll('.address-radio, .pickup-radio');
-        allShippingRadios.forEach(r => {
-            r.addEventListener('change', checkPaymentSectionStatus);
-        });
+        document.querySelectorAll('.address-radio, .pickup-radio').forEach(r => r.addEventListener('change', checkPaymentSectionStatus));
         checkPaymentSectionStatus();
-
-        form.addEventListener('submit', function(e) {
-            const shippingType = document.getElementById('shipping_method_type').value;
-            let hasShipping = false;
-            if (shippingType === 'home') {
-                hasShipping = Array.from(document.querySelectorAll('.address-radio')).some(r => r.checked);
-                if(!hasShipping) {
-                    e.preventDefault();
-                    alert("Selecciona una dirección de envío.");
-                    return;
-                }
-            } else {
-                hasShipping = Array.from(document.querySelectorAll('.pickup-radio')).some(r => r.checked);
-                if(!hasShipping) {
-                    e.preventDefault();
-                    alert("Selecciona un punto de retiro en el mapa/lista.");
-                    return;
-                }
-            }
-
-            let selectedPayment = null;
-            document.querySelectorAll('.payment-radio').forEach(r => { if(r.checked) selectedPayment = r.value; });
-            if (!selectedPayment) {
-                e.preventDefault();
-                alert("Selecciona un método de pago.");
-                return;
-            }
-
-            if (selectedPayment === 'qr_modal') {
-                e.preventDefault();
-                qrModal.show();
-            } else {
-                const btn = document.getElementById('btn-submit-main');
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
-                btn.disabled = true;
-            }
+        
+        document.getElementById('checkout-form').addEventListener('submit', function(e) {
+            const btn = document.getElementById('btn-submit-main');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
+            btn.classList.add('disabled');
         });
+
+        // --- LÓGICA MODAL QR (Server Trigger) ---
+        {% if qr_data_active %}
+            const qrData = JSON.parse('{{ qr_data|escapejs }}');
+            
+            // 1. Instanciar Modal
+            const qrModal = new bootstrap.Modal(document.getElementById('qrPaymentModal'));
+            
+            // 2. Dibujar QR
+            const qrDiv = document.getElementById("modal-qrcode");
+            qrDiv.innerHTML = "";
+            new QRCode(qrDiv, {
+                text: qrData.url,
+                width: 200, height: 200,
+                colorDark : "#000000", colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+
+            document.getElementById('modal-total-price').innerText = "$" + qrData.total.toFixed(2);
+            qrModal.show();
+
+            // 3. Iniciar Temporizador
+            const timeDisplay = document.querySelector('#time-display');
+            const totalSeconds = (qrData.minutes || 15) * 60;
+            const timerInterval = startTimer(totalSeconds, timeDisplay);
+
+            // 4. Iniciar Polling (Verificar pago)
+            // IMPORTANTE: Usamos la URL generada por Django que ahora incluye el prefijo correcto
+            const checkUrl = qrData.check_url; 
+            
+            console.log("Esperando pago en: " + checkUrl);
+
+            let checkInterval = setInterval(() => {
+                fetch(checkUrl)
+                    .then(r => {
+                         if (!r.ok) throw new Error("404 o Error");
+                         return r.json();
+                    })
+                    .then(d => {
+                        if (d.status === 'approved') {
+                            clearInterval(checkInterval);
+                            clearInterval(timerInterval);
+                            qrModal.hide();
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Pago Confirmado!',
+                                text: 'Tu orden fue procesada.',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.href = d.redirect_url;
+                            });
+                        }
+                    })
+                    .catch(err => console.log("Polling...", err));
+            }, 3000);
+        {% endif %}
     });
 </script>
 {% endblock content %}

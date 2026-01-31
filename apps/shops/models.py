@@ -7,6 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 from apps.perfil.models import *
 
+from django.core.cache import cache
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -145,7 +146,45 @@ class UserPoints(models.Model):
         return f"{self.user} - {self.points} points"
 
 
+
+
+# --- 1. NUEVO MODELO DE CONFIGURACIÓN ---
+class ConfiguracionCompartir(models.Model):
+    meta_vistas = models.PositiveIntegerField(
+        default=30, 
+        verbose_name="Meta de Vistas",
+        help_text="Cantidad de vistas únicas necesarias para ganar el premio."
+    )
+    premio_coins = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=500.00,
+        verbose_name="Premio en Coins",
+        help_text="Cantidad de Coins a otorgar al cumplir la meta."
+    )
+
+    class Meta:
+        verbose_name = "Configuración de Referidos"
+        verbose_name_plural = "Configuración de Referidos"
+
+    def save(self, *args, **kwargs):
+        # Esto asegura que solo exista UN registro (ID=1)
+        self.pk = 1
+        super().save(*args, **kwargs)
+        # Limpiamos caché si usaras, para que se actualice al instante
+        cache.delete('share_config')
+
+    @classmethod
+    def load(cls):
+        # Método mágico para obtener la config desde cualquier lado
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "Configuración del Sistema de Referidos"
     
+
+
 class ProductShare(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='shared_products')
@@ -154,8 +193,25 @@ class ProductShare(models.Model):
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     share_link = models.URLField()  # Enlace generado
     created_at = models.DateTimeField(auto_now_add=True)
-    views_count = models.PositiveIntegerField(default=0)  # Vistas desde el enlace compartido
+    reward_claimed = models.BooleanField(default=False)
 
+    views_count = models.PositiveIntegerField(default=0)  # Vistas desde el enlace compartido
+   
+    @property
+    def META_VISTAS(self):
+        return ConfiguracionCompartir.load().meta_vistas
+
+    @property
+    def PREMIO_COINS(self):
+        return ConfiguracionCompartir.load().premio_coins
+
+    # --- AGREGA ESTO ---
+    @property
+    def vistas_restantes(self):
+        """Calcula cuántas faltan para llegar a la meta"""
+        restantes = self.META_VISTAS - self.views_count
+        return max(restantes, 0) # Para que nunca devuelva negativo
+    
     def __str__(self):
         return f"{self.user or 'Anonymous'} shared {self.product.title} at {self.created_at}"
 
