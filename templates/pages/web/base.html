@@ -1,252 +1,396 @@
 {% load socialaccount %}
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
- 
-
-
-
-
-
-
-
     <title>NextGen | Tienda Online</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #195A59;       
-            --primary-dark: #0F3C3C;
-            --whatsapp-color: #25D366; 
-            --bg-light: #F3F4F6;
-            --white: #FFFFFF;
+            /* --- VARIABLES GLOBALES --- */
+            --emerald: rgb(25, 90, 89);
+            --gold: rgb(200, 160, 90);
+            --primary-bot: #195A59;       
+            --bg-dark: rgb(23, 23, 23);
+            --text-main: #333;
             --font-main: 'Inter', sans-serif;
         }
 
-        body { font-family: var(--font-main); background-color: #f9fafb; }
+        /* --- CONFIGURACIÓN BASE --- */
+        html, body {
+            margin: 0; padding: 0; width: 100%;
+            overflow-x: hidden;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+            transition: background-color 0.3s ease, color 0.3s ease;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        body.dark-mode { background-color: #121212; color: #fff; }
+        body::-webkit-scrollbar, html::-webkit-scrollbar { display: none; }
 
-        /* --- BOTÓN FLOTANTE --- */
+        /* --- COMPENSACIÓN NAVBAR --- */
+        main {
+            padding-top: 0; /* Controlado por JS del navbar */
+            min-height: 100vh;
+        }
+
+
+        /* =========================================
+           ESTILOS WIDGET DE SCROLL / MÚSICA
+           ========================================= */
+        .custom-track {
+            position: fixed; top: 0; right: 0; bottom: 0;
+            width: 30px; /* Área de detección cómoda */
+            z-index: 9990; cursor: default;
+        }
+
+        .custom-thumb {
+            position: fixed; top: 0; right: 2px;
+            width: 4px; height: 60px;
+            background-color: rgba(20, 25, 30, 0.6); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border-radius: 100px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            
+            /* --- ANIMACIÓN --- */
+            transition-property: width, height, background-color, border-radius, right;
+            transition-duration: 0.3s;
+            transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+            
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden; z-index: 9991;
+            
+            cursor: grab;
+        }
+        
+        /* SOLUCIÓN FLUIDEZ: !important para matar cualquier retraso al arrastrar */
+        .custom-thumb.dragging { 
+            cursor: grabbing; 
+            background-color: #000;
+            transition: none !important; 
+        }
+
+        .custom-thumb.expanded {
+            width: 50px; height: 170px; right: 5px;
+            background-color: rgba(15, 15, 20, 0.85);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2); border-radius: 25px;
+        }
+
+        .custom-thumb.music-mode {
+            width: 280px !important; height: 100px !important; right: 15px;
+            border-radius: 24px; background-color: rgba(10, 10, 12, 0.95);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            flex-direction: row; padding: 0; cursor: default;
+        }
+
+        /* Elementos dentro del Scroll */
+        .btn-icon-scroll {
+            position: relative; z-index: 1; color: rgba(255,255,255,0.8); 
+            font-size: 20px; padding: 8px; border-radius: 50%; cursor: pointer; transition: 0.2s;
+        }
+        .btn-icon-scroll:hover { background: rgba(255,255,255,0.15); color: white; transform: scale(1.1); }
+        
+        /* Efecto Anillo Música */
+        .custom-thumb.expanded .btn-icon-scroll.playing-active::after {
+            content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border-radius: 50%; border: 2px solid transparent;
+            background: linear-gradient(#151515, #151515) padding-box,
+                        conic-gradient(from 0deg, #ff0055, #00ddff, #00ff66, #ff0055) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            animation: spinRing 1.5s linear infinite; pointer-events: none; z-index: -1;
+        }
+        @keyframes spinRing { 100% { transform: rotate(360deg); } }
+
+        /* Vistas internas */
+        .view-vertical {
+            display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+            height: 85%; width: 100%; opacity: 0; transform: scale(0.8); transition: 0.3s;
+            position: absolute; pointer-events: none;
+        }
+        .custom-thumb.expanded:not(.music-mode) .view-vertical { opacity: 1; transform: scale(1); pointer-events: auto; }
+        
+        .view-player {
+            display: flex; align-items: center; width: 100%; height: 100%; padding: 12px 18px;
+            opacity: 0; transform: translateY(10px); transition: 0.4s; position: absolute; pointer-events: none;
+        }
+        .custom-thumb.music-mode .view-player { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+        .clock-box { text-align: center; color: white; }
+        .clock-num { font-weight: 700; font-size: 13px; }
+        .clock-am { font-size: 9px; opacity: 0.5; font-weight: 600; }
+        
+        /* Player UI */
+        .cover-art {
+            width: 60px; height: 60px; border-radius: 14px;
+            background: #333 url('https://picsum.photos/id/145/200') center/cover;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4); flex-shrink: 0;
+        }
+        .song-info { flex-grow: 1; margin: 0 15px; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+        .song-title { color: white; font-weight: 600; font-size: 14px; white-space: nowrap; }
+        .song-artist { color: rgba(255,255,255,0.5); font-size: 11px; }
+        .controls-music { display: flex; align-items: center; gap: 8px; }
+        .play-main { font-size: 38px; color: white; cursor: pointer; }
+
+
+        /* =========================================
+           ESTILOS CHATBOT
+           ========================================= */
         .chat-launcher {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 60px;
-            height: 60px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 26px;
-            cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            transition: transform 0.3s ease;
+            position: fixed; bottom: 25px; right: 25px;
+            width: 60px; height: 60px; background: var(--primary-bot);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 26px; cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15); transition: transform 0.3s ease;
             z-index: 9999;
         }
         .chat-launcher:hover { transform: scale(1.1); }
 
-        /* --- VENTANA DEL CHAT --- */
         .chat-window {
-            position: fixed;
-            bottom: 95px;
-            right: 25px;
-            width: 360px;
-            height: 550px;
-            background: var(--white);
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            opacity: 0;
-            transform: translateY(15px) scale(0.95);
-            transition: all 0.2s ease-in-out;
-            pointer-events: none;
-            z-index: 9998;
-            border: 1px solid rgba(0,0,0,0.05);
+            position: fixed; bottom: 95px; right: 25px;
+            width: 360px; height: 550px; background: #fff;
+            border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            display: flex; flex-direction: column; overflow: hidden;
+            opacity: 0; transform: translateY(15px) scale(0.95);
+            transition: all 0.2s ease-in-out; pointer-events: none;
+            z-index: 9998; border: 1px solid rgba(0,0,0,0.05);
         }
+        .chat-window.active { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
 
-        .chat-window.active {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: all;
-        }
-
-        /* HEADER */
-        .chat-header {
-            background: white;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .brand-box { display: flex; align-items: center; gap: 12px; }
+        .chat-header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; }
+        .chat-body { flex: 1; padding: 20px; background: #fafafa; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 85%; padding: 10px 15px; font-size: 0.9rem; border-radius: 14px; word-wrap: break-word; }
+        .message.bot { align-self: flex-start; background: white; color: #333; border: 1px solid #e5e7eb; border-bottom-left-radius: 4px; }
+        .message.user { align-self: flex-end; background: var(--primary-bot); color: white; border-bottom-right-radius: 4px; }
         
-        .brand-icon {
-            width: 38px; height: 38px;
-            background: var(--bg-light);
-            color: var(--primary);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
-        }
-
-        .brand-text h4 { margin: 0; font-size: 1rem; font-weight: 700; color: #333; }
-        .brand-text span { font-size: 0.75rem; color: #10B981; display: flex; align-items: center; gap: 4px; font-weight: 500; }
-
-        /* BODY */
-        .chat-body {
-            flex: 1;
-            padding: 20px;
-            background: #fafafa;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* BURBUJAS */
-        .message {
-            max-width: 85%;
-            padding: 10px 15px;
-            font-size: 0.9rem;
-            line-height: 1.45;
-            border-radius: 14px;
-            animation: fadeIn 0.2s ease;
-            word-wrap: break-word;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        .message.bot {
-            align-self: flex-start;
-            background: white;
-            color: #333;
-            border: 1px solid #e5e7eb;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message.user {
-            align-self: flex-end;
-            background: var(--primary);
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        /* BOTÓN WHATSAPP */
-        .btn-whatsapp-chat {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background-color: var(--whatsapp-color);
-            color: white !important;
-            text-decoration: none !important;
-            padding: 10px 0;
-            width: 100%;
-            border-radius: 50px;
-            margin-top: 10px;
-            font-weight: 600;
-            box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2);
-            transition: transform 0.2s;
-        }
-        .btn-whatsapp-chat:hover { transform: scale(1.02); box-shadow: 0 6px 15px rgba(37, 211, 102, 0.3); }
-
-        .message.bot a:not(.btn-whatsapp-chat) { color: var(--primary); font-weight: 600; }
-
-        /* FOOTER */
         .chat-footer { padding: 15px; background: white; border-top: 1px solid #f0f0f0; }
+        .input-group-custom { display: flex; background: #F3F4F6; border-radius: 25px; padding: 5px; }
+        .chat-input { flex: 1; border: none; background: transparent; outline: none; padding-left: 15px; }
+        .send-btn-chat { width: 36px; height: 36px; background: var(--primary-bot); color: white; border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        .input-group-custom {
-            display: flex;
-            background: #F3F4F6;
-            border-radius: 25px;
-            padding: 5px;
-            border: 1px solid transparent;
-            transition: 0.2s;
-        }
-        .input-group-custom:focus-within { background: white; border-color: var(--primary); }
-
-        .chat-input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            outline: none;
-            padding-left: 15px;
-            font-size: 0.9rem;
-            color: #333;
-        }
-        
-        .send-btn {
-            width: 36px; height: 36px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .send-btn:hover { background: var(--primary-dark); }
-
         /* Typing Dots */
-        .typing-indicator { display: flex; gap: 4px; padding: 12px; background: white; width: fit-content; border-radius: 14px; border: 1px solid #eee; margin-bottom: 5px; }
+        .typing-indicator { display: flex; gap: 4px; padding: 12px; background: white; width: fit-content; border-radius: 14px; margin-bottom: 5px; }
         .dot { width: 6px; height: 6px; background: #ccc; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(1) { animation-delay: -0.32s; } .dot:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
-    {% block navbar %}{% endblock navbar %}
-    <main>{% block content %}{% endblock content %}</main>
-    {% block footer %}{% endblock footer %}
+    {% block navbar %}
+    {% endblock navbar %}
 
-    <div class="chat-launcher" id="chatLauncher">
-        <i class="bi bi-chat-text-fill"></i>
-    </div>
 
-    <div class="chat-window" id="chatWindow">
-        
-        <div class="chat-header">
-            <div class="brand-box">
-                <div class="brand-icon"><i class="bi bi-headset"></i></div>
-                <div class="brand-text">
-                    <h4>Soporte NextGen</h4>
-                    <span><i class="bi bi-circle-fill" style="font-size: 6px;"></i> En línea</span>
+    <main>
+        {% block content %}{% endblock content %}
+    </main>
+
+
+    {% block footer %}
+    {% endblock footer %}
+
+
+    <div class="custom-track" id="track">
+        <div class="custom-thumb" id="thumb">
+            <div class="view-vertical">
+                <span class="material-icons-round btn-icon-scroll" id="btnMusicOpen">music_note</span>
+                <div class="clock-box"><div class="clock-num" id="clock">12:00</div><div class="clock-am" id="ampm">AM</div></div>
+                <span class="material-icons-round btn-icon-scroll btn-up" id="btnUp">arrow_upward</span>
+            </div>
+            <div class="view-player">
+                <div class="cover-art"></div>
+                <div class="song-info"><span class="song-title">Dreaming Light</span><span class="song-artist">Anathema</span></div>
+                <div class="controls-music">
+                    <span class="material-icons-round ctrl-btn">skip_previous</span>
+                    <span class="material-icons-round ctrl-btn play-main" id="btnPlay">play_circle_filled</span>
+                    <span class="material-icons-round ctrl-btn">skip_next</span>
                 </div>
             </div>
-            <button id="chatClose" style="background:none; border:none; color:#999; font-size:1.5rem; cursor:pointer;">&times;</button>
-        </div>
-
-        <div class="chat-body" id="chatBody">
-            </div>
-
-        <div class="chat-footer">
-            <div class="input-group-custom">
-                <input type="text" id="chatInput" class="chat-input" placeholder="Escribe tu mensaje...">
-                <button id="sendBtn" class="send-btn"><i class="bi bi-arrow-up-short" style="font-size: 1.3rem;"></i></button>
-            </div>
         </div>
     </div>
+    <audio id="audioPlayer" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></audio>
+
+
+    
+
 
     <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- A. TEMA ---
+            const isDark = localStorage.getItem('theme') === 'dark';
+            if(isDark) document.body.classList.add('dark');
+
+
+            // --- B. LÓGICA SCROLLBAR FLUIDO & DRAGGABLE ---
+            const thumb = document.getElementById('thumb');
+            const track = document.getElementById('track');
+            const btnMusicOpen = document.getElementById('btnMusicOpen');
+            const btnPlay = document.getElementById('btnPlay');
+            const btnUp = document.getElementById('btnUp');
+            const audio = document.getElementById('audioPlayer');
+
+            let isDragging = false, isMusicMode = false;
+            let startY = 0, startThumbTop = 0;
+            let scrollEndTimeout;
+
+            // Función de Actualización (Loop visual)
+            function updatePos() {
+                if(isDragging) return;
+                const winH = window.innerHeight;
+                const docH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                const scrollT = window.scrollY || document.documentElement.scrollTop;
+                
+                const maxS = docH - winH;
+                const maxT = winH - thumb.offsetHeight;
+                
+                if(maxS <= 1) { thumb.style.display = 'none'; return; } 
+                else { thumb.style.display = 'flex'; }
+
+                const newY = (scrollT / maxS) * maxT;
+                thumb.style.transform = `translate3d(0, ${newY}px, 0)`;
+
+                if(scrollT > 100) btnUp.classList.add('visible'); 
+                else btnUp.classList.remove('visible');
+            }
+
+            function loop() {
+                updatePos();
+                requestAnimationFrame(loop);
+            }
+            loop(); 
+
+            // --- EVENTOS SCROLL Y HOVER ---
+            track.addEventListener('mouseenter', () => { thumb.classList.add('expanded'); });
+
+            track.addEventListener('mouseleave', () => {
+                if (isDragging) return;
+                thumb.classList.remove('expanded');
+                isMusicMode = false;
+                thumb.classList.remove('music-mode');
+            });
+
+            window.addEventListener('scroll', () => {
+                // Colapso rápido arriba
+                if (window.scrollY < 5 && !isMusicMode) {
+                    thumb.classList.remove('expanded');
+                    return; 
+                }
+
+                // Cerrar música si hay scroll
+                if(isMusicMode) {
+                    isMusicMode = false;
+                    thumb.classList.remove('music-mode');
+                }
+
+                // Expandir mientras scroleamos
+                if (!isDragging) {
+                     thumb.classList.add('expanded');
+                     clearTimeout(scrollEndTimeout);
+                     scrollEndTimeout = setTimeout(() => {
+                         if (!track.matches(':hover')) {
+                             thumb.classList.remove('expanded');
+                         }
+                     }, 800);
+                }
+            });
+            
+            // --- DRAG LOGIC (SOLUCIÓN FLUIDEZ) ---
+            thumb.addEventListener('mousedown', (e) => {
+                if(isMusicMode || e.target.closest('.btn-icon-scroll')) return;
+                
+                e.preventDefault(); 
+                isDragging = true; 
+                thumb.classList.add('dragging');
+                document.body.style.userSelect = 'none'; 
+                
+                startY = e.clientY;
+                const rect = thumb.getBoundingClientRect();
+                startThumbTop = rect.top;
+
+                document.addEventListener('mousemove', onMouseMove); 
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            function onMouseMove(e) {
+                if(!isDragging) return;
+                const delta = e.clientY - startY;
+                const maxMove = window.innerHeight - thumb.offsetHeight;
+                let newTop = Math.min(Math.max(0, startThumbTop + delta), maxMove);
+                
+                // 1. Mover visualmente el thumb (Inmediato gracias al CSS transition: none)
+                thumb.style.transform = `translate3d(0, ${newTop}px, 0)`;
+                
+                // 2. Mover la página (SOLUCIÓN FLUIDEZ: behavior: 'auto')
+                // 'auto' evita que el scroll suave nativo pelee con el arrastre del mouse.
+                const docH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                const scrollPercent = newTop / maxMove;
+                
+                window.scrollTo({
+                    top: scrollPercent * (docH - window.innerHeight),
+                    behavior: 'auto' 
+                });
+            }
+
+            function onMouseUp() {
+                isDragging = false; 
+                thumb.classList.remove('dragging');
+                document.body.style.userSelect = '';
+                document.removeEventListener('mousemove', onMouseMove); 
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                if (!track.matches(':hover')) {
+                    thumb.classList.remove('expanded');
+                }
+            }
+
+            // --- MUSIC CONTROLS ---
+            btnMusicOpen.addEventListener('click', (e) => { 
+                e.stopPropagation(); 
+                isMusicMode = true; 
+                thumb.classList.add('music-mode'); 
+                thumb.classList.add('expanded');
+            });
+
+            btnPlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if(audio.paused) {
+                    audio.play(); btnPlay.textContent = 'pause_circle_filled'; btnMusicOpen.classList.add('playing-active'); 
+                } else {
+                    audio.pause(); btnPlay.textContent = 'play_circle_filled'; btnMusicOpen.classList.remove('playing-active');
+                }
+            });
+
+            btnUp.addEventListener('click', (e) => { 
+                e.stopPropagation(); 
+                window.scrollTo({top:0, behavior:'smooth'});
+            });
+
+            // Reloj
+            setInterval(() => {
+                const d = new Date();
+                const clock = document.getElementById('clock');
+                if(clock) { 
+                    clock.textContent = `${d.getHours() % 12 || 12}:${d.getMinutes() < 10 ? '0'+d.getMinutes() : d.getMinutes()}`;
+                    document.getElementById('ampm').textContent = d.getHours() >= 12 ? 'PM' : 'AM';
+                }
+            }, 1000);
+
+
+            // --- C. LÓGICA CHATBOT ---
             const launcher = document.getElementById('chatLauncher');
             const windowChat = document.getElementById('chatWindow');
             const closeBtn = document.getElementById('chatClose');
@@ -254,95 +398,47 @@
             const chatInput = document.getElementById('chatInput');
             const sendBtn = document.getElementById('sendBtn');
             
-            // --- Control de Ventana ---
-            launcher.addEventListener('click', () => {
-                windowChat.classList.add('active');
-                launcher.style.transform = "scale(0)";
-                setTimeout(() => chatInput.focus(), 200);
-            });
+            if(launcher && windowChat) {
+                launcher.addEventListener('click', () => { windowChat.classList.add('active'); launcher.style.transform = "scale(0)"; });
+                closeBtn.addEventListener('click', () => { windowChat.classList.remove('active'); launcher.style.transform = "scale(1)"; });
 
-            closeBtn.addEventListener('click', () => {
-                windowChat.classList.remove('active');
-                launcher.style.transform = "scale(1)";
-            });
-
-            // --- Renderizar Mensajes ---
-            function appendMessage(text, sender) {
-                const div = document.createElement('div');
-                div.className = `message ${sender}`;
-                if (sender === 'bot') div.innerHTML = text;
-                else div.textContent = text;
-                
-                chatBody.appendChild(div);
-                chatBody.scrollTop = chatBody.scrollHeight;
-            }
-
-            function showTyping() {
-                const div = document.createElement('div');
-                div.className = 'typing-indicator';
-                div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-                chatBody.appendChild(div);
-                chatBody.scrollTop = chatBody.scrollHeight;
-                return div;
-            }
-
-            // --- Enviar Mensaje ---
-            async function sendMessage() {
-                const text = chatInput.value.trim();
-                if (!text) return;
-
-                appendMessage(text, 'user');
-                chatInput.value = '';
-                
-                const loader = showTyping();
-
-                try {
-                    // --- NUEVO: Capturamos URL actual para el contexto ---
-                    const currentUrl = window.location.href;
-
-                    const response = await fetch("/botOLO/chatbot-message/", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                            "X-CSRFToken": getCookie('csrftoken')
-                        },
-                        // Enviamos message Y current_url
-                        body: `message=${encodeURIComponent(text)}&current_url=${encodeURIComponent(currentUrl)}`
-                    });
-
-                    const data = await response.json();
-                    loader.remove();
-
-                    if (data.redirect) {
-                        window.location.href = data.redirect;
-                    } else if (data.response) {
-                        appendMessage(data.response, 'bot');
-                    } else {
-                        appendMessage("Hubo un error de comunicación.", 'bot');
-                    }
-                } catch (e) {
-                    loader.remove();
-                    console.error(e);
-                    appendMessage("Sin conexión con el servidor.", 'bot');
+                function appendMessage(text, sender) {
+                    const div = document.createElement('div'); div.className = `message ${sender}`;
+                    if (sender === 'bot') div.innerHTML = text; else div.textContent = text;
+                    chatBody.appendChild(div); chatBody.scrollTop = chatBody.scrollHeight;
                 }
-            }
 
-            sendBtn.addEventListener('click', sendMessage);
-            chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-            
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
+                function showTyping() {
+                    const div = document.createElement('div'); div.className = 'typing-indicator';
+                    div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                    chatBody.appendChild(div); chatBody.scrollTop = chatBody.scrollHeight; return div;
+                }
+
+                async function sendMessage() {
+                    const text = chatInput.value.trim(); if (!text) return;
+                    appendMessage(text, 'user'); chatInput.value = ''; const loader = showTyping();
+                    try {
+                        function getCookie(name) {
+                            let v = null; if (document.cookie && document.cookie !== '') {
+                                const c = document.cookie.split(';');
+                                for (let i = 0; i < c.length; i++) {
+                                    const cookie = c[i].trim();
+                                    if (cookie.substring(0, name.length + 1) === (name + '=')) { v = decodeURIComponent(cookie.substring(name.length + 1)); break; }
+                                }
+                            } return v;
                         }
-                    }
+                        const response = await fetch("/botOLO/chatbot-message/", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": getCookie('csrftoken') },
+                            body: `message=${encodeURIComponent(text)}&current_url=${encodeURIComponent(window.location.href)}`
+                        });
+                        const data = await response.json(); loader.remove();
+                        if (data.redirect) window.location.href = data.redirect;
+                        else if (data.response) appendMessage(data.response, 'bot');
+                    } catch (e) { loader.remove(); appendMessage("Sin conexión.", 'bot'); }
                 }
-                return cookieValue;
+                sendBtn.addEventListener('click', sendMessage);
+                chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
             }
         });
     </script>

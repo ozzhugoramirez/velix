@@ -4,159 +4,429 @@
     {% include "components/admin/navbar.html" %}
 {% endblock navbar %}
 
-
-
 {% block content %}
-<style>
-    .fade-in { animation: fadeIn 0.8s ease-in-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .container-admin { max-width: 1100px; margin: auto; margin-top: 4rem; padding: 20px; }
-</style>
+<div class="linear-layout">
+    
+    <aside class="linear-sidebar">
+        <div class="ls-header">
+            <div class="ls-team-selector">
+                <span class="team-avatar">N</span>
+                <span class="team-name">NextGen Store</span>
+                <i class="bi bi-chevron-down ms-auto" style="font-size: 10px; opacity: 0.5;"></i>
+            </div>
+        </div>
 
-<div class="container container-admin fade-in">
-    <h2 class="text-center">📩 Panel de Notificaciones (Admin)</h2>
+        <div class="ls-action-area">
+            <button class="ls-btn-new">
+                <i class="bi bi-pencil-square"></i>
+                <span>Nuevo Mensaje</span>
+            </button>
+            <button class="ls-btn-search"><i class="bi bi-search"></i></button>
+        </div>
 
-    <!-- Mensajes de éxito -->
-    {% if messages %}
-        <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-            {% for message in messages %}
-                {{ message }}<br>
-            {% endfor %}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="ls-menu">
+            <div class="ls-menu-item active">
+                <i class="bi bi-inbox"></i> Inbox <span class="badge-count">4</span>
+            </div>
+            <div class="ls-menu-item">
+                <i class="bi bi-send"></i> Enviados
+            </div>
+            <div class="ls-menu-item">
+                <i class="bi bi-people"></i> Grupos VIP
+            </div>
+            <div class="ls-menu-item">
+                <i class="bi bi-broadcast"></i> Campañas
+            </div>
         </div>
-    {% endif %}
 
-    <!-- Listado de Grupos -->
-    <div class="card shadow-sm mt-4">
-        <div class="card-header bg-dark text-white">
-            <h5>📌 Grupos</h5>
+        <div class="ls-section-label">Tus Equipos</div>
+        <div class="ls-menu">
+            <div class="ls-menu-item"><span class="team-dot" style="background: #6366f1"></span> Marketing</div>
+            <div class="ls-menu-item"><span class="team-dot" style="background: #f59e0b"></span> Soporte</div>
         </div>
-        <div class="card-body">
-            <ul class="list-group">
-                {% for group in groups %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ group.name }}
-                        <span class="badge bg-info">{{ group.users.count }} Usuarios</span>
-                    </li>
-                {% empty %}
-                    <p class="text-muted text-center">No hay grupos creados.</p>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
+    </aside>
 
-    <!-- Listado de Notificaciones -->
-    <div class="card shadow-sm mt-4">
-        <div class="card-header bg-primary text-white">
-            <h5>📬 Notificaciones</h5>
+    <section class="linear-list">
+        <div class="list-header">
+            <span class="view-title">Inbox</span>
+            <div class="list-actions">
+                <i class="bi bi-filter"></i>
+                <i class="bi bi-sort-down"></i>
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-striped table-hover" id="notificationsTable">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Título</th>
-                        <th>Mensaje</th>
-                        <th>Fecha</th>
-                        <th class="text-center">Leídos</th>
-                        <th class="text-center">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in notification_data %}
-                        <tr>
-                            <td>{{ item.notification.title }}</td>
-                            <td>{{ item.notification.message|truncatechars:50 }}</td>
-                            <td>{{ item.notification.created_at|date:"d M Y H:i" }}</td>
-                            <td class="text-center">
-                                <span class="badge bg-success">{{ item.read_count }} / {{ item.total_users }}</span>
-                            </td>
-                            <td class="text-center">
-                                <form method="post" action="">
-                                    {% csrf_token %}
-                                    <button type="submit" name="action" value="mark_as_read" class="btn btn-sm btn-outline-secondary">
-                                        📖 Marcar como Leído
-                                    </button>
-                                    <button type="submit" name="action" value="delete" class="btn btn-sm btn-outline-danger">
-                                        ❌ Eliminar
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center text-muted">No hay notificaciones.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <div class="list-content custom-scroll">
+            
+            <div class="list-item active">
+                <div class="item-row-top">
+                    <img src="https://i.pravatar.cc/150?u=1" class="item-avatar">
+                    <span class="item-title">Promo Verano 2026</span>
+                    <span class="item-time">2h</span>
+                </div>
+                <div class="item-row-sub">
+                    <span class="status-icon in-progress"><i class="bi bi-circle-half"></i></span>
+                    <span class="item-subtitle">Enviado a: Grupo VIP</span>
+                </div>
+            </div>
+
+            <div class="list-item">
+                <div class="item-row-top">
+                    <img src="https://i.pravatar.cc/150?u=2" class="item-avatar">
+                    <span class="item-title">Consulta de Stock</span>
+                    <span class="item-time">5h</span>
+                </div>
+                <div class="item-row-sub">
+                    <span class="status-icon todo"><i class="bi bi-circle"></i></span>
+                    <span class="item-subtitle">Cliente: Juan Pérez</span>
+                </div>
+            </div>
+
+            <div class="list-item">
+                <div class="item-row-top">
+                    <img src="https://i.pravatar.cc/150?u=3" class="item-avatar">
+                    <span class="item-title">Black Friday Prep</span>
+                    <span class="item-time">1d</span>
+                </div>
+                <div class="item-row-sub">
+                    <span class="status-icon done"><i class="bi bi-check-circle-fill"></i></span>
+                    <span class="item-subtitle">Borrador de Campaña</span>
+                </div>
+            </div>
+
+            <div class="list-item">
+                <div class="item-row-top">
+                    <div class="item-avatar fallback">S</div>
+                    <span class="item-title">System Alert</span>
+                    <span class="item-time">2d</span>
+                </div>
+                <div class="item-row-sub">
+                    <span class="status-icon high-priority"><i class="bi bi-exclamation-circle-fill"></i></span>
+                    <span class="item-subtitle">Error en envíos SMTP</span>
+                </div>
+            </div>
+
         </div>
-    </div>
+    </section>
+
+    <main class="linear-detail">
+        
+        <div class="detail-header">
+            <div class="breadcrumbs">
+                <span class="bc-item">Campañas</span>
+                <span class="bc-sep">/</span>
+                <span class="bc-item active">CMP-204</span>
+            </div>
+            <div class="detail-actions">
+                <button class="btn-action-text"><i class="bi bi-check2"></i> Resolver</button>
+                <button class="btn-action-icon"><i class="bi bi-bell"></i></button>
+                <button class="btn-action-icon"><i class="bi bi-three-dots"></i></button>
+            </div>
+        </div>
+
+        <div class="detail-scroll-area custom-scroll">
+            
+            <div class="detail-content">
+                <div class="content-meta">
+                    <span class="badge-status in-progress"><i class="bi bi-circle-half"></i> En Progreso</span>
+                    <div class="assignee">
+                        <img src="https://i.pravatar.cc/150?u=me" alt="">
+                        <span>Asignado a <strong>Marketing</strong></span>
+                    </div>
+                </div>
+
+                <h1 class="content-title">Promo Verano 2026</h1>
+                <p class="content-desc">
+                    Campaña dirigida al segmento "Compradores Frecuentes". <br>
+                    Objetivo: Liquidar stock de accesorios de verano. <br><br>
+                    <a href="#">https://nextgen.store/landing/verano</a>
+                </p>
+            </div>
+
+            <hr class="detail-divider">
+
+            <div class="detail-activity">
+                <h4 class="activity-title">Actividad</h4>
+
+                <div class="timeline-item">
+                    <div class="tl-avatar"><img src="https://i.pravatar.cc/150?u=me"></div>
+                    <div class="tl-content">
+                        <div class="tl-header">
+                            <span class="tl-user">Admin</span> creó la campaña.
+                            <span class="tl-time">Hace 2 días</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="tl-connector"></div> <div class="tl-avatar icon"><i class="bi bi-lightning-fill"></i></div>
+                    <div class="tl-content">
+                        <div class="tl-header">
+                            <span class="tl-user">Sistema</span> envió 1,240 correos.
+                            <span class="tl-time">Hace 5 horas</span>
+                        </div>
+                        <div class="tl-body">
+                            Tasa de apertura inicial: <strong>12%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="tl-connector"></div>
+                    <div class="tl-avatar"><img src="https://i.pravatar.cc/150?u=1"></div>
+                    <div class="tl-content">
+                        <div class="tl-header">
+                            <span class="tl-user">Laura (Soporte)</span> comentó
+                            <span class="tl-time">Hace 2 horas</span>
+                        </div>
+                        <div class="tl-card">
+                            <p>@Admin Varios clientes reportan que el cupón <b>SUMMER20</b> da error. ¿Podemos revisar?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-input-area">
+                    <div class="tl-avatar"><img src="https://i.pravatar.cc/150?u=me"></div>
+                    <div class="tl-input-wrapper">
+                        <textarea placeholder="Deja un comentario o escribe un mensaje..."></textarea>
+                        <div class="tl-input-footer">
+                            <div class="tl-tools">
+                                <i class="bi bi-type-bold"></i>
+                                <i class="bi bi-paperclip"></i>
+                                <i class="bi bi-emoji-smile"></i>
+                            </div>
+                            <button class="btn-comment">Comentar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
 </div>
 
-<!-- Agregar DataTables para mejor experiencia -->
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<style>
+    /* VARIABLES (Tema Dark Linear) */
+    :root {
+        --l-bg: #0b0c0e;        /* Fondo más oscuro */
+        --l-sidebar: #131416;   /* Sidebar */
+        --l-border: #26272b;    /* Bordes sutiles */
+        --l-hover: #1f2023;     /* Hover items */
+        --l-active: #1f2023;    /* Active items */
+        --l-text: #eaeaeb;      /* Texto principal */
+        --l-text-dim: #8a8d94;  /* Texto secundario */
+        --l-accent: #5e6ad2;    /* Acento (Botones) */
+        
+        --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* LAYOUT PRINCIPAL */
+    .linear-layout {
+        display: grid;
+        grid-template-columns: 240px 320px 1fr; /* Sidebar | Lista | Detalle */
+        height: calc(100vh - 64px); /* Ajuste por tu navbar */
+        background: var(--l-bg);
+        color: var(--l-text);
+        font-family: var(--font-ui);
+        overflow: hidden;
+    }
+
+    /* --- 1. SIDEBAR --- */
+    .linear-sidebar {
+        background: var(--l-sidebar);
+        border-right: 1px solid var(--l-border);
+        display: flex; flex-direction: column;
+        padding: 12px;
+    }
+
+    .ls-header {
+        padding: 0 8px 16px 8px;
+    }
+    .ls-team-selector {
+        display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;
+        padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: 0.2s;
+    }
+    .ls-team-selector:hover { background: var(--l-hover); }
+    .team-avatar { width: 16px; height: 16px; background: #C8A05A; color: black; border-radius: 3px; font-size: 10px; display: grid; place-items: center; }
+
+    .ls-action-area { display: flex; gap: 8px; margin-bottom: 20px; }
+    .ls-btn-new {
+        flex: 1; display: flex; align-items: center; gap: 8px;
+        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.05);
+        color: var(--l-text); padding: 6px 12px; border-radius: 6px; font-size: 13px; cursor: pointer; transition: 0.2s;
+    }
+    .ls-btn-new:hover { background: rgba(255,255,255,0.12); }
+    .ls-btn-search {
+        width: 32px; background: transparent; border: 1px solid transparent; color: var(--l-text-dim);
+        border-radius: 6px; cursor: pointer;
+    }
+    .ls-btn-search:hover { color: var(--l-text); background: var(--l-hover); }
+
+    .ls-menu { display: flex; flex-direction: column; gap: 2px; }
+    .ls-menu-item {
+        display: flex; align-items: center; gap: 10px; padding: 6px 10px;
+        font-size: 13px; color: var(--l-text-dim); border-radius: 6px; cursor: pointer; text-decoration: none;
+    }
+    .ls-menu-item:hover { color: var(--l-text); background: var(--l-hover); }
+    .ls-menu-item.active { color: var(--l-text); background: var(--l-active); font-weight: 500; }
+    .ls-menu-item i { font-size: 14px; }
+    .badge-count { margin-left: auto; font-size: 11px; color: var(--l-text-dim); }
+
+    .ls-section-label {
+        font-size: 11px; font-weight: 600; color: var(--l-text-dim); text-transform: uppercase;
+        margin: 24px 10px 8px 10px;
+    }
+    .team-dot { width: 6px; height: 6px; border-radius: 2px; }
+
+
+    /* --- 2. LIST PANEL --- */
+    .linear-list {
+        background: var(--l-bg);
+        border-right: 1px solid var(--l-border);
+        display: flex; flex-direction: column;
+    }
+
+    .list-header {
+        height: 48px; border-bottom: 1px solid var(--l-border);
+        display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+    }
+    .view-title { font-size: 13px; font-weight: 600; }
+    .list-actions { color: var(--l-text-dim); display: flex; gap: 10px; font-size: 14px; }
+
+    .list-content { flex: 1; overflow-y: auto; }
+    
+    .list-item {
+        padding: 12px 16px; border-bottom: 1px solid var(--l-border); cursor: pointer; transition: 0.2s;
+    }
+    .list-item:hover { background: var(--l-hover); }
+    .list-item.active { background: #151619; border-left: 2px solid var(--l-accent); }
+
+    .item-row-top { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .item-avatar { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; }
+    .item-avatar.fallback { background: #333; color: #ccc; font-size: 9px; display: grid; place-items: center; }
+    .item-title { font-size: 13px; font-weight: 500; color: var(--l-text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-time { font-size: 11px; color: var(--l-text-dim); }
+
+    .item-row-sub { display: flex; align-items: center; gap: 10px; padding-left: 26px; }
+    .status-icon { font-size: 12px; display: flex; }
+    .status-icon.in-progress { color: #f59e0b; }
+    .status-icon.todo { color: #8a8d94; }
+    .status-icon.done { color: #5e6ad2; }
+    .status-icon.high-priority { color: #ef4444; }
+    .item-subtitle { font-size: 12px; color: var(--l-text-dim); }
+
+
+    /* --- 3. DETAIL PANEL --- */
+    .linear-detail {
+        background: var(--l-bg);
+        display: flex; flex-direction: column;
+    }
+
+    .detail-header {
+        height: 48px; border-bottom: 1px solid var(--l-border);
+        display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    }
+    .breadcrumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--l-text-dim); }
+    .bc-item.active { color: var(--l-text); }
+    .bc-sep { opacity: 0.4; }
+
+    .detail-actions { display: flex; gap: 4px; }
+    .btn-action-text {
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.05);
+        color: var(--l-text); font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 4px; cursor: pointer; display: flex; gap: 6px; align-items: center;
+    }
+    .btn-action-icon {
+        background: transparent; border: none; color: var(--l-text-dim); width: 28px; height: 28px; border-radius: 4px; cursor: pointer;
+    }
+    .btn-action-icon:hover { background: var(--l-hover); color: var(--l-text); }
+
+    .detail-scroll-area { flex: 1; overflow-y: auto; padding: 32px 48px; }
+    
+    .detail-content { max-width: 700px; margin-bottom: 40px; }
+    .content-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+    .badge-status {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(245, 158, 11, 0.1); color: #f59e0b;
+        font-size: 12px; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    .assignee { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--l-text-dim); }
+    .assignee img { width: 16px; height: 16px; border-radius: 50%; }
+
+    .content-title { font-size: 24px; font-weight: 600; color: var(--l-text); margin-bottom: 12px; letter-spacing: -0.02em; }
+    .content-desc { font-size: 15px; line-height: 1.6; color: #d1d2d3; }
+    .content-desc a { color: var(--l-accent); text-decoration: none; }
+
+    .detail-divider { border: 0; border-top: 1px solid var(--l-border); margin: 30px 0; }
+
+    /* TIMELINE (Exactamente como la imagen) */
+    .activity-title { font-size: 13px; font-weight: 600; color: var(--l-text); margin-bottom: 24px; }
+    
+    .timeline-item { position: relative; display: flex; gap: 16px; padding-bottom: 24px; }
+    
+    .tl-connector {
+        position: absolute; left: 14px; top: 32px; bottom: -8px; /* Línea vertical */
+        width: 2px; background: var(--l-border);
+    }
+    .timeline-item:last-of-type .tl-connector { display: none; } /* Ocultar en el último */
+
+    .tl-avatar { width: 30px; height: 30px; border-radius: 50%; background: #1f2023; border: 1px solid var(--l-border); flex-shrink: 0; z-index: 1; overflow: hidden; }
+    .tl-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .tl-avatar.icon { display: grid; place-items: center; color: var(--l-text-dim); font-size: 14px; }
+
+    .tl-content { flex: 1; padding-top: 4px; }
+    .tl-header { font-size: 13px; color: var(--l-text-dim); }
+    .tl-user { color: var(--l-text); font-weight: 500; }
+    .tl-time { margin-left: 6px; font-size: 12px; opacity: 0.6; }
+    
+    .tl-body { font-size: 13px; margin-top: 4px; color: var(--l-text); }
+    
+    .tl-card {
+        margin-top: 8px; background: var(--l-hover); border: 1px solid var(--l-border);
+        border-radius: 8px; padding: 12px; font-size: 13px; line-height: 1.5; color: var(--l-text);
+    }
+
+    /* INPUT AREA */
+    .timeline-input-area { display: flex; gap: 16px; margin-top: 10px; }
+    .tl-input-wrapper {
+        flex: 1; background: var(--l-sidebar); border: 1px solid var(--l-border);
+        border-radius: 8px; transition: 0.2s;
+    }
+    .tl-input-wrapper:focus-within { border-color: #555; background: black; }
+    
+    .tl-input-wrapper textarea {
+        width: 100%; background: transparent; border: none; outline: none;
+        color: var(--l-text); padding: 12px; font-size: 13px; resize: none; min-height: 40px; font-family: inherit;
+    }
+    .tl-input-footer {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 12px; border-top: 1px solid var(--l-border);
+    }
+    .tl-tools { display: flex; gap: 12px; color: var(--l-text-dim); font-size: 14px; cursor: pointer; }
+    .tl-tools i:hover { color: var(--l-text); }
+    
+    .btn-comment {
+        background: var(--l-accent); color: white; border: none;
+        font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 4px; cursor: pointer;
+    }
+    .btn-comment:hover { opacity: 0.9; }
+
+    /* Scrollbar */
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+
+</style>
+
 <script>
-    $(document).ready(function() {
-        $('#notificationsTable').DataTable({
-            "language": { "url": "//cdn.datatables.net/plug-ins/1.11.5/i18n/Spanish.json" },
-            "ordering": false
+    // JS mínimo para interactividad visual (Selección de items)
+    document.querySelectorAll('.list-item').forEach(item => {
+        item.addEventListener('click', function() {
+            document.querySelectorAll('.list-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            // Aquí cargarías el contenido dinámicamente en Django con AJAX o HTMX
         });
     });
 </script>
 
 {% endblock %}
-
-
-
-
-{% block footer %} 
-    <div class="contador-consultas izquierda">
-        <span class="icono">📊</span><a href="">Total:</a>  <span class="cantidad"></span>
-    </div>
-
-    <div class="contador-consultas derecha">
-        <span class="icono">📈</span><a href="">Boleta</span>
-    </div>
-
-    <style>
-        .contador-consultas {
-            position: fixed;
-            bottom: 15px;
-            padding: 12px 18px;
-            background: linear-gradient(45deg,rgb(128, 158, 190),rgb(203, 177, 245)); /* Degradado azul a violeta */
-            color: white;
-            font-size: 17px;
-            font-weight: bold;
-            border-radius: 8px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .contador-consultas:hover {
-            transform: scale(1.05);
-        }
-
-        .icono {
-            font-size: 20px;
-        }
-
-        .cantidad {
-            color: #ffeb3b; /* Amarillo brillante para resaltar el número */
-        }
-
-        /* Posicionamiento para el botón izquierdo */
-        .izquierda {
-            left: 15px;
-        }
-
-        /* Posicionamiento para el botón derecho */
-        .derecha {
-            right: 15px;
-        }
-    </style>
-{% endblock footer %}
-
-

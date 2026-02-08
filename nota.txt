@@ -1,4 +1,4 @@
-1- login con google listo
+1- login con google listo tindasilo.com
 2- login con verificacion con whatsapp listo en base de prueba . falta conectar con el api de whatsapp
 para el envio de codigo de verificacion
 3- control de cookie de 1 hora enel caso de que el cliente no este usando el sitio web. pasado 1 hora se cierra o si lo usa se renueva el cookie sin cerrar sesion

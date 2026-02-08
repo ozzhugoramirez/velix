@@ -10,371 +10,217 @@
 {% include "components/web/invitacionmodel.html" %}
 
 <style>
-  :root {
-    --emerald: #047857;
-    --gold: #d97706;
-    --dark: #0f172a;
-    --light: #f8fafc;
-  }
-  
-  body { background-color: var(--light); font-family: 'Inter', sans-serif; }
+    :root {
+        --primary-bg: #fff;
+        --accent-color: #195a59;
+        --sale-color: #e11d48;
+        --soft-gray: #f2f2f7;
+        --text-main: #1a1a1a;
+    }
 
-  /* --- 1. HERO SECTION CINEMÁTICO --- */
-  .hero-wrapper {
-    position: relative;
-    height: 85vh; /* Ocupa casi toda la pantalla */
-    width: 100%;
-    overflow: hidden;
-    background: #000;
-  }
-  
-  .hero-slide {
-    position: absolute; top:0; left:0; width: 100%; height: 100%;
-    background-size: cover; background-position: center;
-    opacity: 0; transition: opacity 1s ease-in-out;
-  }
-  .hero-slide.active { opacity: 1; }
-  
-  /* Gradiente para que el texto se lea siempre */
-  .hero-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%);
-    display: flex; align-items: center; padding: 0 5%;
-  }
+    body { background-color: #f5f5f7; font-family: 'Outfit', sans-serif; }
 
-  .hero-content {
-    max-width: 600px;
-    color: white;
-    transform: translateY(30px); opacity: 0;
-    animation: slideUpFade 1s forwards 0.5s;
-  }
+    /* --- 1. CATEGORÍAS ESTILO APP (MERCADO LIBRE) --- */
+    .app-categories {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        padding: 20px 0;
+        scroll-behavior: smooth;
+    }
+    .app-categories::-webkit-scrollbar { display: none; }
 
-  @keyframes slideUpFade { to { transform: translateY(0); opacity: 1; } }
+    .cat-item {
+        flex: 0 0 auto;
+        text-align: center;
+        width: 75px;
+        text-decoration: none;
+        color: var(--text-main);
+    }
+    .cat-icon-wrap {
+        width: 60px;
+        height: 60px;
+        background: white;
+        border-radius: 50%;
+        margin: 0 auto 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+        transition: transform 0.2s;
+    }
+    .cat-item:active .cat-icon-wrap { transform: scale(0.9); }
+    .cat-icon-wrap img { width: 35px; height: 35px; object-fit: contain; }
+    .cat-name { font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
 
-  .btn-hero {
-    background: white; color: black; font-weight: 800;
-    padding: 15px 40px; border-radius: 50px; text-transform: uppercase;
-    letter-spacing: 1px; transition: 0.3s; border: none;
-    display: inline-flex; align-items: center; gap: 10px;
-  }
-  .btn-hero:hover { background: var(--emerald); color: white; transform: scale(1.05); }
+    /* --- 2. HERO BANNER PRINCIPAL --- */
+    .main-banner {
+        width: 100%;
+        height: 200px;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-bottom: 25px;
+        position: relative;
+    }
+    .main-banner img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* --- 3. SECCIÓN DE OFERTAS (SCROLL HORIZONTAL) --- */
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding: 0 5px;
+    }
+    .section-title { font-size: 1.1rem; font-weight: 800; }
+    .view-all { color: var(--accent-color); font-size: 0.85rem; font-weight: 700; text-decoration: none; }
 
-  /* --- 2. BENTO GRID (Categorías/Promos) --- */
-  .bento-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 250px);
-    gap: 15px;
-    padding: 20px 0;
-  }
-  
-  .bento-item {
-    position: relative; border-radius: 20px; overflow: hidden;
-    cursor: pointer; transition: transform 0.3s;
-  }
-  .bento-item:hover { transform: translateY(-5px); }
-  .bento-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-  .bento-item:hover img { transform: scale(1.1); }
-  
-  .bento-content {
-    position: absolute; bottom: 0; left: 0; width: 100%;
-    padding: 20px;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-    color: white;
-  }
-  
-  /* Layout del grid */
-  .span-2 { grid-column: span 2; }
-  .span-row-2 { grid-row: span 2; }
-  
-  @media (max-width: 768px) {
-    .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
-    .span-2, .span-row-2 { grid-column: span 1; grid-row: span 1; height: 250px; }
-  }
+    .horizontal-scroll {
+        display: flex;
+        overflow-x: auto;
+        gap: 12px;
+        padding-bottom: 15px;
+        scroll-snap-type: x mandatory;
+    }
+    .horizontal-scroll::-webkit-scrollbar { display: none; }
 
-  /* --- 3. PRODUCT CARDS (Premium) --- */
-  .prod-card {
-    background: white; border-radius: 12px; overflow: hidden;
-    position: relative; transition: 0.3s; border: 1px solid #eee;
-  }
-  .prod-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-  
-  .prod-image-wrap {
-    position: relative; padding-top: 100%; background: #f4f4f4; overflow: hidden;
-  }
-  .prod-image-wrap img {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
-  }
-  
-  /* Etiquetas flotantes */
-  .tag-badge {
-    position: absolute; top: 10px; left: 10px;
-    background: black; color: white; font-size: 10px; font-weight: 800;
-    padding: 4px 10px; text-transform: uppercase; border-radius: 4px;
-  }
-  .tag-sale { background: #dc2626; } /* Rojo */
+    /* --- 4. CARD DE PRODUCTO RETAIL --- */
+    .retail-card {
+        flex: 0 0 160px;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #eee;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+    }
+    .card-img-wrap {
+        width: 100%;
+        height: 160px;
+        background: #f9f9f9;
+        position: relative;
+    }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .price-tag {
+        padding: 10px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .current-price { font-size: 1.1rem; font-weight: 800; color: #000; }
+    .old-price { font-size: 0.8rem; color: #999; text-decoration: line-through; }
+    .discount-pill {
+        color: #2e7d32;
+        font-size: 0.75rem;
+        font-weight: 700;
+        margin-left: 5px;
+    }
+    .product-title-small {
+        font-size: 0.85rem;
+        color: #444;
+        margin-bottom: 5px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .shipping-badge { color: #00a650; font-size: 0.7rem; font-weight: 700; }
 
-  /* Botón Quick Add que aparece al hover */
-  .quick-add {
-    position: absolute; bottom: -50px; left: 0; right: 0;
-    background: white; color: black; font-weight: 700;
-    text-align: center; padding: 12px;
-    transition: 0.3s; border-top: 1px solid #eee;
-  }
-  .prod-card:hover .quick-add { bottom: 0; }
-  .quick-add:hover { background: var(--emerald); color: white; }
+    /* --- 5. GRID DE CATEGORÍAS (TIPO MOSAICO) --- */
+    .grid-deals {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 20px;
+    }
+    .deal-box {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #eee;
+    }
 
-  /* --- 4. VIDEO SECTION --- */
-  .video-section {
-    position: relative; height: 500px; margin: 4rem 0;
-    background: #000; border-radius: 20px; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .video-bg { opacity: 0.6; width: 100%; height: 100%; object-fit: cover; }
-  .play-btn {
-    position: absolute; width: 80px; height: 80px;
-    background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 2rem; border: 2px solid white;
-    cursor: pointer; transition: 0.3s; z-index: 10;
-  }
-  .play-btn:hover { transform: scale(1.1); background: white; color: black; }
-
-  /* --- 5. REVIEWS (Dark Mode) --- */
-  .reviews-section {
-    background: var(--dark); color: white; padding: 5rem 0;
-    position: relative;
-  }
-  .review-card {
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-    padding: 2rem; border-radius: 16px; margin: 10px;
-  }
-  .stars { color: var(--gold); }
 </style>
 
-<section class="hero-wrapper">
-    <div class="hero-slide active" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');"></div>
+<div class="container-fluid px-3">
     
-    <div class="hero-overlay">
-        <div class="hero-content">
-            <span class="badge bg-warning text-dark mb-3 px-3 py-2">NUEVA TEMPORADA 2025</span>
-            <h1 class="display-2 fw-bold mb-4" style="line-height: 1;">Redefine<br>Tu Estilo.</h1>
-            <p class="lead mb-5 opacity-75">Colecciones exclusivas diseñadas para destacar. Calidad premium, envío gratuito y la mejor experiencia de compra.</p>
-            <div class="d-flex gap-3">
-                <a href="{% url 'shop' %}" class="btn-hero">
-                    Comprar Ahora <i class="bi bi-arrow-right"></i>
-                </a>
-                <a href="#" class="btn btn-outline-light rounded-pill px-4 py-3 fw-bold">Ver Video</a>
-            </div>
-        </div>
-    </div>
-</section>
-
-<div class="container" style="margin-top: -50px; position: relative; z-index: 10;">
-    <div class="bg-white p-4 rounded-4 shadow-lg">
-        <div class="row text-center g-4">
-            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
-                <i class="bi bi-truck fs-1 text-success"></i>
-                <div class="text-start"><h6 class="fw-bold m-0">Envío Gratis</h6><small class="text-muted">En pedidos +$100</small></div>
-            </div>
-            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
-                <i class="bi bi-shield-check fs-1 text-primary"></i>
-                <div class="text-start"><h6 class="fw-bold m-0">Pago Seguro</h6><small class="text-muted">Encriptación SSL</small></div>
-            </div>
-            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
-                <i class="bi bi-arrow-repeat fs-1 text-warning"></i>
-                <div class="text-start"><h6 class="fw-bold m-0">Devoluciones</h6><small class="text-muted">30 días gratis</small></div>
-            </div>
-            <div class="col-md-3 d-flex align-items-center justify-content-center gap-3">
-                <i class="bi bi-star-fill fs-1" style="color: var(--gold);"></i>
-                <div class="text-start"><h6 class="fw-bold m-0">4.9/5 Estrellas</h6><small class="text-muted">Clientes felices</small></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<section class="container py-5">
-    <div class="d-flex justify-content-between align-items-end mb-4">
-        <div>
-            <h2 class="fw-bold display-6">Explora & Descubre</h2>
-            <p class="text-muted">Selección curada para ti.</p>
-        </div>
-        <a href="{% url 'shop' %}" class="btn btn-link text-dark fw-bold text-decoration-none">Ver Todo <i class="bi bi-arrow-right"></i></a>
+    <div class="app-categories">
+        <a href="#" class="cat-item">
+            <div class="cat-icon-wrap"><img src="https://cdn-icons-png.flaticon.com/512/612/612499.png"></div>
+            <div class="cat-name">Ofertas</div>
+        </a>
+        <a href="#" class="cat-item">
+            <div class="cat-icon-wrap"><img src="https://cdn-icons-png.flaticon.com/512/3659/3659899.png"></div>
+            <div class="cat-name">Cuotas</div>
+        </a>
+        <a href="#" class="cat-item">
+            <div class="cat-icon-wrap"><img src="https://cdn-icons-png.flaticon.com/512/3050/3050160.png"></div>
+            <div class="cat-name">Super</div>
+        </a>
+        <a href="#" class="cat-item">
+            <div class="cat-icon-wrap"><img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png"></div>
+            <div class="cat-name">Moda</div>
+        </a>
+        <a href="#" class="cat-item">
+            <div class="cat-icon-wrap"><img src="https://cdn-icons-png.flaticon.com/512/2776/2776067.png"></div>
+            <div class="cat-name">Hogar</div>
+        </a>
     </div>
 
-    <div class="bento-grid">
-        <div class="bento-item span-row-2">
-            <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Moda">
-            <div class="bento-content">
-                <h3>Tendencias</h3>
-                <p>Lo último en moda</p>
-            </div>
-        </div>
-        
-        <div class="bento-item span-2">
-            <img src="https://images.unsplash.com/photo-1550009158-9ebf69173e03?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Tecnología">
-            <div class="bento-content">
-                <h3>Tecnología</h3>
-                <span class="badge bg-danger">Hasta 40% OFF</span>
-            </div>
-        </div>
-        
-        <div class="bento-item">
-            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Hogar">
-            <div class="bento-content">
-                <h5>Hogar</h5>
-            </div>
-        </div>
-        <div class="bento-item">
-            <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Accesorios">
-            <div class="bento-content">
-                <h5>Accesorios</h5>
-            </div>
-        </div>
+    <div class="main-banner shadow-sm">
+        <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1200&q=80">
     </div>
-</section>
 
-<section class="bg-white py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <span class="text-uppercase text-warning fw-bold tracking-wider">Top Sellers</span>
-            <h2 class="display-5 fw-bold mt-2">Los Favoritos de la Semana</h2>
-        </div>
+    <div class="section-header">
+        <h2 class="section-title">Ofertas del día</h2>
+        <a href="{% url 'shop' %}" class="view-all">Ver todas</a>
+    </div>
 
-        <div class="row g-4">
-            {% for item in promotional_products|default:daily_offers|slice:":4" %}
-            <div class="col-6 col-md-3">
-                <div class="prod-card h-100">
-                    <div class="prod-image-wrap">
-                        {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
-                        {% elif item.image %}
-                            <img src="{{ item.image.url }}" alt="{{ item.title }}">
-                        {% else %}
-                            <img src="https://dummyimage.com/600x600/f0f0f0/999" alt="Sin imagen">
-                        {% endif %}
-                        
-                        <div class="tag-badge tag-sale">OFERTA</div>
-                    </div>
-                    <div class="p-3">
-                        <small class="text-muted text-uppercase">{{ item.product.category.name|default:"General" }}</small>
-                        <h6 class="fw-bold text-truncate mb-2">{{ item.product.title|default:item.title }}</h6>
-                        <div class="d-flex align-items-center justify-content-between">
-                            <span class="fw-bold fs-5">${{ item.product.price|default:item.price }}</span>
-                            <div class="text-warning small"><i class="bi bi-star-fill"></i> 5.0</div>
-                        </div>
-                    </div>
-                    <a href="{% url 'product_detail' item.product.id|default:item.id %}" class="quick-add text-decoration-none">
-                        VER DETALLES <i class="bi bi-eye ms-1"></i>
-                    </a>
+    <div class="horizontal-scroll">
+        {% for item in promotional_products|default:daily_offers|slice:":6" %}
+        <div class="retail-card shadow-sm">
+            <a href="{% url 'product_detail' item.product.id|default:item.id %}" style="text-decoration:none; color:inherit;">
+                <div class="card-img-wrap">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}">
+                    {% else %}
+                        <img src="https://via.placeholder.com/300">
+                    {% endif %}
                 </div>
-            </div>
-            {% empty %}
-                <div class="col-12 text-center py-5 bg-light rounded-4">
-                    <i class="bi bi-box-seam fs-1 text-muted"></i>
-                    <p class="mt-3 text-muted">Cargando las mejores ofertas para ti...</p>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<div class="container">
-    <div class="video-section">
-        <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80" class="video-bg" alt="Video Cover">
-        
-        <div class="position-absolute text-center text-white px-3">
-            <h2 class="display-4 fw-bold mb-4">La Experiencia NextGen</h2>
-            <p class="fs-5 mb-4">Descubre cómo seleccionamos cada producto pensando en ti.</p>
-            <div class="play-btn" data-bs-toggle="modal" data-bs-target="#videoModal">
-                <i class="bi bi-play-fill ms-1"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="videoModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content bg-black">
-            <div class="modal-body p-0">
-                <div class="ratio ratio-16x9">
-                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" title="YouTube video" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<section class="reviews-section">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <h2 class="display-5 fw-bold mb-3">Amado por<br>Miles.</h2>
-                <p class="opacity-75 mb-4">No solo lo decimos nosotros. Mira lo que nuestra comunidad opina.</p>
-                <div class="d-flex align-items-center gap-4">
+                <div class="price-tag">
                     <div>
-                        <h3 class="fw-bold mb-0">15k+</h3>
-                        <small class="opacity-50">Clientes</small>
-                    </div>
-                    <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.2);"></div>
-                    <div>
-                        <h3 class="fw-bold mb-0">4.9</h3>
-                        <small class="opacity-50">Rating Promedio</small>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-lg-8">
-                <div class="d-flex gap-4 overflow-auto pb-3" style="scrollbar-width: none;">
-                    <div class="review-card flex-shrink-0" style="width: 300px;">
-                        <div class="stars mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                        <p>"La calidad supera el precio. El envío fue rapidísimo y el packaging es precioso."</p>
-                        <div class="d-flex align-items-center gap-3 mt-4">
-                            <img src="https://randomuser.me/api/portraits/women/1.jpg" class="rounded-circle" width="40" alt="User">
-                            <div><h6 class="m-0 fw-bold">Ana G.</h6><small class="opacity-50">Verificado</small></div>
+                        <div class="product-title-small">{{ item.product.title|default:item.title }}</div>
+                        <div class="old-price">${{ item.product.price|add:"500" }}</div>
+                        <div class="current-price">
+                            ${{ item.product.price|default:item.price }}
+                            <span class="discount-pill">15% OFF</span>
                         </div>
                     </div>
-                    <div class="review-card flex-shrink-0" style="width: 300px;">
-                        <div class="stars mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
-                        <p>"Excelente atención al cliente. Tuve una duda con el talle y me ayudaron al instante."</p>
-                        <div class="d-flex align-items-center gap-3 mt-4">
-                            <img src="https://randomuser.me/api/portraits/men/2.jpg" class="rounded-circle" width="40" alt="User">
-                            <div><h6 class="m-0 fw-bold">Marcos L.</h6><small class="opacity-50">Verificado</small></div>
-                        </div>
-                    </div>
-                    <div class="review-card flex-shrink-0" style="width: 300px;">
-                        <div class="stars mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i></div>
-                        <p>"Me encanta la variedad de productos. Definitivamente mi tienda favorita este año."</p>
-                        <div class="d-flex align-items-center gap-3 mt-4">
-                            <img src="https://randomuser.me/api/portraits/women/3.jpg" class="rounded-circle" width="40" alt="User">
-                            <div><h6 class="m-0 fw-bold">Lucía P.</h6><small class="opacity-50">Verificado</small></div>
-                        </div>
-                    </div>
+                    <div class="shipping-badge mt-2">Envío gratis <i class="bi bi-lightning-fill"></i></div>
                 </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-{% if recent_views %}
-<div class="container py-5">
-    <h4 class="fw-bold mb-4">Vistos Recientemente</h4>
-    <div class="d-flex gap-3 overflow-auto pb-2" style="scrollbar-width: none;">
-        {% for view in recent_views %}
-        <div class="flex-shrink-0" style="width: 200px;">
-            <div class="prod-card h-100 p-2">
-                <div style="height: 150px; overflow: hidden; border-radius: 8px; margin-bottom: 10px;">
-                    <img src="{{ view.product.image.url }}" alt="{{ view.product.title }}" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                <h6 class="small fw-bold text-truncate">{{ view.product.title }}</h6>
-                <div class="fw-bold text-success">${{ view.product.price }}</div>
-                <a href="{% url 'product_detail' view.product.id %}" class="stretched-link"></a>
-            </div>
+            </a>
         </div>
         {% endfor %}
     </div>
+
+    <div class="grid-deals mb-4">
+        <div class="deal-box">
+            <h6 class="fw-bold">Tecnología</h6>
+            <img src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=300&q=60" class="img-fluid rounded mt-2">
+            <div class="view-all mt-2" style="font-size: 0.7rem;">Hasta 30% OFF</div>
+        </div>
+        <div class="deal-box">
+            <h6 class="fw-bold">Hogar</h6>
+            <img src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=300&q=60" class="img-fluid rounded mt-2">
+            <div class="view-all mt-2" style="font-size: 0.7rem;">Ver colección</div>
+        </div>
+    </div>
+
 </div>
-{% endif %}
 
 {% endblock content %}
 

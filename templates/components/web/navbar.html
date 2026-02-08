@@ -1,515 +1,586 @@
 {% load socialaccount %}
 {% load static %}
 
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<div id="csrf-storage" style="display: none;">
+    {% csrf_token %}
+</div>
+
 <style>
+    /* =========================================
+       VARIABLES & RESET
+       ========================================= */
     :root {
-        --emerald: rgb(25, 90, 89);
-        --gold: rgb(200, 160, 90);
-        --bg-dark: rgb(23, 23, 23);
-        --bg-panel: rgba(23, 23, 23, 0.95);
-        --border-color: rgba(255, 255, 255, 0.1);
-        --text-white: rgba(255, 255, 255, 0.9);
-        --text-muted: rgba(255, 255, 255, 0.6);
-        --danger: #ef4444; /* Agregado para notificaciones */
+        --nav-bg: #ffffff;
+        --nav-text: #1a1a1a;
+        --nav-gray: #f2f2f7; 
+        --accent: #195a59;
+        --ease-spring: cubic-bezier(0.19, 1, 0.22, 1);
+        
+        --h-mobile: 110px;    
+        --h-scrolled: 65px;   
+        --h-pc: 80px;
     }
 
-    /* Base Setup */
-    body.dark {
-        background-color: #0a0a0a;
-        color: white;
-    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Outfit', sans-serif; margin: 0; background: #fff; }
+    input, select, textarea { font-size: 16px !important; }
 
-    /* Navbar Container - RESTAURADO A 64PX */
-    .glass-header {
-        position: sticky;
-        top: 0;
+    /* =========================================
+       1. NAVBAR FIXED
+       ========================================= */
+    .silo-header {
+        position: fixed; top: 0; left: 0; width: 100%;
+        background-color: var(--nav-bg);
         z-index: 1050;
-        width: 100%;
-        background-color: rgba(23, 23, 23, 0.8);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-bottom: 1px solid var(--border-color);
-        height: 64px; /* Altura original */
-        display: flex;
-        align-items: center;
+        height: var(--h-mobile);
+        transition: height 0.5s var(--ease-spring), box-shadow 0.3s;
+        box-shadow: 0 1px 0px rgba(0,0,0,0.05);
+        overflow: hidden; 
+    }
+    
+    @media (max-width: 991px) {
+        .silo-header.ai-expanded {
+            height: 50vh !important;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 20px 80px rgba(0,0,0,0.15);
+        }
+        .silo-header.scrolled .mobile-logo,
+        .silo-header.force-scrolled .mobile-logo {
+            opacity: 0; pointer-events: none;
+        }
     }
 
-    .nav-container {
-        max-width: 1280px;
-        margin: 0 auto;
-        padding: 0 1rem;
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: relative;
+    .silo-container {
+        max-width: 1800px; margin: 0 auto; padding: 0 20px;
+        height: 100%; position: relative;
     }
 
-    /* Logo Central - ORIGINAL */
-    .logo-center {
-        position: absolute;
-        left: 50%;
-        top: 50%;
+    .mobile-top-row {
+        display: flex; justify-content: space-between; align-items: center;
+        height: 60px; position: relative;
+        z-index: 60; pointer-events: none; transition: opacity 0.3s;
+    }
+
+    .btn-icon {
+        background: none; border: none; padding: 0;
+        width: 44px; height: 44px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--nav-text); font-size: 1.6rem; cursor: pointer;
+        text-decoration: none; position: relative;
+        z-index: 100; pointer-events: auto; transition: transform 0.2s;
+    }
+    .btn-icon:active { transform: scale(0.9); }
+
+    .mobile-logo {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800; font-size: 1.7rem; letter-spacing: -0.5px;
+        color: var(--nav-text); text-decoration: none;
+        position: absolute; left: 50%; top: 50%;
         transform: translate(-50%, -50%);
-        display: flex;
-        z-index: 10;
-    }
-    .logo-ring {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: grid;
-        place-items: center;
-        background: linear-gradient(90deg, var(--gold) 50%, var(--emerald) 50%);
-        box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
+        transition: opacity 0.3s, transform 0.3s;
+        z-index: 19; pointer-events: auto;
     }
 
-    /* Botones/Links (Pills) - ORIGINAL */
-    .nav-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
-        color: var(--text-white);
-        border-radius: 9999px;
-        border: 1px solid var(--border-color);
-        background: transparent;
-        text-decoration: none;
-        transition: all 0.2s;
-        cursor: pointer;
-        position: relative; /* Para posicionar badges */
-    }
-    .nav-pill:hover {
-        background: rgba(255,255,255,0.05);
-        border-color: rgba(255,255,255,0.2);
-    }
-    /* Clase extra para botones que son solo icono (cuadrados redondeados) */
-    .nav-pill-icon {
-        padding: 0.4rem;
-        color: var(--text-muted);
-    }
-    .nav-pill-icon:hover { color: white; }
-
-    /* Buscador Complex - ORIGINAL REDONDEADO */
-    .search-wrapper {
-        position: relative;
-        margin-left: 0.5rem;
-        display: none;
-        width: 280px;
-        align-items: center;
-    }
-    @media(min-width: 640px) { .search-wrapper { display: flex; } }
-    @media(min-width: 768px) { .search-wrapper { width: 360px; } }
-
-    .search-input-container {
-        position: relative;
-        width: 100%;
+    /* --- MÓVIL: BUSCADOR --- */
+    .mobile-search-wrapper {
+        height: 50px; width: 100%;
+        display: flex; align-items: flex-start; justify-content: center;
+        padding: 0 5px;
+        transition: all 0.4s var(--ease-spring);
+        position: relative; z-index: 15;
     }
 
-    .ghost-text {
-        position: absolute;
-        inset: 0;
-        padding-left: 2.5rem;
-        padding-right: 2.5rem;
-        display: flex;
-        align-items: center;
-        font-size: 0.875rem;
-        color: rgba(255, 255, 255, 0.35);
-        pointer-events: none;
-        white-space: pre;
-    }
-
-    .search-input {
-        width: 100%;
-        background-color: rgba(38, 38, 38, 0.8);
-        border: 1px solid var(--gold); /* Borde dorado original */
-        border-radius: 9999px; /* REDONDEADO ORIGINAL */
-        padding: 0.5rem 2.5rem 0.5rem 2.5rem;
-        color: white;
-        font-size: 0.875rem;
-        outline: none;
-        transition: box-shadow 0.2s;
-        position: relative; 
-        z-index: 2;
-        background: transparent;
-    }
-    .search-input:focus {
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    .silo-search-box {
+        background: var(--nav-gray);
+        border-radius: 50px; 
+        width: 100%; height: 44px;
+        display: flex; align-items: center; 
+        padding: 0 4px 0 15px; 
+        transition: all 0.3s ease;
+        border: 2px solid transparent; 
+        pointer-events: auto;
     }
     
-    .search-icon-left {
-        position: absolute;
-        left: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: rgba(255,255,255,0.7);
-        z-index: 3;
+    .silo-search-box input {
+        border: none; background: transparent; height: 100%;
+        flex-grow: 1; outline: none; color: #333; margin-right: 5px; font-weight: 500; min-width: 0;
     }
 
-    /* Panel de Resultados */
-    .search-panel {
-        position: absolute;
-        top: calc(100% + 8px);
-        left: 0;
-        width: min(92vw, 720px);
-        background-color: var(--bg-panel);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--border-color);
-        border-radius: 1rem;
-        padding: 0.75rem;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        visibility: hidden;
-        opacity: 0;
-        transform: translateY(-10px);
-        transition: all 0.2s ease;
-        z-index: 1060;
-    }
-    @media(min-width: 768px) { .search-panel { grid-template-columns: 1fr 1fr; } }
-    .search-panel.open { visibility: visible; opacity: 1; transform: translateY(0); }
-
-    .panel-section-title {
-        font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);
-        margin-bottom: 0.5rem; padding-left: 0.5rem;
-    }
-
-    .suggestion-item {
-        display: flex; justify-content: space-between; align-items: center; width: 100%;
-        padding: 0.5rem 0.75rem; border-radius: 0.5rem; color: var(--text-white);
-        font-size: 0.875rem; cursor: pointer; background: transparent; border: none; text-align: left;
-    }
-    .suggestion-item:hover { background: rgba(255,255,255,0.05); }
-
-    .offer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-    .offer-card {
-        border-radius: 0.75rem; overflow: hidden; border: 1px solid var(--border-color);
-        text-decoration: none; color: white; transition: all 0.2s;
-    }
-    .offer-card:hover { border-color: rgba(255,255,255,0.2); }
-    .offer-img { aspect-ratio: 4/3; width: 100%; background: #222; object-fit: cover; }
-    .offer-info { padding: 0.5rem; }
-    .offer-title { font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .offer-price { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
-
-    /* Menus Dropdown (Idioma) */
-    .dropdown-menu-custom {
-        display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 10rem;
-        background-color: var(--bg-panel); border: 1px solid var(--border-color);
-        border-radius: 0.75rem; padding: 0.25rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        z-index: 1100;
-    }
-    .dropdown-menu-custom.show { display: block; }
+    /* LÓGICA SCROLL MÓVIL */
+    .silo-header.scrolled { height: var(--h-scrolled); }
     
-    .lang-option {
-        width: 100%; display: flex; align-items: center; justify-content: space-between;
-        padding: 0.5rem 0.75rem; color: var(--text-white); font-size: 0.875rem;
-        background: none; border: none; border-radius: 0.5rem; cursor: pointer;
+    .silo-header.scrolled .mobile-search-wrapper,
+    .silo-header.force-scrolled .mobile-search-wrapper {
+        transform: translateY(-52px); 
+        padding-left: 50px; padding-right: 50px; 
+        z-index: 50; 
     }
-    .lang-option:hover { background: rgba(255,255,255,0.05); }
-
-    /* Auth Right Side */
-    .auth-section { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
     
-    /* AVATAR ORIGINAL */
-    .user-avatar {
-        width: 36px; height: 36px; border-radius: 0.75rem; overflow: hidden;
-        border: 1px solid var(--border-color); transition: transform 0.2s, box-shadow 0.2s;
+    .silo-header.scrolled .silo-search-box,
+    .silo-header.force-scrolled .silo-search-box {
+        background: #fff; border-color: #e5e5e5;
+        height: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    .user-avatar:hover {
-        transform: scale(1.03); box-shadow: 0 0 0 2px rgba(200, 160, 90, 0.7);
+    
+    .silo-header.force-scrolled .silo-search-box.search-ai-active {
+        border-color: var(--accent) !important;
     }
 
-    /* NUEVO: Badges para notificaciones/carrito */
-    .badge-dot {
-        position: absolute; top: -2px; right: -2px;
-        min-width: 16px; height: 16px; border-radius: 50%;
-        font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    /* =========================================
+       2. PANEL IA MÓVIL
+       ========================================= */
+    .ai-feedback-mobile {
+        position: absolute;
+        top: 70px; left: 0; width: 100%; 
+        height: calc(100% - 70px); 
+        display: flex; flex-direction: column;
+        opacity: 0; visibility: hidden; pointer-events: none;
+        transition: 0.3s; z-index: 40;
+        background: rgba(255, 255, 255, 0.98); 
+        backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(0,0,0,0.05);
     }
-    .bg-red { background: var(--danger); color: white; }
-    .bg-gold { background: var(--gold); color: rgb(25,90,89); }
+    @media (min-width: 992px) { .ai-feedback-mobile { display: none; } }
 
-    .hidden { display: none !important; }
+    .silo-header.ai-expanded .ai-feedback-mobile {
+        opacity: 1; visibility: visible; pointer-events: auto;
+    }
+
+    .ai-mobile-header {
+        flex-shrink: 0; height: 50px;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 20px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .ai-mobile-body {
+        flex: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; gap: 15px;
+    }
+
+    .btn-close-ai-mobile {
+        width: 32px; height: 32px; background: #f2f2f7;
+        border-radius: 50%; border: none; color: #555;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: 0.2s;
+    }
+    .btn-close-ai-mobile:active { transform: scale(0.9); background: #e0e0e0; }
+
+    /* Mensajes */
+    .ai-msg { padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; max-width: 100%; word-wrap: break-word; }
+    .ai-msg.user { background: var(--nav-gray); color: #000; align-self: flex-start; border-bottom-left-radius: 4px; font-weight: 600; }
+    .ai-msg.bot { background: transparent; color: var(--accent); padding-left: 0; }
+    
+    .typing-indicator { display: flex; gap: 4px; padding: 10px 0; }
+    .dot { width: 6px; height: 6px; background: #aaa; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+    .dot:nth-child(1) { animation-delay: -0.32s; } .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    /* =========================================
+       3. MENU HAMBURGUESA
+       ========================================= */
+    .fullscreen-menu {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: #ffffff;
+        z-index: 5000; 
+        display: flex; flex-direction: column;
+        opacity: 0; visibility: hidden; transform: scale(0.96);
+        transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    .fullscreen-menu.active { opacity: 1; visibility: visible; transform: scale(1); }
+    
+    .fs-header { height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 25px; flex-shrink: 0; }
+    .fs-logo { font-weight: 800; font-size: 1.8rem; color: #000; letter-spacing: -1px; }
+    .btn-close-menu { width: 38px; height: 38px; border-radius: 50%; background: #f7f7f7; border: none; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #333; cursor: pointer; }
+    
+    .fs-body { flex: 1; padding: 10px 30px; display: flex; flex-direction: column; justify-content: center; gap: 20px; overflow-y: auto; }
+    .nav-group { display: flex; flex-direction: column; gap: 15px; }
+    .apple-link { font-size: 2rem; font-weight: 700; color: #111; text-decoration: none; letter-spacing: -0.5px; transition: 0.2s; display: block; line-height: 1.1; }
+    .apple-link:hover { color: var(--accent); }
+    
+    .apple-settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+    .apple-setting-btn { background: var(--nav-gray); border: none; border-radius: 14px; padding: 12px; font-size: 0.95rem; font-weight: 600; color: #333; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+    .fs-footer { padding: 25px 30px; flex-shrink: 0; display: flex; justify-content: center; border-top: 1px solid #fafafa; }
+    .social-row { display: flex; gap: 25px; align-items: center; }
+    .social-icon { width: 48px; height: 48px; border-radius: 50%; background: #1a1a1a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; text-decoration: none; transition: 0.2s; }
+    .lang-select-box { width: 100%; padding: 12px; border-radius: 14px; background: var(--nav-gray); border: none; font-size: 0.95rem; font-weight: 600; color: #333; appearance: none; -webkit-appearance: none; text-align: center; cursor: pointer; }
+
+    /* =========================================
+       4. PC DRAWER & LAYOUT
+       ========================================= */
+    .pc-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 2999; opacity: 0; visibility: hidden; transition: 0.3s; }
+    .pc-overlay.active { opacity: 1; visibility: visible; }
+
+    .ai-sidebar-pc { position: fixed; top: 0; right: 0; width: 450px; height: 100vh; background: #fff; z-index: 3000; box-shadow: -10px 0 40px rgba(0,0,0,0.15); transform: translateX(100%); transition: transform 0.5s var(--ease-spring); display: flex; flex-direction: column; }
+    .ai-sidebar-pc.active { transform: translateX(0); }
+    .ai-pc-header { padding: 25px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fff; }
+    .ai-pc-body { flex: 1; padding: 25px; overflow-y: auto; background: #fafafa; display: flex; flex-direction: column; gap: 15px; }
+
+    /* MAGIC BUTTON */
+    .magic-btn-border { position: relative; z-index: 1; overflow: hidden; border-radius: 50%; padding: 2px; display: flex; justify-content: center; align-items: center; width: 36px; height: 36px; flex-shrink: 0; }
+    .magic-btn-border::before { content: ""; position: absolute; width: 150%; height: 150%; background: conic-gradient(#ff0055, #ff00cc, #00ddff, #00ff66, #ff0055); animation: rotateBorder 3s linear infinite; z-index: -2; }
+    .magic-btn-border::after { content: ""; position: absolute; inset: 2px; background: var(--nav-gray); border-radius: 50%; z-index: -1; }
+    .magic-btn-border i { z-index: 2; color: #555; transition: 0.2s; font-size: 1rem; }
+    .search-ai-active .magic-btn-border i { color: var(--accent); text-shadow: 0 0 5px rgba(25,90,89,0.5); }
+    @keyframes rotateBorder { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* PC Layout CSS */
+    .pc-layout { display: none; }
+    .btn-ai-toggle { background: none; border: none; cursor: pointer; display: flex; padding: 0; flex-shrink: 0; }
+    .btn-ai-toggle:hover i { transform: scale(1.1); }
+    .search-ai-active { border-color: var(--accent) !important; background-color: #fff !important; box-shadow: 0 0 0 4px rgba(25, 90, 89, 0.1) !important; }
+
+    @media (min-width: 992px) {
+        .mobile-top-row, .mobile-search-wrapper, .fullscreen-menu, .ai-feedback-mobile { display: none !important; }
+        .silo-header { height: var(--h-pc); display: block; overflow: visible; }
+        .silo-header.scrolled { height: var(--h-pc); }
+        .pc-layout { display: grid; grid-template-columns: 1fr auto 1fr; width: 100%; height: var(--h-pc); align-items: center; }
+        .pc-left { display: flex; align-items: center; gap: 25px; }
+        .pc-center { justify-self: center; }
+        .pc-right { display: flex; align-items: center; gap: 15px; justify-self: end; }
+        .pc-nav-link { text-decoration: none; color: #555; font-weight: 500; transition: 0.2s; }
+        .pc-nav-link:hover { color: var(--accent); }
+        .pc-logo { font-family: 'Outfit', sans-serif; font-weight: 900; font-size: 2.2rem; letter-spacing: -1px; color: var(--nav-text); text-decoration: none; }
+        .pc-search { position: relative; width: 340px; }
+        .pc-search input { width: 100%; height: 44px; border-radius: 50px; background: var(--nav-gray); border: 2px solid transparent; padding: 0 45px; outline: none; transition: 0.3s; }
+        .pc-search input:focus { background: white; border-color: #ddd; }
+        .pc-search .icon-left { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #999; pointer-events: none; }
+        .pc-search .icon-right { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+        .pc-icon-btn { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #333; cursor: pointer; text-decoration: none; font-size: 1.2rem; }
+        .btn-login { background: #111; color: white; border-radius: 30px; padding: 10px 24px; font-weight: 600; text-decoration: none; }
+    }
 </style>
 
-<header class="glass-header">
-    <div class="nav-container">
+<header class="silo-header" id="navbar">
+    <div class="silo-container">
         
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <a href="{% url 'home' %}" class="nav-pill">
-                
-                <span style="display:none;" class="d-sm-inline">Home</span>
+        <div class="mobile-top-row">
+            <button class="btn-icon" id="mobileMenuBtn"><i class="bi bi-list" style="font-size: 2rem;"></i></button>
+            <a href="{% url 'home' %}" class="mobile-logo">Silo.</a>
+            <a href="{% url 'cart' %}" class="btn-icon">
+                <i class="bi bi-bag"></i>
+                {% if cart_item_count > 0 %} <span style="position:absolute; top:8px; right:6px; width:8px; height:8px; background:#ff3b30; border-radius:50%; border:2px solid white;"></span> {% endif %}
             </a>
-            
-            <a href="{% url 'shop' %}" class="nav-pill">Shops</a>
+        </div>
 
-            <div class="search-wrapper" id="searchWrapper">
-                <form action="{% url 'Search' %}" method="GET" id="searchForm" style="width: 100%; position: relative;">
-                    
-                    <div class="search-input-container">
-                        <span class="search-icon-left">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28h.79L20 19.5 21.5 18 15.5 14zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.505 4.505 0 0 1 9.5 14z"/></svg>
-                        </span>
-
-                        <div class="ghost-text">
-                            <span style="opacity: 0" id="ghostHiddenPart"></span><span id="ghostVisiblePart"></span>
-                        </div>
-
-                        <input 
-                            type="text" 
-                            name="q" 
-                            id="searchInput" 
-                            class="search-input" 
-                            placeholder="Search Games..." 
-                            autocomplete="off"
-                        >
-
-                        <button type="button" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background:none; border:none; color: rgba(255,255,255,0.8); cursor: pointer;" class="nav-pill" style="padding: 4px;">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M6 10h12v2H6v-2zm-3 6h18v2H3v-2zM3 6h18v2H3V6z"/></svg>
-                        </button>
+        <div class="mobile-search-wrapper">
+            <form action="{% url 'Search' %}" method="GET" class="silo-search-box" id="mobileSearchForm">
+                <i class="bi bi-search" style="color:#999;"></i>
+                <input type="text" name="q" id="mobileInput" placeholder="Buscar..." autocomplete="off">
+                <button type="button" class="btn-ai-toggle" onclick="toggleAIMode('mobile')">
+                    <div class="magic-btn-border">
+                        <i class="bi bi-stars"></i>
                     </div>
+                </button>
+            </form>
+        </div>
 
-                    <div id="searchPanel" class="search-panel">
-                        <div style="padding-right: 0.5rem;">
-                            <div class="panel-section-title">Sugerencias</div>
-                            <div id="suggestionsList">
-                                <div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem;">Escribe para buscar...</div>
+        <div class="ai-feedback-mobile" id="aiFeedbackMobile">
+            <div class="ai-mobile-header">
+                <div style="font-weight:700; color:var(--accent); font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                    <i class="bi bi-stars"></i> Asistente IA
+                </div>
+                <button class="btn-close-ai-mobile" onclick="closeAiResultsMobile()">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="ai-mobile-body" id="aiMobileContent"></div>
+        </div>
+
+        <div class="pc-layout">
+            <div class="pc-left">
+                <a href="{% url 'home' %}" class="pc-nav-link">Inicio</a>
+                <a href="{% url 'shop' %}" class="pc-nav-link">Tienda</a>
+                <form action="{% url 'Search' %}" method="GET" class="pc-search" id="pcSearchForm">
+                    <i class="bi bi-search icon-left"></i>
+                    <input type="text" name="q" id="pcInput" placeholder="Buscar productos..." autocomplete="off">
+                    <div class="icon-right">
+                        <button type="button" class="btn-ai-toggle" onclick="toggleAIMode('pc')">
+                             <div class="magic-btn-border">
+                                <i class="bi bi-stars"></i>
                             </div>
-                        </div>
-                        <div style="border-left: 1px solid var(--border-color); padding-left: 0.5rem;">
-                            <div class="panel-section-title">Ofertas Relacionadas</div>
-                            <div id="offersGrid" class="offer-grid"></div>
-                        </div>
+                        </button>
                     </div>
                 </form>
             </div>
-        </div>
-
-        <a href="{% url 'home' %}" class="logo-center">
-            <span class="logo-ring">
-                <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden>
-                  <circle cx="18" cy="18" r="17" fill="transparent" stroke="rgba(255,255,255,.18)" />
-                  <circle cx="12" cy="12" r="2" fill="white" />
-                </svg>
-            </span>
-        </a>
-
-        <div class="auth-section">
-            
-            <div style="position: relative;">
-                <button id="langToggle" class="nav-pill nav-pill-icon">
-                    <span style="text-transform: uppercase; font-weight:bold; font-size: 0.75rem;">ES</span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
-                </button>
-                <div id="langMenu" class="dropdown-menu-custom">
-                    <button class="lang-option" data-lang="es"><span>Español</span></button>
-                    <button class="lang-option" data-lang="en"><span>English</span></button>
-                    <button class="lang-option" data-lang="zh"><span>中文</span></button>
-                </div>
+            <div class="pc-center">
+                <a href="{% url 'home' %}" class="pc-logo">Silo.</a>
             </div>
-
-            <button id="themeToggle" class="nav-pill nav-pill-icon">
-                <svg id="iconSun" class="hidden" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.8 1.42-1.42zM1 13h3v-2H1v2zm10 10h2v-3h-2v3zm9-10v-2h-3v2h3zm-3.95 7.95l1.41 1.41 1.8-1.79-1.41-1.41-1.8 1.79zM11 1h2v3h-2V1zm-4.24 16.24l-1.79 1.8 1.41 1.41 1.8-1.79-1.42-1.42zM17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0z"/></svg>
-                <svg id="iconMoon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 1 0 9.79 9.79z"/></svg>
-            </button>
-
-            {% if user.is_authenticated %}
-                
-                <a href="{% url 'notification_list' %}" class="nav-pill nav-pill-icon" title="Notificaciones">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    {% if unread_notifications_count > 0 %}
-                        <span class="badge-dot bg-red">{{ unread_notifications_count }}</span>
-                    {% endif %}
-                </a>
-
-                <a href="{% url 'cart' %}" class="nav-pill nav-pill-icon" title="Carrito">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-                    {% if cart_item_count > 0 %}
-                        <span class="badge-dot bg-gold">{{ cart_item_count }}</span>
-                    {% endif %}
-                </a>
-
-                <a href="{% url 'profile' %}" class="user-avatar" title="{{ user.username }}">
-                    {% if user.avatar %}
-                        <img src="{{ user.avatar.url }}" alt="Profile" style="width:100%; height:100%; object-fit:cover;">
-                    {% else %}
-                        <img src="https://i.pravatar.cc/150?u={{ user.username }}" alt="Profile" style="width:100%; height:100%; object-fit:cover;">
-                    {% endif %}
-                </a>
-            {% else %}
-                <a href="{% provider_login_url 'google' %}" class="nav-pill" style="font-weight: 500;">Ingresar</a>
-            {% endif %}
+            <div class="pc-right">
+                <button class="pc-icon-btn"><i class="bi bi-translate"></i></button>
+                <button class="pc-icon-btn" id="themeToggle"><i class="bi bi-moon"></i></button>
+                <div style="width:1px; height:24px; background:#ddd; margin:0 5px;"></div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'notification_list' %}" class="pc-icon-btn"><i class="bi bi-bell"></i></a>
+                    <a href="{% url 'profile' %}" class="pc-icon-btn" style="border:none; padding:0; overflow:hidden;">
+                         {% if user.avatar %}<img src="{{ user.avatar.url }}" style="width:100%; height:100%; object-fit:cover;">
+                         {% else %}<img src="https://i.pravatar.cc/150?u={{ user.username }}" style="width:100%; height:100%; object-fit:cover;">{% endif %}
+                    </a>
+                {% else %}
+                    <a href="{% provider_login_url 'google' %}" class="btn-login">Ingresar</a>
+                {% endif %}
+            </div>
         </div>
+
     </div>
 </header>
 
+<div class="pc-overlay" id="pcOverlay" onclick="closeAiSidebarPC()"></div>
+<div class="ai-sidebar-pc" id="aiSidebarPC">
+    <div class="ai-pc-header">
+        <div style="font-weight:700; color:var(--accent); font-size:1.2rem;">
+            <i class="bi bi-stars"></i> Asistente IA
+        </div>
+        <button class="btn-close-menu" onclick="closeAiSidebarPC()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+    <div class="ai-pc-body" id="aiPCContent"></div>
+</div>
+
+<div class="fullscreen-menu" id="fullscreenMenu">
+    <div class="fs-header">
+        <div class="fs-logo">Silo.</div>
+        <button class="btn-close-menu" id="closeMenuBtn"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="fs-body">
+        <div class="nav-group">
+            <a href="{% url 'home' %}" class="apple-link">Inicio</a>
+            <a href="{% url 'shop' %}" class="apple-link">Tienda</a>
+            <a href="#" class="apple-link" style="color:#999;">Favoritos</a>
+        </div>
+        <div class="apple-settings-grid">
+            <select class="lang-select-box">
+                <option value="es">Español</option>
+                <option value="en">English</option>
+                <option value="pt">Português</option>
+                <option value="fr">Français</option>
+            </select>
+            <button class="apple-setting-btn" id="mobileThemeToggle">
+                <span>Tema</span> <i class="bi bi-moon"></i>
+            </button>
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+                <div style="font-weight:700; font-size:1.2rem; margin-bottom:5px;">Hola, {{ user.username }}</div>
+                <a href="{% url 'profile' %}" style="text-decoration:underline; color:#666;">Ver Perfil</a>
+            {% else %}
+                <a href="{% provider_login_url 'google' %}" class="apple-setting-btn" style="background:#000; color:#fff; justify-content:center;">
+                    Ingresar
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="fs-footer">
+        <div class="social-row">
+            <a href="#" class="social-icon"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="social-icon"><i class="bi bi-tiktok"></i></a>
+            <a href="#" class="social-icon"><i class="bi bi-whatsapp"></i></a>
+        </div>
+    </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    
-    // --- BÚSQUEDA ---
-    const API_URL = '/api/productos/'; 
-    const SUFFIXES = {
-        "olla": ["de acero", "de presión", "de barro"],
-        "sartén": ["antiadherente", "de hierro", "wok"],
-        "cuchillo": ["de chef", "santoku", "parrillero"],
-        "juego": ["de mesa", "de rol", "de pc"]
-    };
-
-    const searchInput = document.getElementById('searchInput');
-    const searchPanel = document.getElementById('searchPanel');
-    const ghostHidden = document.getElementById('ghostHiddenPart');
-    const ghostVisible = document.getElementById('ghostVisiblePart');
-    const suggestionsList = document.getElementById('suggestionsList');
-    const offersGrid = document.getElementById('offersGrid');
-    const searchForm = document.getElementById('searchForm');
-    
-    let debounceTimer;
-    let currentSuggestion = "";
-
-    searchInput.addEventListener('input', function(e) {
-        const val = e.target.value;
-        handleGhostText(val);
-        if(val.length > 0) {
-            searchPanel.classList.add('open');
-        } else {
-            searchPanel.classList.remove('open');
-            return;
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- UI Logic ---
+        const navbar = document.getElementById('navbar');
+        const body = document.body;
+        
+        function setInitialPadding() {
+            if(window.innerWidth < 992) body.style.paddingTop = '110px'; 
+            else body.style.paddingTop = '80px'; 
         }
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            fetchSuggestions(val);
-            fetchOffers(val);
-        }, 300);
-    });
+        setInitialPadding();
+        window.addEventListener('resize', setInitialPadding);
 
-    searchInput.addEventListener('keydown', function(e) {
-        if(e.key === 'Tab' && currentSuggestion) {
-            e.preventDefault();
-            searchInput.value = currentSuggestion;
-            handleGhostText(currentSuggestion);
-        }
-    });
+        window.addEventListener('scroll', () => {
+            if(navbar.classList.contains('ai-expanded')) return;
+            if(window.innerWidth < 992) { 
+                if (window.scrollY > 10) { navbar.classList.add('scrolled'); body.style.paddingTop = '65px'; } 
+                else { navbar.classList.remove('scrolled'); navbar.classList.remove('force-scrolled'); body.style.paddingTop = '110px'; }
+            } else {
+                navbar.classList.remove('scrolled'); body.style.paddingTop = '80px';
+            }
+        });
 
-    document.addEventListener('click', function(e) {
-        if (!document.getElementById('searchWrapper').contains(e.target)) {
-            searchPanel.classList.remove('open');
-        }
-    });
+        const menuBtn = document.getElementById('mobileMenuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const fullscreenMenu = document.getElementById('fullscreenMenu');
 
-    function handleGhostText(val) {
-        ghostHidden.textContent = val; 
-        ghostVisible.textContent = "";
-        currentSuggestion = "";
-        if(!val) return;
-        const lowerVal = val.toLowerCase();
-        for (const [key, suffixes] of Object.entries(SUFFIXES)) {
-            if (lowerVal.includes(key)) {
-                const match = suffixes.find(s => (key + " " + s).startsWith(lowerVal) && (key + " " + s) !== lowerVal);
-                if (match) {
-                    const fullText = key + " " + match;
-                    if(fullText.startsWith(lowerVal)) {
-                        ghostVisible.textContent = fullText.substring(lowerVal.length);
-                        currentSuggestion = fullText;
-                    }
+        if(menuBtn) menuBtn.addEventListener('click', (e) => { e.stopPropagation(); fullscreenMenu.classList.add('active'); document.body.style.overflow = 'hidden'; });
+        if(closeMenuBtn) closeMenuBtn.addEventListener('click', () => { fullscreenMenu.classList.remove('active'); document.body.style.overflow = ''; });
+
+
+        // ============================================================
+        // LOGICA IA INFALIBLE (ATTRIBUTE SWAPPING) + CLEAN URL
+        // ============================================================
+        let aiModeActive = false;
+
+        window.toggleAIMode = function(device) {
+            aiModeActive = !aiModeActive;
+            const mobileBox = document.getElementById('mobileSearchForm');
+            const pcInput = document.getElementById('pcInput');
+            const mobileInput = document.getElementById('mobileInput');
+            
+            if (aiModeActive) {
+                // ACTIVANDO IA
+                navbar.classList.add('ai-active-mode'); 
+                
+                // MÓVIL: "Rompemos" el form para que no envíe GET
+                if(mobileBox) mobileBox.removeAttribute('action'); 
+                if(mobileInput) {
+                    mobileInput.removeAttribute('name'); 
+                    mobileInput.placeholder = "✨ Pregúntale a la IA...";
                 }
+                if(mobileBox) mobileBox.classList.add('search-ai-active');
+
+                // PC
+                if(pcInput) {
+                    pcInput.classList.add('search-ai-active');
+                    pcInput.placeholder = "✨ Pregúntale a la IA...";
+                }
+
+            } else {
+                // DESACTIVANDO IA: Restauramos para búsqueda normal
+                navbar.classList.remove('ai-active-mode');
+                
+                // MÓVIL: Restauramos GET standard
+                if(mobileBox) mobileBox.setAttribute('action', "{% url 'Search' %}");
+                if(mobileInput) {
+                    mobileInput.setAttribute('name', 'q');
+                    mobileInput.placeholder = "Buscar...";
+                }
+                
+                if(mobileBox) mobileBox.classList.remove('search-ai-active');
+                if(pcInput) pcInput.classList.remove('search-ai-active');
+                if(pcInput) pcInput.placeholder = "Buscar productos...";
+                
+                closeAiResultsMobile();
+                closeAiSidebarPC();
             }
         }
-    }
 
-    function fetchOffers(query) {
-        const demoData = [
-            { title: query + " Edición Coleccionista", price: "USD 120.00", img: null },
-            { title: query + " Standard", price: "USD 59.99", img: null },
-        ];
-        renderOffers(demoData);
-    }
-    
-    function fetchSuggestions(query) {
-        const html = `
-            <button class="suggestion-item" type="button" onclick="selectSuggestion('${query}')">
-                <span>Buscar: <b>${query}</b></span>
-            </button>
-        `;
-        suggestionsList.innerHTML = html;
-    }
-
-    function renderOffers(products) {
-        if(products.length === 0) {
-            offersGrid.innerHTML = '<div style="grid-column: span 2; padding:1rem; opacity:0.6">Sin resultados</div>';
-            return;
+        // --- FUNCIONES UI CHAT ---
+        function appendMessage(text, sender, containerId) {
+            const container = document.getElementById(containerId);
+            if(!container) return;
+            const div = document.createElement('div'); div.className = `ai-msg ${sender}`;
+            if (sender === 'bot') div.innerHTML = text; else div.textContent = text;
+            container.appendChild(div); container.scrollTop = container.scrollHeight;
         }
-        const html = products.map((p, idx) => {
-            const grad = idx % 2 === 0 ? 'linear-gradient(135deg, #1f2937, #111827)' : 'linear-gradient(135deg, rgb(200,160,90), rgb(25,90,89))';
-            const imgStyle = p.img ? `background-image: url('${p.img}')` : `background: ${grad}`;
-            return `
-            <a href="/search?q=${p.title}" class="offer-card">
-                <div class="offer-img" style="${imgStyle}"></div>
-                <div class="offer-info">
-                    <div class="offer-title">${p.title}</div>
-                    <div class="offer-price">${p.price}</div>
-                </div>
-            </a>
-            `;
-        }).join('');
-        offersGrid.innerHTML = html;
-    }
 
-    window.selectSuggestion = function(text) {
-        searchInput.value = text;
-        searchForm.submit();
-    };
-
-
-    // --- IDIOMA & TEMA ---
-    const langToggle = document.getElementById('langToggle');
-    const langMenu = document.getElementById('langMenu');
-    
-    langToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        langMenu.classList.toggle('show');
-    });
-
-    document.querySelectorAll('.lang-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const lang = btn.dataset.lang;
-            // Lógica cookie Django
-            alert('Idioma: ' + lang); 
-            location.reload();
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!langToggle.contains(e.target)) langMenu.classList.remove('show');
-    });
-
-    const themeToggle = document.getElementById('themeToggle');
-    const iconSun = document.getElementById('iconSun');
-    const iconMoon = document.getElementById('iconMoon');
-    
-    const isDark = localStorage.getItem('theme') !== 'light';
-    applyTheme(isDark);
-
-    themeToggle.addEventListener('click', () => {
-        const currentDark = document.body.classList.contains('dark');
-        applyTheme(!currentDark);
-    });
-
-    function applyTheme(dark) {
-        if(dark) {
-            document.body.classList.add('dark');
-            iconSun.classList.add('hidden');
-            iconMoon.classList.remove('hidden');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.body.classList.remove('dark');
-            iconSun.classList.remove('hidden');
-            iconMoon.classList.add('hidden');
-            localStorage.setItem('theme', 'light');
+        function showLoading(containerId) {
+            const container = document.getElementById(containerId);
+            if(!container) return null;
+            const div = document.createElement('div'); div.className = 'typing-indicator'; div.id = 'loading-' + containerId;
+            div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            container.appendChild(div); container.scrollTop = container.scrollHeight;
+            return div;
         }
-    }
-});
+
+        function removeLoading(containerId) {
+            const el = document.getElementById('loading-' + containerId);
+            if(el) el.remove();
+        }
+
+        // --- ENVÍO ASÍNCRONO ---
+        async function sendAiMessage(text, isMobile) {
+            if(!text) return;
+            
+            let containerId;
+            if(isMobile) {
+                containerId = 'aiMobileContent';
+                navbar.classList.add('force-scrolled', 'ai-expanded');
+            } else {
+                containerId = 'aiPCContent';
+                document.getElementById('aiSidebarPC').classList.add('active');
+                document.getElementById('pcOverlay').classList.add('active');
+            }
+
+            appendMessage(text, 'user', containerId);
+            showLoading(containerId);
+
+            try {
+                // OBTENER EL TOKEN DEL CONTENEDOR OCULTO GLOBAL
+                // Ya no ensuciamos los formularios con esto
+                const csrfTokenInput = document.querySelector('#csrf-storage input');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+
+                const response = await fetch("/botOLO/chatbot-message/", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/x-www-form-urlencoded", 
+                        "X-CSRFToken": csrfToken 
+                    },
+                    body: `message=${encodeURIComponent(text)}&current_url=${encodeURIComponent(window.location.href)}`
+                });
+
+                const data = await response.json();
+                removeLoading(containerId);
+
+                if (data.redirect) window.location.href = data.redirect;
+                else if (data.response) appendMessage(data.response, 'bot', containerId);
+                else appendMessage("Sin respuesta.", 'bot', containerId);
+
+            } catch (err) {
+                console.error(err);
+                removeLoading(containerId);
+                appendMessage("Error de conexión.", 'bot', containerId);
+            }
+        }
+
+        // --- INTERCEPTOR MAESTRO ---
+        function masterInterceptor(e) {
+            if (aiModeActive) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                
+                const formId = e.currentTarget.id; 
+                const isMobile = (formId === 'mobileSearchForm');
+                const inputId = isMobile ? 'mobileInput' : 'pcInput';
+                const inputEl = document.getElementById(inputId);
+                
+                const val = inputEl.value.trim();
+                if(val) {
+                    inputEl.value = '';
+                    inputEl.blur(); 
+                    sendAiMessage(val, isMobile);
+                }
+                return false;
+            }
+        }
+
+        const pcForm = document.getElementById('pcSearchForm');
+        const mobileForm = document.getElementById('mobileSearchForm');
+        
+        if(pcForm) pcForm.addEventListener('submit', masterInterceptor);
+        if(mobileForm) mobileForm.addEventListener('submit', masterInterceptor);
+
+        // --- EXTRAS PARA MÓVILES ---
+        const mobileInput = document.getElementById('mobileInput');
+        if(mobileInput) {
+            mobileInput.addEventListener('keypress', (e) => {
+                if(aiModeActive && e.key === 'Enter') {
+                    e.preventDefault();
+                    mobileForm.dispatchEvent(new Event('submit'));
+                }
+            });
+        }
+
+        // Close functions
+        window.closeAiResultsMobile = function() { navbar.classList.remove('ai-expanded'); if(window.scrollY < 10) navbar.classList.remove('force-scrolled'); }
+        window.closeAiSidebarPC = function() { document.getElementById('aiSidebarPC').classList.remove('active'); document.getElementById('pcOverlay').classList.remove('active'); }
+        
+        // Theme
+        const toggleTheme = () => document.body.classList.toggle('dark-mode');
+        const themeBtn = document.getElementById('themeToggle');
+        const mobileThemeBtn = document.getElementById('mobileThemeToggle');
+        if(themeBtn) themeBtn.addEventListener('click', toggleTheme);
+        if(mobileThemeBtn) mobileThemeBtn.addEventListener('click', toggleTheme);
+    });
 </script>
